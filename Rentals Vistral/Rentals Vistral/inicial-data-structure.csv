@@ -1,0 +1,60 @@
+📍 Información de la Propiedad					
+📄 Datos generales					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Dirrección 	address_full	TEXT	N/A (Texto libre)	Sí	Supply
+Tipo de activo 	property_asset_type	ENUM	 ' Unit ', ' Project ', ' Building ', ' WIP '	Sí	Supply
+Tamaño de la vivienda (m²)	surface_area	INTEGER	N/A	Sí	Supply
+Número de habitaciones 	bedrooms_count	INTEGER	N/A	Sí	Supply
+Número de baños/aseos	bathrooms_count	INTEGER	N/A	Sí	Supply
+Número de plazas de garaje	parking_slots_count	INTEGER	N/A	Sí	Supply
+Piso 	floor_number	INTEGER	N/A	Sí	Supply
+Unique ID 	property_ref_id	TEXT	N/A (Texto libre)	Sí	Automated
+Administrador de la propiedad	building_admin_name	TEXT	N/A (Texto libre)	Sí	Supply
+🔑 Accesos					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Localización de las llaves	keys_location	TEXT	N/A (Texto libre)	Sí	Settlement
+🛠️Documentación técnica y visual					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Documentos de la reforma 	doc_renovation_files	TEXT (URL)	N/A (Texto libre)	Sí	Reno team
+Certificado de eficiencia energética 	doc_energy_cert	TEXT (URL)	N/A (Texto libre)	Sí	Supply
+Fotos de la propiedad actualizadas tras la reforma	photos_urls	TEXT (URL)	N/A (Texto libre)	Sí	Reno team
+👤 Información del Propietario					
+📄 Datos personales					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Nombre del propietario 	owner_full_name	TEXT	N/A (Texto libre)	Sí	Investor Relations team
+DNI del propietario 	owner_id_number	TEXT (URL)	N/A (Texto libre)	Sí	Investor Relations team
+Número de teléfono del propietario 	owner_phone	TEXT	N/A (Texto libre)	Sí	Investor Relations team
+Correo electrónico del propietario 	owner_email	TEXT	N/A (Texto libre)	Sí	Investor Relations team
+💳 Datos bancarios					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Cuenta bancaria del propietario 	owner_iban	TEXT	N/A (Texto libre)	Sí	Investor Relations team
+Certificado de titularidad bancaria 	doc_bank_ownership	TEXT (URL)	N/A (Texto libre)	Sí	Investor Relations team
+📂 Contratos y Pólizas de la Vivienda					
+🏠 Documentación Legal					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Contrato de compraventa de la propiedad 	doc_purchase_contract	TEXT (URL)	N/A (Texto libre)	Sí	Property Coach
+Nota Simple de la propiedad	doc_land_registry_note	TEXT (URL)	N/A (Texto libre)	Sí	Supply
+🔌 Suministros					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Contrato Electricidad	doc_contract_electricity	TEXT (URL)	N/A (Texto libre)	Sí	Supply
+Contrato Agua	doc_contract_water	TEXT (URL)	N/A (Texto libre)	Sí	Supply
+Contrato Gas	doc_contract_gas	TEXT (URL)	N/A (Texto libre)	Sí	Supply
+Contrato Otros Suministros	doc_contract_other	TEXT (URL)	N/A (Texto libre)	Sí	Supply
+🧾 Facturas					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Factura Electricidad	doc_bill_electricity	TEXT (URL)	N/A (Texto libre)	Sí	Reno team
+Factura Agua	doc_bill_electricity	TEXT (URL)	N/A (Texto libre)	Sí	Reno team
+Factura Gas	doc_bill_gas	TEXT (URL)	N/A (Texto libre)	Sí	Reno team
+Factura Otros Suministros	doc_bill_other	TEXT (URL)	N/A (Texto libre)	Sí	Reno team
+🛡️ Seguro de hogar					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Tipo de Seguro de Hogar 	insurance_type	ENUM	N/A (Texto libre)	Sí	Investor Relations team
+Política del Seguro de Hogar 	doc_insurance_policy	TEXT (URL)	N/A (Texto libre)	Sí	Investor Relations team
+📣 Información para la fase de Comercialización					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Tipo de alquiler 	rental_type	ENUM	 ' Larga estancia ', ' Corta estancia/Vacacional '	Sí	Supply
+¿Tiene ya inquilino?	has_tenant_already	BOOLEAN, ENUM	 ' Sí ', ' No '	Sí	Supply
+🧭 Gestión interna Prophero					
+Nombre 	Nombre Variable	Type of SQL (Postgres)	Valores Permitidos (Lista Cerrada)	¿Obligatorio?	Fuente
+Plan PM	management_plan	ENUM	 ' Premium ', ' Basic '	Sí	Rental
+Property Manager asignado	property_manager_id	UUID	N/A 	Sí	Rental
