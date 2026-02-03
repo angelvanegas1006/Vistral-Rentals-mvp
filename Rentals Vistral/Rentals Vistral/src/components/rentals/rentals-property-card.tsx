@@ -98,6 +98,7 @@ interface Property {
   renoEndDate?: string; // Fecha de fin de renovación
   propertyReadyDate?: string; // Fecha en que la propiedad está lista
   daysToPublishRent?: number; // Días para publicar el alquiler
+  propheroSubstate?: "Pendiente de revisión" | "Pendiente de información" | null; // Subestado de Prophero
 }
 
 interface RentalsPropertyCardProps {
@@ -120,11 +121,49 @@ export function RentalsPropertyCard({
   const getRentalTypeColor = (type?: string) => {
     switch (type) {
       case "Larga estancia":
-        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200";
+        return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300";
       case "Corta estancia":
-        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200";
+        return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300";
       case "Vacacional":
-        return "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200";
+        return "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300";
+      default:
+        return "";
+    }
+  };
+
+  // Función para obtener color del Property Manager según su nombre (gama azul)
+  const getPropertyManagerColor = (name?: string) => {
+    switch (name) {
+      case "JJ":
+        return "bg-blue-500 dark:bg-blue-600 text-white";
+      // Preparado para futuros Property Managers
+      default:
+        return "bg-blue-500 dark:bg-blue-600 text-white";
+    }
+  };
+
+  // Función para obtener color del Rentals Analyst según su nombre (gama azul)
+  const getRentalsAnalystColor = (name?: string) => {
+    switch (name) {
+      case "Luis Martín":
+        return "bg-blue-400 dark:bg-blue-500 text-white";
+      case "Alice Ruggieri":
+        return "bg-cyan-400 dark:bg-cyan-500 text-white";
+      default:
+        return "bg-blue-400 dark:bg-blue-500 text-white";
+    }
+  };
+
+  // Función para obtener color del subestado de Prophero
+  // Colores que coinciden con los mensajes de las secciones:
+  // - "Pendiente de revisión" (isCorrect === null): azul muy suave
+  // - "Pendiente de información" (isCorrect === false): naranja
+  const getPropheroSubstateColor = (substate?: string | null) => {
+    switch (substate) {
+      case "Pendiente de revisión":
+        return "bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400";
+      case "Pendiente de información":
+        return "bg-orange-100 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400";
       default:
         return "";
     }
@@ -199,8 +238,21 @@ export function RentalsPropertyCard({
       )}
       style={{ pointerEvents: disabled ? "none" : "auto" }}
     >
-      {/* ID */}
-      <div className="text-xs font-semibold text-muted-foreground mb-2">ID {property.property_unique_id}</div>
+      {/* Header con ID y Tag de Subestado */}
+      <div className="flex items-start justify-between mb-2">
+        <div className="text-xs font-semibold text-muted-foreground">ID {property.property_unique_id}</div>
+        {/* Tag de subestado de Prophero - esquina superior derecha */}
+        {property.currentPhase === "Viviendas Prophero" && property.propheroSubstate !== null && property.propheroSubstate !== undefined && (
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full text-xs font-medium px-2 py-1",
+              getPropheroSubstateColor(property.propheroSubstate)
+            )}
+          >
+            {property.propheroSubstate}
+          </span>
+        )}
+      </div>
       
       {/* Address */}
       <div className="text-sm font-medium text-foreground mb-[5px]">{property.address}</div>
@@ -232,7 +284,7 @@ export function RentalsPropertyCard({
                   <div
                     className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center",
-                      "bg-blue-500 dark:bg-blue-600 text-white",
+                      getPropertyManagerColor(property.propertyManager),
                       "text-xs font-semibold cursor-default",
                       "border-2 border-white dark:border-[var(--prophero-gray-800)]",
                       "shadow-sm hover:shadow-md transition-shadow"
@@ -274,7 +326,7 @@ export function RentalsPropertyCard({
                   <div
                     className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center",
-                      "bg-purple-500 dark:bg-purple-600 text-white",
+                      getRentalsAnalystColor(property.rentalsAnalyst),
                       "text-xs font-semibold cursor-default",
                       "border-2 border-white dark:border-[var(--prophero-gray-800)]",
                       "shadow-sm hover:shadow-md transition-shadow"

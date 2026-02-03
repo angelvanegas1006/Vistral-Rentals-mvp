@@ -12,7 +12,7 @@ import { PropheroTasks } from "./prophero-tasks";
 import { ProgressOverviewWidget } from "@/components/specs-card/ProgressOverviewWidget";
 import { usePropertyForm } from "./property-form-context";
 import { useProperty } from "@/hooks/use-property";
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import type { PropheroSectionReviews } from "@/lib/supabase/types";
 
 interface Property {
@@ -32,9 +32,24 @@ interface PropertyTasksTabProps {
     city?: string;
   };
   onPropheroReviewsChange?: (reviews: PropheroSectionReviews | undefined) => void;
+  onSubmitCommentsRef?: React.MutableRefObject<(() => void) | null>;
+  onHasAnySectionWithNoRef?: React.MutableRefObject<boolean>;
+  onCanSubmitCommentsRef?: React.MutableRefObject<boolean>;
+  onHasAnySectionWithNoChange?: (hasNo: boolean) => void;
+  onCanSubmitCommentsChange?: (canSubmit: boolean) => void;
 }
 
-export function PropertyTasksTab({ propertyId, currentPhase, property: propFromParent, onPropheroReviewsChange }: PropertyTasksTabProps) {
+export function PropertyTasksTab({ 
+  propertyId, 
+  currentPhase, 
+  property: propFromParent, 
+  onPropheroReviewsChange,
+  onSubmitCommentsRef,
+  onHasAnySectionWithNoRef,
+  onCanSubmitCommentsRef,
+  onHasAnySectionWithNoChange,
+  onCanSubmitCommentsChange,
+}: PropertyTasksTabProps) {
   const { formData } = usePropertyForm();
   const { property: supabaseProperty, loading: propertyLoading } = useProperty(propertyId);
   
@@ -49,12 +64,18 @@ export function PropertyTasksTab({ propertyId, currentPhase, property: propFromP
           const reviews = typeof supabaseProperty.prophero_section_reviews === 'string'
             ? JSON.parse(supabaseProperty.prophero_section_reviews)
             : supabaseProperty.prophero_section_reviews;
+          
+          // Actualizar el ref con el estado inicial
+          previousReviewsRef.current = reviews as PropheroSectionReviews;
+          
           // Convertir a formato simplificado para el widget (solo necesitamos isCorrect)
           const simplified: Record<string, { isCorrect: boolean | null }> = {};
           Object.keys(reviews).forEach((sectionId) => {
-            simplified[sectionId] = { 
-              isCorrect: reviews[sectionId].isCorrect ?? null
-            };
+            if (sectionId !== '_meta') {
+              simplified[sectionId] = { 
+                isCorrect: reviews[sectionId]?.isCorrect ?? null
+              };
+            }
           });
           console.log("📊 Prophero reviews loaded for widget:", simplified);
           setPropheroSectionReviews(simplified as PropheroSectionReviews);
@@ -62,34 +83,84 @@ export function PropertyTasksTab({ propertyId, currentPhase, property: propFromP
           onPropheroReviewsChange?.(reviews as PropheroSectionReviews);
         } catch (error) {
           console.warn("Error parsing prophero_section_reviews:", error);
+          previousReviewsRef.current = undefined;
           setPropheroSectionReviews(undefined);
           onPropheroReviewsChange?.(undefined);
         }
       } else {
         // No hay reviews todavía, notificar con objeto vacío para que el padre sepa que estamos en Prophero
         console.log("📊 No prophero reviews found, initializing empty state");
+        previousReviewsRef.current = undefined;
         setPropheroSectionReviews(undefined);
         onPropheroReviewsChange?.(undefined);
       }
     } else {
+      previousReviewsRef.current = undefined;
       setPropheroSectionReviews(undefined);
       onPropheroReviewsChange?.(undefined);
     }
   }, [currentPhase, supabaseProperty?.prophero_section_reviews, onPropheroReviewsChange]);
   
+  // Ref para rastrear el valor anterior y evitar actualizaciones innecesarias
+  const previousReviewsRef = useRef<PropheroSectionReviews | undefined>(undefined);
+  
   // Callback para actualizar el estado cuando PropheroTasks cambie las reviews
   const handlePropheroReviewsChange = useCallback((reviews: PropheroSectionReviews) => {
-    // Convertir a formato simplificado para el widget (solo necesitamos isCorrect)
-    const simplified: Record<string, { isCorrect: boolean | null }> = {};
-    Object.keys(reviews).forEach((sectionId) => {
-      simplified[sectionId] = { 
-        isCorrect: reviews[sectionId].isCorrect ?? null
-      };
+    // Comparar si los valores realmente cambiaron antes de actualizar
+    const previous = previousReviewsRef.current;
+    
+    if (!previous) {
+      // Primera vez, siempre actualizar
+      previousReviewsRef.current = reviews;
+      // Convertir a formato simplificado para el widget (solo necesitamos isCorrect)
+      const simplified: Record<string, { isCorrect: boolean | null }> = {};
+      Object.keys(reviews).forEach((sectionId) => {
+        if (sectionId !== '_meta') {
+          simplified[sectionId] = { 
+            isCorrect: reviews[sectionId]?.isCorrect ?? null
+          };
+        }
+      });
+      setPropheroSectionReviews(simplified);
+      onPropheroReviewsChange?.(reviews);
+      return;
+    }
+    
+    // Comparar valores de isCorrect para detectar cambios reales
+    const requiredSectionIds = [
+      "property-management-info",
+      "technical-documents",
+      "legal-documents",
+      "client-financial-info",
+      "supplies-contracts",
+      "supplies-bills",
+      "home-insurance",
+      "property-management",
+    ];
+    
+    const hasChanged = requiredSectionIds.some((sectionId) => {
+      const prevReview = previous[sectionId];
+      const newReview = reviews[sectionId];
+      const prevIsCorrect = prevReview?.isCorrect ?? null;
+      const newIsCorrect = newReview?.isCorrect ?? null;
+      return prevIsCorrect !== newIsCorrect;
     });
-    console.log("🔄 Prophero reviews updated in widget:", simplified);
-    setPropheroSectionReviews(simplified);
-    // Notificar al componente padre (page.tsx) sobre los cambios
-    onPropheroReviewsChange?.(reviews);
+    
+    // Solo actualizar si realmente cambió algo
+    if (hasChanged) {
+      previousReviewsRef.current = reviews;
+      // Convertir a formato simplificado para el widget (solo necesitamos isCorrect)
+      const simplified: Record<string, { isCorrect: boolean | null }> = {};
+      Object.keys(reviews).forEach((sectionId) => {
+        if (sectionId !== '_meta') {
+          simplified[sectionId] = { 
+            isCorrect: reviews[sectionId]?.isCorrect ?? null
+          };
+        }
+      });
+      setPropheroSectionReviews(simplified);
+      onPropheroReviewsChange?.(reviews);
+    }
   }, [onPropheroReviewsChange]);
   
   // Usar la propiedad del padre si está disponible, sino crear una mínima
@@ -115,32 +186,42 @@ export function PropertyTasksTab({ propertyId, currentPhase, property: propFromP
       case "Listo para Alquilar":
         return [
           {
-            id: "validation",
-            title: "Validación Técnica",
-            required: true,
-            fields: [{ id: "technicalValidation", required: true }],
-          },
-          {
-            id: "pricing",
-            title: "Precio",
+            id: "client-presentation",
+            title: "Presentación al Cliente",
             required: true,
             fields: [
-              { id: "monthlyRent", required: true },
-              { id: "announcementPrice", required: true },
-              { id: "ownerNotified", required: true },
+              { id: "clientPresentationDone", required: true },
+              { id: "clientPresentationDate", required: true },
+              { id: "clientPresentationChannel", required: true },
             ],
           },
           {
-            id: "publication",
-            title: "Publicación",
+            id: "pricing-strategy",
+            title: "Estrategia de Precio",
+            required: true,
+            fields: [
+              { id: "announcementPrice", required: true },
+              { id: "priceApproval", required: true },
+            ],
+          },
+          {
+            id: "technical-inspection",
+            title: "Inspección Técnica y Reportaje",
+            required: true,
+            fields: [
+              // Esta sección se valida mediante la lógica de completitud en ReadyToRentTasks
+              // Los campos se guardan directamente en Supabase, no en formData
+              // Por ahora, usamos un campo placeholder que se validará de forma especial
+              { id: "technicalInspectionComplete", required: true },
+            ],
+          },
+          {
+            id: "commercial-launch",
+            title: "Lanzamiento Comercial",
             required: true,
             fields: [
               { id: "publishOnline", required: true },
-              { id: "idealistaPrice", required: false },
               { id: "idealistaDescription", required: false },
-              { id: "idealistaAddress", required: false },
-              { id: "idealistaCity", required: false },
-              { id: "idealistaPhotos", required: false },
             ],
           },
         ];
@@ -320,6 +401,190 @@ export function PropertyTasksTab({ propertyId, currentPhase, property: propFromP
 
   const progressSections = getProgressSections();
 
+  // Calcular completitud de la sección de inspección técnica para fase 2
+  const calculateTechnicalInspectionComplete = () => {
+    if (currentPhase !== "Listo para Alquilar" || !supabaseProperty) {
+      return false;
+    }
+
+    // Obtener todas las estancias que deben estar completas
+    const getAllRooms = () => {
+      const rooms: Array<{ type: string; index?: number }> = [
+        { type: "common_areas" },
+        { type: "entry_hallways" },
+        { type: "living_room" },
+        { type: "kitchen" },
+        { type: "exterior" },
+      ];
+      
+      const bedrooms = supabaseProperty.bedrooms || 0;
+      for (let i = 0; i < bedrooms; i++) {
+        rooms.push({ type: "bedrooms", index: i });
+      }
+      
+      const bathrooms = supabaseProperty.bathrooms || 0;
+      for (let i = 0; i < bathrooms; i++) {
+        rooms.push({ type: "bathrooms", index: i });
+      }
+      
+      if (supabaseProperty.garage && supabaseProperty.garage !== "No tiene") {
+        rooms.push({ type: "garage" });
+      }
+      if (supabaseProperty.has_terrace) {
+        rooms.push({ type: "terrace" });
+      }
+      
+      return rooms;
+    };
+
+    const allRooms = getAllRooms();
+    
+    return allRooms.every(room => {
+      const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.check_bedrooms;
+          if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
+            return arr[room.index] as "good" | "incident";
+          }
+          return null;
+        }
+        if (room.type === "bathrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.check_bathrooms;
+          if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
+            return arr[room.index] as "good" | "incident";
+          }
+          return null;
+        }
+        const statusMap: Record<string, string | null> = {
+          common_areas: supabaseProperty.check_common_areas,
+          entry_hallways: supabaseProperty.check_entry_hallways,
+          living_room: supabaseProperty.check_living_room,
+          kitchen: supabaseProperty.check_kitchen,
+          exterior: supabaseProperty.check_exterior,
+          garage: supabaseProperty.check_garage,
+          terrace: supabaseProperty.check_terrace,
+        };
+        const status = statusMap[room.type];
+        return (status === "good" || status === "incident") ? status : null;
+      };
+
+      const getRoomComment = (room: { type: string; index?: number }): string => {
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.comment_bedrooms;
+          return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
+        }
+        if (room.type === "bathrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.comment_bathrooms;
+          return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
+        }
+        const commentMap: Record<string, string | null> = {
+          common_areas: supabaseProperty.comment_common_areas,
+          entry_hallways: supabaseProperty.comment_entry_hallways,
+          living_room: supabaseProperty.comment_living_room,
+          kitchen: supabaseProperty.comment_kitchen,
+          exterior: supabaseProperty.comment_exterior,
+          garage: supabaseProperty.comment_garage,
+          terrace: supabaseProperty.comment_terrace,
+        };
+        return commentMap[room.type] || "";
+      };
+
+      const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.affects_commercialization_bedrooms;
+          return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
+        }
+        if (room.type === "bathrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.affects_commercialization_bathrooms;
+          return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
+        }
+        const affectsMap: Record<string, boolean | null> = {
+          common_areas: supabaseProperty.affects_commercialization_common_areas,
+          entry_hallways: supabaseProperty.affects_commercialization_entry_hallways,
+          living_room: supabaseProperty.affects_commercialization_living_room,
+          kitchen: supabaseProperty.affects_commercialization_kitchen,
+          exterior: supabaseProperty.affects_commercialization_exterior,
+          garage: supabaseProperty.affects_commercialization_garage,
+          terrace: supabaseProperty.affects_commercialization_terrace,
+        };
+        return affectsMap[room.type] ?? null;
+      };
+
+      const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.photos_bedrooms;
+          return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+        }
+        if (room.type === "bathrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.photos_bathrooms;
+          return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+        }
+        const photosMap: Record<string, string[] | null> = {
+          common_areas: supabaseProperty.photos_common_areas,
+          entry_hallways: supabaseProperty.photos_entry_hallways,
+          living_room: supabaseProperty.photos_living_room,
+          kitchen: supabaseProperty.photos_kitchen,
+          exterior: supabaseProperty.photos_exterior,
+          garage: supabaseProperty.photos_garage,
+          terrace: supabaseProperty.photos_terrace,
+        };
+        return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      };
+
+      const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.incident_photos_bedrooms;
+          return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+        }
+        if (room.type === "bathrooms" && room.index !== undefined) {
+          const arr = supabaseProperty.incident_photos_bathrooms;
+          return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+        }
+        const photosMap: Record<string, string[] | null> = {
+          common_areas: supabaseProperty.incident_photos_common_areas,
+          entry_hallways: supabaseProperty.incident_photos_entry_hallways,
+          living_room: supabaseProperty.incident_photos_living_room,
+          kitchen: supabaseProperty.incident_photos_kitchen,
+          exterior: supabaseProperty.incident_photos_exterior,
+          garage: supabaseProperty.incident_photos_garage,
+          terrace: supabaseProperty.incident_photos_terrace,
+        };
+        return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      };
+
+      const status = getRoomStatus(room);
+      if (!status) return false;
+      
+      if (status === "good") {
+        return getRoomCommercialPhotos(room).length > 0;
+      } else if (status === "incident") {
+        const comment = getRoomComment(room);
+        const incidentPhotos = getRoomIncidentPhotos(room);
+        const affects = getRoomAffectsCommercialization(room);
+        
+        if (!comment || incidentPhotos.length === 0 || affects === null) return false;
+        
+        if (affects === true) return true;
+        
+        return getRoomCommercialPhotos(room).length > 0;
+      }
+      
+      return false;
+    });
+  };
+
+  // Preparar formData con datos adicionales para fase 2
+  const enhancedFormData = useMemo(() => {
+    const data = { ...formData };
+    
+    if (currentPhase === "Listo para Alquilar") {
+      // Agregar completitud de inspección técnica
+      data["readyToRent.technicalInspectionComplete"] = calculateTechnicalInspectionComplete();
+    }
+    
+    return data;
+  }, [formData, currentPhase, supabaseProperty]);
+
   // Determinar qué tareas mostrar según la fase
   const isProphero = currentPhase === "Viviendas Prophero";
   const isReadyToRent = currentPhase === "Listo para Alquilar";
@@ -336,14 +601,22 @@ export function PropertyTasksTab({ propertyId, currentPhase, property: propFromP
       {/* Progress Overview Widget - Visible in ALL phases */}
       <ProgressOverviewWidget
         sections={progressSections}
-        formData={formData}
+        formData={enhancedFormData}
         visibleSections={progressSections.map(s => s.id)}
         fieldErrors={{}}
         propheroSectionReviews={propheroSectionReviews}
       />
 
       {isProphero ? (
-        <PropheroTasks property={property} onSectionReviewsChange={handlePropheroReviewsChange} />
+        <PropheroTasks 
+          property={property} 
+          onSectionReviewsChange={handlePropheroReviewsChange}
+          onSubmitCommentsRef={onSubmitCommentsRef}
+          onHasAnySectionWithNoRef={onHasAnySectionWithNoRef}
+          onCanSubmitCommentsRef={onCanSubmitCommentsRef}
+          onHasAnySectionWithNoChange={onHasAnySectionWithNoChange}
+          onCanSubmitCommentsChange={onCanSubmitCommentsChange}
+        />
       ) : isReadyToRent ? (
         <ReadyToRentTasks property={property} />
       ) : isTenantAccepted ? (

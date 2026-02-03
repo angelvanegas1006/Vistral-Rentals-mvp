@@ -34,6 +34,7 @@ export const DOCUMENT_LABELS = {
  * Map database field names to their standard labels
  */
 export const FIELD_TO_LABEL: Record<string, string> = {
+  // Documents
   doc_purchase_contract: DOCUMENT_LABELS.PURCHASE_CONTRACT,
   doc_land_registry_note: DOCUMENT_LABELS.LAND_REGISTRY_NOTE,
   property_management_plan_contract_url: DOCUMENT_LABELS.PROPERTY_MANAGEMENT_CONTRACT,
@@ -47,11 +48,23 @@ export const FIELD_TO_LABEL: Record<string, string> = {
   doc_bill_electricity: DOCUMENT_LABELS.BILL_ELECTRICITY,
   doc_bill_water: DOCUMENT_LABELS.BILL_WATER,
   doc_bill_gas: DOCUMENT_LABELS.BILL_GAS,
+  // Text fields
+  admin_name: "Administrador de la propiedad",
+  keys_location: "Localización de las llaves",
+  client_iban: "Cuenta bancaria del propietario (IBAN)",
+  property_manager: "Property Manager asignado",
 };
 
 /**
  * Get the standard label for a database field
  */
 export function getDocumentLabel(fieldName: string): string {
+  return FIELD_TO_LABEL[fieldName] || fieldName;
+}
+
+/**
+ * Get the standard label for any field (document or text field)
+ */
+export function getFieldLabel(fieldName: string): string {
   return FIELD_TO_LABEL[fieldName] || fieldName;
 }

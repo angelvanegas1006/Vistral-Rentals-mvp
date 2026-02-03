@@ -7,6 +7,79 @@ import { RentalsKanbanColumn } from "./rentals-kanban-column";
 import { RentalsHomeLoader } from "./rentals-home-loader";
 import { useProperties } from "@/hooks/use-properties";
 import { mapPropertyFromSupabase } from "@/lib/supabase/mappers";
+import type { PropheroSectionReviews, PropheroSectionReview } from "@/lib/supabase/types";
+
+// Función helper para calcular el subestado de Prophero según las normas EXACTAS:
+// 1. Siempre que haya un campo de ¿Es correcta esta información? en BLANCO/NULL, el subestado será "Pendiente de revisión"
+// 2. Si no hay ningún campo ¿Es correcta esta información? en BLANCO/NULL y hay alguno en NO, el subestado será "Pendiente de información"
+// 3. Si hay campos ¿Es correcta esta información? en NO y campos en NULL el estado será "Pendiente de revisión" (NULL/blanco es más restrictivo)
+function getPropheroSubstate(reviews: PropheroSectionReviews | null | undefined): "Pendiente de revisión" | "Pendiente de información" | null {
+  // Lista de todas las secciones requeridas de Prophero
+  const requiredSectionIds = [
+    "property-management-info",
+    "technical-documents",
+    "legal-documents",
+    "client-financial-info",
+    "supplies-contracts",
+    "supplies-bills",
+    "home-insurance",
+    "property-management",
+  ];
+  
+  // Si no hay reviews, todas las secciones están en NULL → Pendiente de revisión
+  if (!reviews) {
+    return "Pendiente de revisión";
+  }
+  
+  // Verificar cada sección requerida
+  let hasNullSections = false;
+  let hasNoSections = false;
+  let allCorrect = true;
+  
+  for (const sectionId of requiredSectionIds) {
+    const review = reviews[sectionId] as PropheroSectionReview | undefined;
+    
+    // Verificar explícitamente si la sección existe y tiene isCorrect definido
+    if (!review) {
+      // Sección no existe → NULL
+      hasNullSections = true;
+      allCorrect = false;
+    } else {
+      const isCorrectValue = review.isCorrect;
+      
+      // Verificar si isCorrect es null o undefined (BLANCO/NULL)
+      if (isCorrectValue === null || isCorrectValue === undefined) {
+        hasNullSections = true;
+        allCorrect = false;
+      } else if (isCorrectValue === false) {
+        // Sección con respuesta NO
+        hasNoSections = true;
+        allCorrect = false;
+      } else if (isCorrectValue === true) {
+        // Sección con respuesta SÍ, continuar verificando
+      }
+    }
+  }
+  
+  // Norma 1 y Norma 3: Si hay algún campo isCorrect === null/undefined → "Pendiente de revisión" (PRIORIDAD MÁXIMA)
+  // NULL/blanco es más restrictivo que NO
+  if (hasNullSections) {
+    return "Pendiente de revisión";
+  }
+  
+  // Si todas las secciones están en "Sí" → null (puede avanzar, Progreso General = 100%)
+  if (allCorrect) {
+    return null;
+  }
+  
+  // Norma 2: Si no hay NULL y hay algún isCorrect === false → "Pendiente de información"
+  if (hasNoSections) {
+    return "Pendiente de información";
+  }
+  
+  // Por defecto → Pendiente de revisión
+  return "Pendiente de revisión";
+}
 
 interface Property {
   property_unique_id: string;
@@ -26,6 +99,8 @@ interface Property {
   renoEndDate?: string; // Fecha de fin de renovación
   propertyReadyDate?: string; // Fecha en que la propiedad está lista
   daysToPublishRent?: number; // Días para publicar el alquiler
+  propheroSectionReviews?: PropheroSectionReviews | null; // Estado de revisión de Prophero
+  propheroSubstate?: "Pendiente de revisión" | "Pendiente de información" | null; // Subestado de Prophero
 }
 
 interface KanbanColumn {
@@ -281,6 +356,10 @@ export function RentalsKanbanBoard({
   const [isHovered, setIsHovered] = useState(false);
   const [highlightedPropertyId, setHighlightedPropertyId] = useState<string | null>(null);
   const columnRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  
+  // Estado para almacenar actualizaciones optimistas de propheroSectionReviews
+  // Esto permite actualizar el subestado inmediatamente sin esperar a recargar desde Supabase
+  const [optimisticPropheroReviews, setOptimisticPropheroReviews] = useState<Record<string, PropheroSectionReviews>>({});
 
   const setColumnRef = useCallback((key: string, element: HTMLDivElement | null) => {
     if (element) {
@@ -322,6 +401,9 @@ export function RentalsKanbanBoard({
   }, [kanbanType]);
 
   // Convertir propiedades de Supabase a columnas del Kanban
+  // Ya no necesitamos actualización optimista porque las propiedades se actualizan directamente
+  // en use-properties antes de establecer el estado
+  
   const supabaseColumns = useMemo(() => {
     console.log("📊 Procesando propiedades de Supabase:", {
       count: supabaseProperties?.length || 0,
@@ -372,6 +454,15 @@ export function RentalsKanbanBoard({
     supabaseProperties.forEach((prop) => {
       const mappedProp = mapPropertyFromSupabase(prop);
       const phaseId = phaseMapping[mappedProp.currentPhase as keyof typeof phaseMapping];
+      
+      // Calcular subestado de Prophero si la propiedad está en fase "Viviendas Prophero"
+      // Siempre calcular el subestado, incluso si propheroSectionReviews es null/undefined (será "Pendiente de revisión")
+      // Usar actualización optimista si existe para actualización inmediata del subestado
+      if (mappedProp.currentPhase === "Viviendas Prophero") {
+        const propertyId = mappedProp.property_unique_id;
+        const reviewsToUse = optimisticPropheroReviews[propertyId] || mappedProp.propheroSectionReviews;
+        mappedProp.propheroSubstate = getPropheroSubstate(reviewsToUse);
+      }
       
       // Debug: Verificar propiedades de "Pendiente de trámites"
       if (mappedProp.currentPhase === "Pendiente de trámites") {
@@ -432,7 +523,7 @@ export function RentalsKanbanBoard({
         properties,
       };
     });
-  }, [supabaseProperties, phaseMapping, kanbanType, isSupabaseConfigured]);
+  }, [supabaseProperties, phaseMapping, kanbanType, isSupabaseConfigured, optimisticPropheroReviews]);
 
   // Seleccionar datos: Supabase primero, luego mock como fallback
   const defaultColumns = useMemo(() => {

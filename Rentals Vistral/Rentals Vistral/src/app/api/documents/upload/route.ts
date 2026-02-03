@@ -137,6 +137,47 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-public-docs",
     folder: "photos/terrace",
   },
+  // Property Incident Photos (Fotos de incidencias - diferentes de fotos comerciales)
+  incident_photos_common_areas: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/common_areas",
+  },
+  incident_photos_entry_hallways: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/entry_hallways",
+  },
+  incident_photos_bedrooms: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/bedrooms",
+  },
+  incident_photos_living_room: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/living_room",
+  },
+  incident_photos_bathrooms: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/bathrooms",
+  },
+  incident_photos_kitchen: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/kitchen",
+  },
+  incident_photos_exterior: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/exterior",
+  },
+  incident_photos_garage: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/garage",
+  },
+  incident_photos_terrace: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/terrace",
+  },
+  incident_photos_storage: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/storage",
+  },
 };
 
 /**
@@ -291,9 +332,9 @@ export async function POST(request: NextRequest) {
           [fieldName]: [...currentArray, newDocument],
         };
       }
-    } else if (fieldName === "doc_renovation_files" || fieldName.startsWith("photos_")) {
+    } else if (fieldName === "doc_renovation_files" || fieldName.startsWith("photos_") || fieldName.startsWith("incident_photos_")) {
       // Special handling for bedrooms and bathrooms (arrays of arrays)
-      if ((fieldName === "photos_bedrooms" || fieldName === "photos_bathrooms") && roomIndex !== null) {
+      if ((fieldName === "photos_bedrooms" || fieldName === "photos_bathrooms" || fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms") && roomIndex !== null) {
         const roomIdx = parseInt(roomIndex, 10);
         if (isNaN(roomIdx)) {
           return NextResponse.json(
@@ -376,6 +417,16 @@ export async function POST(request: NextRequest) {
         { error: `Failed to update database: ${updateError.message}` },
         { status: 500 }
       );
+    }
+
+    // Detectar cambios en campos de secciones Prophero y resetear si es necesario
+    // Esto se ejecuta incluso si la tarjeta no está abierta
+    try {
+      const { detectAndResetPropheroSection } = await import("@/lib/prophero-field-change-detector");
+      await detectAndResetPropheroSection(propertyId, updateData);
+    } catch (error) {
+      // No fallar la request si hay error en la detección de cambios
+      console.error("Error detecting prophero field changes:", error);
     }
 
     // Step 4: Cleanup old file (if replacing)

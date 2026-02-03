@@ -15,6 +15,8 @@ interface NavbarL2Props {
   nextPhaseLabel?: string;
   isBlocked?: boolean;
   blockedMessage?: string;
+  onSubmitComments?: () => void | Promise<void>;
+  canSubmitComments?: boolean;
 }
 
 export function NavbarL2({
@@ -27,6 +29,8 @@ export function NavbarL2({
   nextPhaseLabel = "Avanzar a la siguiente fase",
   isBlocked = false,
   blockedMessage = "Avance bloqueado",
+  onSubmitComments,
+  canSubmitComments = true,
 }: NavbarL2Props) {
   const router = useRouter();
 
@@ -66,7 +70,7 @@ export function NavbarL2({
         </div>
 
         {/* Right: Action Buttons */}
-        {(onSave || onNextPhase) && (
+        {(onSave || onNextPhase || onSubmitComments) && (
           <div className="flex items-center gap-3">
             {onSave && (
               <button
@@ -81,6 +85,31 @@ export function NavbarL2({
               >
                 <Save className="h-4 w-4" />
                 <span>{isSaving ? "Guardando..." : "Guardar"}</span>
+              </button>
+            )}
+            {onSubmitComments && (
+              <button
+                onClick={() => {
+                  // El handler mostrará el mensaje de error si no se cumplen las condiciones
+                  // Permitimos el click para que el handler pueda validar y mostrar el mensaje apropiado
+                  if (!isSaving) {
+                    onSubmitComments();
+                  }
+                }}
+                disabled={isSaving}
+                className={cn(
+                  "flex items-center justify-center gap-2 h-10 px-4 py-2 rounded-full text-sm font-medium",
+                  canSubmitComments
+                    ? "bg-[#2050F6] hover:bg-[#1D4ED8] text-white"
+                    : "bg-[#2050F6]/50 hover:bg-[#2050F6]/60 text-white/80",
+                  "shadow-sm hover:shadow-md transition-all duration-200",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2050F6] focus-visible:ring-offset-2",
+                  "whitespace-nowrap"
+                )}
+                title={!canSubmitComments ? "Completa la revisión de todas las secciones y comentarios requeridos" : undefined}
+              >
+                <span>Enviar comentarios</span>
               </button>
             )}
             {onNextPhase && canAdvancePhase && (

@@ -125,6 +125,47 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-public-docs",
     folder: "photos/terrace",
   },
+  // Property Incident Photos (Fotos de incidencias - diferentes de fotos comerciales)
+  incident_photos_common_areas: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/common_areas",
+  },
+  incident_photos_entry_hallways: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/entry_hallways",
+  },
+  incident_photos_bedrooms: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/bedrooms",
+  },
+  incident_photos_living_room: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/living_room",
+  },
+  incident_photos_bathrooms: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/bathrooms",
+  },
+  incident_photos_kitchen: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/kitchen",
+  },
+  incident_photos_exterior: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/exterior",
+  },
+  incident_photos_garage: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/garage",
+  },
+  incident_photos_terrace: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/terrace",
+  },
+  incident_photos_storage: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/storage",
+  },
 };
 
 // JSONB array fields that need special handling
@@ -141,6 +182,16 @@ const JSONB_ARRAY_FIELDS = [
   "photos_garage",
   "photos_storage",
   "photos_terrace",
+  "incident_photos_common_areas",
+  "incident_photos_entry_hallways",
+  "incident_photos_bedrooms",
+  "incident_photos_living_room",
+  "incident_photos_bathrooms",
+  "incident_photos_kitchen",
+  "incident_photos_exterior",
+  "incident_photos_garage",
+  "incident_photos_terrace",
+  "incident_photos_storage",
 ];
 const CUSTOM_DOCUMENT_FIELDS = ["custom_legal_documents", "custom_insurance_documents", "custom_supplies_documents", "custom_investor_documents"];
 
@@ -238,7 +289,7 @@ export async function DELETE(request: NextRequest) {
       updateData = { [fieldName]: updatedArray };
     } else if (JSONB_ARRAY_FIELDS.includes(fieldName)) {
       // Special handling for bedrooms and bathrooms (arrays of arrays)
-      if ((fieldName === "photos_bedrooms" || fieldName === "photos_bathrooms") && roomIndex !== undefined && roomIndex !== null) {
+      if ((fieldName === "photos_bedrooms" || fieldName === "photos_bathrooms" || fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms") && roomIndex !== undefined && roomIndex !== null) {
         const roomIdx = typeof roomIndex === "string" ? parseInt(roomIndex, 10) : roomIndex;
         if (isNaN(roomIdx)) {
           return NextResponse.json(

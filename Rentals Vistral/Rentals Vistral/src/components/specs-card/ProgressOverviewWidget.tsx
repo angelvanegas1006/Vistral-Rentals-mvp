@@ -49,7 +49,11 @@ export function ProgressOverviewWidget({
   
   // Validation helper - checks if a field is valid
   const isFieldValid = (sectionId: string, fieldId: string, value: any): boolean => {
-    const fieldKey = `${sectionId}.${fieldId}`;
+    // Check if this is a Phase 2 section
+    const phase2SectionIds = ["client-presentation", "pricing-strategy", "technical-inspection", "commercial-launch"];
+    const isPhase2Section = phase2SectionIds.includes(sectionId);
+    const sectionPrefix = isPhase2Section ? "readyToRent" : sectionId;
+    const fieldKey = `${sectionPrefix}.${fieldId}`;
     const error = fieldErrors[fieldKey];
     
     // If there's an error, field is invalid
@@ -66,8 +70,15 @@ export function ProgressOverviewWidget({
     }
     
     // Handle URL/document fields - check if it's a valid non-empty string
-    if (fieldId.includes("_url") || fieldId.includes("_cert") || fieldId.includes("doc_")) {
-      return typeof value === 'string' && value.trim().length > 0;
+    if (fieldId.includes("_url") || fieldId.includes("_cert") || fieldId.includes("doc_") || 
+        fieldId.includes("Photos") || fieldId.includes("photos")) {
+      return typeof value === 'string' && value.trim().length > 0 || 
+             (Array.isArray(value) && value.length > 0);
+    }
+    
+    // Handle boolean fields (for Phase 2)
+    if (typeof value === 'boolean') {
+      return value === true; // For Phase 2, boolean fields are valid when true
     }
     
     // If field is empty, it's invalid (for required fields)
@@ -119,6 +130,11 @@ export function ProgressOverviewWidget({
       }
     }
     
+    // Check if this is a Phase 2 section (Listo para Alquilar)
+    const phase2SectionIds = ["client-presentation", "pricing-strategy", "technical-inspection", "commercial-launch"];
+    const isPhase2Section = phase2SectionIds.includes(section.id);
+    const sectionPrefix = isPhase2Section ? "readyToRent" : section.id;
+    
     // Handle checklist fields specially - count checked items
     let totalFields = 0;
     let completedFields = 0;
@@ -129,14 +145,19 @@ export function ProgressOverviewWidget({
         const checklistItems = ["Verificación de documentos", "Validación de datos", "Revisión de contactos"];
         checklistItems.forEach((_, idx) => {
           totalFields++;
-          const itemKey = `${section.id}.${field.id}_${idx}`;
+          const itemKey = isPhase2Section 
+            ? `${sectionPrefix}.${field.id}_${idx}`
+            : `${section.id}.${field.id}_${idx}`;
           const value = formData[itemKey];
           // Only count as completed if checked (true)
           if (value === true) completedFields++;
         });
       } else {
         totalFields++;
-        const value = formData[`${section.id}.${field.id}`];
+        const fieldKey = isPhase2Section 
+          ? `${sectionPrefix}.${field.id}`
+          : `${section.id}.${field.id}`;
+        const value = formData[fieldKey];
         // Progress based on VALIDATION STATUS, not just filled status
         if (field.required) {
           // For required fields, only count if valid

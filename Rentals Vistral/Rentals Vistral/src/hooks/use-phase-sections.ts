@@ -130,8 +130,57 @@ export function usePhaseSections(currentPhase: string) {
     },
   ];
 
+  // Sections for "Listo para Alquilar" phase - Fase 2
+  const readyToRentSections = [
+    {
+      id: "client-presentation",
+      title: "Presentación al Cliente",
+      instructions: "Confirma el contacto inicial y alineación con el propietario",
+      required: true,
+      fields: [
+        { id: "client_presentation_done", type: "radio", label: "¿Se ha realizado la presentación del servicio al cliente?", required: true },
+        { id: "client_presentation_date", type: "date", label: "Fecha de Presentación", required: true },
+        { id: "client_presentation_channel", type: "radio", label: "Canal de Comunicación", required: true },
+      ],
+    },
+    {
+      id: "pricing-strategy",
+      title: "Estrategia de Precio",
+      instructions: "Define y aprueba el precio de salida al mercado",
+      required: true,
+      fields: [
+        { id: "announcement_price", type: "number", label: "Precio de Publicación", required: true },
+        { id: "price_approval", type: "radio", label: "¿Ha aprobado el cliente este precio de publicación?", required: true },
+      ],
+    },
+    {
+      id: "technical-inspection",
+      title: "Inspección Técnica y Reportaje",
+      instructions: "Valida el estado físico estancia por estancia y carga material visual",
+      required: true,
+      fields: [
+        { id: "check_common_areas", type: "select", label: "Estado de estancias", required: true },
+        { id: "photos_common_areas", type: "document", label: "Fotos comerciales", required: true },
+        { id: "incident_photos_common_areas", type: "document", label: "Fotos de incidencias", required: false },
+      ],
+    },
+    {
+      id: "commercial-launch",
+      title: "Lanzamiento Comercial",
+      instructions: "Configuración final y activación del anuncio",
+      required: true,
+      fields: [
+        { id: "publish_online", type: "radio", label: "¿Se publicará la propiedad en portales inmobiliarios?", required: true },
+        { id: "idealista_description", type: "textarea", label: "Descripción del Inmueble para el Anuncio", required: false },
+      ],
+    },
+  ];
+
   // Return phase-specific sections
-  const sections = currentPhase === "Viviendas Prophero" ? propheroSections : defaultSections;
+  const sections = 
+    currentPhase === "Viviendas Prophero" ? propheroSections :
+    currentPhase === "Listo para Alquilar" ? readyToRentSections :
+    defaultSections;
 
   const requiredSections = sections.filter((s) => s.required);
   const allSections = sections;

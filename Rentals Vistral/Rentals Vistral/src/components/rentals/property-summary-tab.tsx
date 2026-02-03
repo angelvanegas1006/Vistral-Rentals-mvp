@@ -45,6 +45,7 @@ import { SmartDocumentFieldArray } from "./smart-document-field-array";
 import { DocumentPreviewModal } from "./document-preview-modal";
 import { FinancialPerformanceWidget } from "@/components/property/FinancialPerformanceWidget";
 import { TimeMetricsWidget } from "@/components/property/TimeMetricsWidget";
+import { ComplianceStatusWidget } from "@/components/property/ComplianceStatusWidget";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/types";
 import { config } from "@/lib/config/environment";
@@ -641,26 +642,13 @@ export function PropertySummaryTab({ propertyId, currentPhase, property }: Prope
         <TimeMetricsWidget property={localProperty} />
       </Card>
 
-      {/* Block 4: Operations & Compliance - Split into Two Cards */}
-      
-      {/* Logística */}
+      {/* Widget 3: Situación Administrativa */}
       <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-6">Logística</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mb-1">Localización de Llaves</p>
-            <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
-              {property?.keys_location || "No disponible"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mb-1">Administrador</p>
-            <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
-              {property?.admin_name || "No disponible"}
-            </p>
-          </div>
-        </div>
+        <h2 className="text-xl font-semibold mb-6">Situación Administrativa</h2>
+        <ComplianceStatusWidget property={localProperty} />
       </Card>
+
+      {/* Block 4: Operations & Compliance - Split into Two Cards */}
 
       {/* Widget B: Estado Legal y Pagos - OCULTO */}
       {/* <Card className="bg-card rounded-lg border shadow-sm">

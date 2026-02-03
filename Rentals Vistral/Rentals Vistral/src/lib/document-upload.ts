@@ -151,6 +151,47 @@ const FIELD_MAPPINGS: Record<string, FieldMapping> = {
     bucket: "properties-public-docs",
     folder: "photos/terrace",
   },
+  // Property Incident Photos (Fotos de incidencias - diferentes de fotos comerciales)
+  incident_photos_common_areas: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/common_areas",
+  },
+  incident_photos_entry_hallways: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/entry_hallways",
+  },
+  incident_photos_bedrooms: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/bedrooms",
+  },
+  incident_photos_living_room: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/living_room",
+  },
+  incident_photos_bathrooms: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/bathrooms",
+  },
+  incident_photos_kitchen: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/kitchen",
+  },
+  incident_photos_exterior: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/exterior",
+  },
+  incident_photos_garage: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/garage",
+  },
+  incident_photos_terrace: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/terrace",
+  },
+  incident_photos_storage: {
+    bucket: "properties-public-docs",
+    folder: "photos/incidents/storage",
+  },
 };
 
 /**

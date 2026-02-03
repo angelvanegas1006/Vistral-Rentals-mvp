@@ -13,14 +13,19 @@ export function useProperty(propertyId: string) {
   const supabase = createClient();
 
   useEffect(() => {
-    async function fetchProperty() {
+    let isInitialLoad = true;
+    
+    async function fetchProperty(skipLoading = false) {
       if (!propertyId) {
         setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
+        // Solo mostrar loading en la carga inicial, no en actualizaciones
+        if (!skipLoading) {
+          setLoading(true);
+        }
         setError(null);
 
         // Buscar por property_unique_id (primary identifier for routing)
@@ -37,16 +42,20 @@ export function useProperty(propertyId: string) {
         setError(err instanceof Error ? err : new Error("Error al cargar propiedad"));
         console.error("Error fetching property:", err);
       } finally {
-        setLoading(false);
+        if (!skipLoading) {
+          setLoading(false);
+        }
       }
     }
 
     fetchProperty();
+    isInitialLoad = false;
     
     // Escuchar eventos de actualización de propiedad
+    // NO mostrar loading state cuando se actualiza desde un evento (evita recargas)
     const handlePropertyUpdate = (event: CustomEvent) => {
       if (event.detail?.propertyId === propertyId) {
-        fetchProperty();
+        fetchProperty(true); // skipLoading = true para evitar mostrar loading state
       }
     };
     

@@ -43,6 +43,12 @@ export function mapPropertyFromSupabase(row: any) {
     idealistaAddress: row.idealista_address || undefined,
     idealistaCity: row.idealista_city || undefined,
     idealistaPhotos: row.idealista_photos || undefined,
+    // Sección 1: Presentación al Cliente
+    clientPresentationDone: row.client_presentation_done ?? undefined,
+    clientPresentationDate: row.client_presentation_date || undefined,
+    clientPresentationChannel: row.client_presentation_channel || undefined,
+    // Sección 2: Estrategia de Precio
+    priceApproval: row.price_approval ?? undefined,
     // Prophero section reviews
     propheroSectionReviews: row.prophero_section_reviews ? (
       typeof row.prophero_section_reviews === 'string' 
@@ -104,6 +110,12 @@ export function mapPropertyToSupabase(property: {
   idealistaAddress?: string;
   idealistaCity?: string;
   idealistaPhotos?: string[];
+  // Sección 1: Presentación al Cliente
+  clientPresentationDone?: boolean;
+  clientPresentationDate?: string;
+  clientPresentationChannel?: string;
+  // Sección 2: Estrategia de Precio
+  priceApproval?: boolean;
   propheroSectionReviews?: PropheroSectionReviews;
 }) {
   return {
@@ -135,6 +147,12 @@ export function mapPropertyToSupabase(property: {
     idealista_address: property.idealistaAddress || null,
     idealista_city: property.idealistaCity || null,
     idealista_photos: property.idealistaPhotos || null,
+    // Sección 1: Presentación al Cliente
+    client_presentation_done: property.clientPresentationDone ?? null,
+    client_presentation_date: property.clientPresentationDate || null,
+    client_presentation_channel: property.clientPresentationChannel || null,
+    // Sección 2: Estrategia de Precio
+    price_approval: property.priceApproval ?? null,
     // Prophero section reviews
     prophero_section_reviews: property.propheroSectionReviews || null,
   };

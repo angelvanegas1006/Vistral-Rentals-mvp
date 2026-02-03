@@ -21,6 +21,8 @@ interface PropertyRightSidebarProps {
     property_manager?: string | null;
     rentals_analyst?: string | null;
     client_full_name?: string | null;
+    keys_location?: string | null;
+    admin_name?: string | null;
     updated_at?: string | null;
     created_at?: string | null;
   } | null;
@@ -162,8 +164,8 @@ export function PropertyRightSidebar({
   };
 
   return (
-    <div className="w-full lg:w-80 border-l-0 lg:border-l bg-white dark:bg-[var(--prophero-gray-900)] flex flex-col h-full rounded-lg border border-[var(--prophero-gray-200)] dark:border-[var(--prophero-gray-800)] shadow-sm">
-      <div className="flex-1 overflow-y-auto p-6">
+    <div className="w-full lg:w-80 border-l-0 lg:border-l bg-white dark:bg-[var(--prophero-gray-900)] rounded-lg border border-[var(--prophero-gray-200)] dark:border-[var(--prophero-gray-800)] shadow-sm">
+      <div className="p-6">
         {/* Title */}
         <h2 className="text-xl font-bold text-[#111827] dark:text-[#F9FAFB] mb-2">
           Gestión de Alquiler
@@ -226,6 +228,26 @@ export function PropertyRightSidebar({
             <div className="text-right flex items-center justify-end">
               <InvestorWithBadge fullName={supabaseProperty?.client_full_name} />
             </div>
+          </div>
+
+          {/* Localización de Llaves */}
+          <div className="flex justify-between items-center gap-4 py-3 border-b border-[#F3F4F6] dark:border-[#374151]">
+            <span className="text-sm font-medium text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0">
+              Localización de Llaves
+            </span>
+            <span className="text-sm font-semibold text-[#111827] dark:text-[#F9FAFB] text-right">
+              {getDisplayValue(supabaseProperty?.keys_location)}
+            </span>
+          </div>
+
+          {/* Administrador */}
+          <div className="flex justify-between items-center gap-4 py-3 border-b border-[#F3F4F6] dark:border-[#374151]">
+            <span className="text-sm font-medium text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0">
+              Administrador
+            </span>
+            <span className="text-sm font-semibold text-[#111827] dark:text-[#F9FAFB] text-right">
+              {getDisplayValue(supabaseProperty?.admin_name)}
+            </span>
           </div>
         </div>
 

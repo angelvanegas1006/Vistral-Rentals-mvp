@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RentalsPropertyCard } from "./rentals-property-card";
+import type { PropheroSectionReviews } from "@/lib/supabase/types";
 
 interface Property {
   property_unique_id: string;
@@ -20,6 +21,10 @@ interface Property {
   visitDate?: string;
   daysToVisit?: number;
   daysToStart?: number;
+  renoEndDate?: string; // Fecha de fin de renovación
+  propertyReadyDate?: string; // Fecha en que la propiedad está lista
+  daysToPublishRent?: number; // Días para publicar el alquiler
+  propheroSectionReviews?: PropheroSectionReviews | null; // Estado de revisión de Prophero
 }
 
 interface RentalsKanbanColumnProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { NavbarL2 } from "@/components/layout/navbar-l2";
 import { PropertyTabs } from "@/components/layout/property-tabs";
@@ -70,6 +70,59 @@ export default function PropertyDetailPage() {
   
   // Estado local para propheroSectionReviews que se actualiza en tiempo real
   const [propheroSectionReviews, setPropheroSectionReviews] = useState<PropheroSectionReviews | undefined>(undefined);
+  const previousPropheroReviewsRef = useRef<PropheroSectionReviews | undefined>(undefined);
+  
+  // Función estabilizada para actualizar propheroSectionReviews
+  // Solo actualiza si los valores realmente cambiaron para evitar re-renderizados innecesarios
+  const handlePropheroReviewsChange = useCallback((reviews: PropheroSectionReviews | undefined) => {
+    // Comparar valores relevantes antes de actualizar
+    const previous = previousPropheroReviewsRef.current;
+    
+    // Si ambos son undefined, no hacer nada
+    if (!reviews && !previous) return;
+    
+    // Si uno es undefined y el otro no, actualizar
+    if (!reviews || !previous) {
+      previousPropheroReviewsRef.current = reviews;
+      setPropheroSectionReviews(reviews);
+      return;
+    }
+    
+    // Comparar los valores de isCorrect de todas las secciones
+    const requiredSectionIds = [
+      "property-management-info",
+      "technical-documents",
+      "legal-documents",
+      "client-financial-info",
+      "supplies-contracts",
+      "supplies-bills",
+      "home-insurance",
+      "property-management",
+    ];
+    
+    const hasChanged = requiredSectionIds.some((sectionId) => {
+      const prevReview = previous[sectionId];
+      const newReview = reviews[sectionId];
+      const prevIsCorrect = prevReview?.isCorrect ?? null;
+      const newIsCorrect = newReview?.isCorrect ?? null;
+      return prevIsCorrect !== newIsCorrect;
+    });
+    
+    // Solo actualizar si realmente cambió algo
+    if (hasChanged) {
+      previousPropheroReviewsRef.current = reviews;
+      setPropheroSectionReviews(reviews);
+    }
+  }, []);
+  
+  // Refs para comunicación con PropheroTasks
+  const submitCommentsRef = useRef<(() => void) | null>(null);
+  const hasAnySectionWithNoRef = useRef<boolean>(false);
+  const canSubmitCommentsRef = useRef<boolean>(false);
+  
+  // Estados locales para controlar visibilidad del botón en header
+  const [hasAnySectionWithNo, setHasAnySectionWithNo] = useState(false);
+  const [canSubmitComments, setCanSubmitComments] = useState(false);
   
   // Obtener datos de la propiedad desde Supabase
   const { property: supabaseProperty, loading: supabaseLoading, error: supabaseError } = useProperty(propertyId);
@@ -330,7 +383,12 @@ export default function PropertyDetailPage() {
               address: property.address,
               city: property.city,
             }}
-            onPropheroReviewsChange={setPropheroSectionReviews}
+            onPropheroReviewsChange={handlePropheroReviewsChange}
+            onSubmitCommentsRef={submitCommentsRef}
+            onHasAnySectionWithNoRef={hasAnySectionWithNoRef}
+            onCanSubmitCommentsRef={canSubmitCommentsRef}
+            onHasAnySectionWithNoChange={setHasAnySectionWithNo}
+            onCanSubmitCommentsChange={setCanSubmitComments}
           />
         );
       case "property-summary":
@@ -355,7 +413,12 @@ export default function PropertyDetailPage() {
               address: property.address,
               city: property.city,
             }}
-            onPropheroReviewsChange={setPropheroSectionReviews}
+            onPropheroReviewsChange={handlePropheroReviewsChange}
+            onSubmitCommentsRef={submitCommentsRef}
+            onHasAnySectionWithNoRef={hasAnySectionWithNoRef}
+            onCanSubmitCommentsRef={canSubmitCommentsRef}
+            onHasAnySectionWithNoChange={setHasAnySectionWithNo}
+            onCanSubmitCommentsChange={setCanSubmitComments}
           />
         );
     }
@@ -406,6 +469,16 @@ export default function PropertyDetailPage() {
             nextPhaseLabel={nextPhaseLabel}
             isBlocked={isPhaseBlocked}
             blockedMessage={blockedMessage}
+            onSubmitComments={
+              property.currentPhase === "Viviendas Prophero" && hasAnySectionWithNo
+                ? () => submitCommentsRef.current?.()
+                : undefined
+            }
+            canSubmitComments={
+              property.currentPhase === "Viviendas Prophero"
+                ? canSubmitComments
+                : true
+            }
           />
 
           {/* Main Content - Matching HTML design */}
@@ -450,13 +523,11 @@ export default function PropertyDetailPage() {
 
                 {/* Right Sidebar - 1 column */}
                 <div className="lg:col-span-1 space-y-8 relative">
-                  <div className="sticky top-24 z-10">
-                    <PropertyRightSidebar
-                      property={property}
-                      slaTargetDays={30}
-                      supabaseProperty={supabaseProperty}
-                    />
-                  </div>
+                  <PropertyRightSidebar
+                    property={property}
+                    slaTargetDays={30}
+                    supabaseProperty={supabaseProperty}
+                  />
                 </div>
               </div>
             </div>

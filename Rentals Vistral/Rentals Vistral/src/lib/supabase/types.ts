@@ -13,13 +13,30 @@ export type Json =
 // Types for Prophero section reviews
 export interface PropheroSectionReview {
   reviewed: boolean;
-  isCorrect: boolean | null; // true = Sí, false = No, null = no revisado
-  comments: string | null;
+  isCorrect: boolean | null; // true = Sí, false = No, null = no revisado/reseteado
+  comments: string | null; // Editable comments (always exists)
   hasIssue: boolean; // Historical flag: true when isCorrect === false, never reverts to false
+  submittedComments?: string | null; // Snapshot of submitted comments (read-only after submission)
+  snapshot?: Record<string, any> | null; // Field values when marked as "No"
+}
+
+export interface CommentSubmissionHistoryEntry {
+  sectionId: string;
+  sectionTitle: string;
+  comments: string;
+  submittedAt: string; // ISO timestamp
+  fieldValues: Record<string, any>; // Snapshot of field values at submission time
+}
+
+export interface PropheroSectionReviewsMeta {
+  commentsSubmitted?: boolean; // Flag: true when comments were submitted
+  commentsSubmittedAt?: string; // ISO timestamp of when comments were first submitted
+  commentSubmissionHistory?: CommentSubmissionHistoryEntry[]; // Complete history of all comment submissions
 }
 
 export type PropheroSectionReviews = {
   [sectionId: string]: PropheroSectionReview;
+  _meta?: PropheroSectionReviewsMeta;
 };
 
 export interface Database {
@@ -63,6 +80,12 @@ export interface Database {
           idealista_address: string | null;
           idealista_city: string | null;
           idealista_photos: string[] | null;
+          // Sección 1: Presentación al Cliente
+          client_presentation_done: boolean | null; // ¿Se ha realizado la presentación del servicio al cliente?
+          client_presentation_date: string | null; // Fecha de presentación (DATE)
+          client_presentation_channel: string | null; // Canal: "Llamada telefónica", "Correo electrónico", "Ambos"
+          // Sección 2: Estrategia de Precio
+          price_approval: boolean | null; // ¿Ha aprobado el cliente este precio de publicación?
           // Property Photos (Listo para Alquilar phase)
           photos_common_areas: Json | null; // Entorno y zonas comunes
           photos_entry_hallways: Json | null; // Entrada y pasillos
@@ -104,6 +127,17 @@ export interface Database {
           affects_commercialization_exterior: boolean | null; // ¿Afecta la comercialización? - Exteriores
           affects_commercialization_garage: boolean | null; // ¿Afecta la comercialización? - Garaje
           affects_commercialization_terrace: boolean | null; // ¿Afecta la comercialización? - Terraza
+          // Property Incident Photos (Fotos de incidencias - diferentes de fotos comerciales)
+          incident_photos_common_areas: Json | null; // Fotos de incidencias - Entorno y zonas comunes
+          incident_photos_entry_hallways: Json | null; // Fotos de incidencias - Entrada y pasillos
+          incident_photos_bedrooms: Json | null; // Fotos de incidencias - Habitaciones (array dinámico)
+          incident_photos_living_room: Json | null; // Fotos de incidencias - Salón
+          incident_photos_bathrooms: Json | null; // Fotos de incidencias - Baños (array dinámico)
+          incident_photos_kitchen: Json | null; // Fotos de incidencias - Cocina
+          incident_photos_exterior: Json | null; // Fotos de incidencias - Exteriores
+          incident_photos_garage: Json | null; // Fotos de incidencias - Garaje (condicional)
+          incident_photos_terrace: Json | null; // Fotos de incidencias - Terraza (condicional)
+          incident_photos_storage: Json | null; // Fotos de incidencias - Trastero (condicional)
           // Property Details
           square_meters: number | null;
           bedrooms: number | null;

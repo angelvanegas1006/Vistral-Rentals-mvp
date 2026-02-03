@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useRef, useCallback } from "react";
 import { useUpdateProperty } from "@/hooks/use-update-property";
 import { mapPropertyToSupabase } from "@/lib/supabase/mappers";
+import { detectAndResetPropheroSection } from "@/lib/prophero-field-change-detector";
 
 interface PropertyFormContextType {
   formData: Record<string, any>;
@@ -101,6 +102,17 @@ export function PropertyFormProvider({
       const success = await updateProperty(propertyId, updates);
       if (success) {
         console.log("✅ Guardado exitoso en Supabase");
+        
+        // Detectar cambios en campos de secciones Prophero y resetear si es necesario
+        // Esto se ejecuta incluso si la tarjeta no está abierta
+        detectAndResetPropheroSection(propertyId, updates).catch((error) => {
+          console.error("Error detecting prophero field changes:", error);
+        });
+        
+        // Disparar evento para actualizar el kanban board y otros componentes que escuchan cambios
+        window.dispatchEvent(new CustomEvent('property-updated', {
+          detail: { propertyId }
+        }));
       } else {
         console.error("❌ Error al guardar en Supabase");
       }
