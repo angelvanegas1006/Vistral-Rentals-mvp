@@ -49,7 +49,7 @@ COMMENT ON COLUMN properties.price_approval IS
 -- 
 -- NOTA: Las fotos comerciales ya están implementadas y se guardan en:
 --   Bucket: properties-public-docs
---   Folders: photos/{estancia}/ (ej: photos/common_areas/, photos/bedrooms/)
+--   Folders: photos/marketing/{estancia}/ (ej: photos/marketing/common_areas/, photos/marketing/bedrooms/)
 --
 -- Las fotos de incidencias se guardarán en:
 --   Bucket: properties-public-docs  
@@ -125,17 +125,88 @@ ADD COLUMN IF NOT EXISTS incident_photos_storage JSONB DEFAULT NULL;
 COMMENT ON COLUMN properties.incident_photos_storage IS 
 'Array de URLs de fotos de incidencias para trastero. JSONB array de strings. Solo se usa si la propiedad tiene trastero.';
 
+-- Marketing Photos (Fotos comerciales/marketing)
+-- Estas fotos se guardan en: Bucket: properties-public-docs, Folders: photos/marketing/{estancia}/
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_common_areas JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_common_areas IS 
+'Array de URLs de fotos comerciales/marketing para entorno y zonas comunes. JSONB array de strings.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_entry_hallways JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_entry_hallways IS 
+'Array de URLs de fotos comerciales/marketing para entrada y pasillos. JSONB array de strings.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_bedrooms JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_bedrooms IS 
+'Array de arrays de URLs de fotos comerciales/marketing para habitaciones. JSONB array de arrays de strings. Cada índice corresponde a una habitación.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_living_room JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_living_room IS 
+'Array de URLs de fotos comerciales/marketing para salón. JSONB array de strings.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_bathrooms JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_bathrooms IS 
+'Array de arrays de URLs de fotos comerciales/marketing para baños. JSONB array de arrays de strings. Cada índice corresponde a un baño.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_kitchen JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_kitchen IS 
+'Array de URLs de fotos comerciales/marketing para cocina. JSONB array de strings.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_exterior JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_exterior IS 
+'Array de URLs de fotos comerciales/marketing para exteriores. JSONB array de strings.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_garage JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_garage IS 
+'Array de URLs de fotos comerciales/marketing para garaje. JSONB array de strings. Solo se usa si la propiedad tiene garaje.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_terrace JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_terrace IS 
+'Array de URLs de fotos comerciales/marketing para terraza. JSONB array de strings. Solo se usa si la propiedad tiene terraza.';
+
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS marketing_photos_storage JSONB DEFAULT NULL;
+
+COMMENT ON COLUMN properties.marketing_photos_storage IS 
+'Array de URLs de fotos comerciales/marketing para trastero. JSONB array de strings. Solo se usa si la propiedad tiene trastero.';
+
 -- Nota: Los campos para estado (check_*), comentarios (comment_*), 
--- afecta comercialización (affects_commercialization_*), y fotos comerciales (photos_*)
--- ya existen en la tabla properties
+-- y afecta comercialización (affects_commercialization_*) ya existen en la tabla properties
 
 -- ============================================================================
 -- SECCIÓN 4: LANZAMIENTO COMERCIAL
 -- ============================================================================
 
--- Nota: Los campos publish_online e idealista_description ya existen en la tabla
--- publish_online: "yes" | "no" | null
--- idealista_description: text (descripción del inmueble para el anuncio)
+-- Publish Online (¿Publicar online?)
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS publish_online BOOLEAN DEFAULT NULL;
+
+COMMENT ON COLUMN properties.publish_online IS 
+'¿Se publicará la propiedad en portales inmobiliarios? Valores: true = Sí, false = No, NULL = No respondido';
+
+-- Idealista Description (Descripción del inmueble para el anuncio)
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS idealista_description TEXT DEFAULT NULL;
+
+COMMENT ON COLUMN properties.idealista_description IS 
+'Descripción del inmueble para el anuncio. Texto descriptivo. Se usa cuando publish_online = "yes".';
 
 -- ============================================================================
 -- VERIFICACIÓN
@@ -154,6 +225,16 @@ AND column_name IN (
   'client_presentation_date',
   'client_presentation_channel',
   'price_approval',
+  'marketing_photos_common_areas',
+  'marketing_photos_entry_hallways',
+  'marketing_photos_bedrooms',
+  'marketing_photos_living_room',
+  'marketing_photos_bathrooms',
+  'marketing_photos_kitchen',
+  'marketing_photos_exterior',
+  'marketing_photos_garage',
+  'marketing_photos_terrace',
+  'marketing_photos_storage',
   'incident_photos_common_areas',
   'incident_photos_entry_hallways',
   'incident_photos_bedrooms',
@@ -184,7 +265,7 @@ ORDER BY column_name;
 --
 -- Sección 3 (Inspección Técnica):
 --   Por estancia:
---     - Buen Estado: check_* = 'good' AND photos_* tiene fotos
+--     - Buen Estado: check_* = 'good' AND marketing_photos_* tiene fotos
 --     - Con Incidencias Bloqueantes: check_* = 'incident' 
 --                                   AND comment_* IS NOT NULL 
 --                                   AND incident_photos_* tiene fotos
@@ -193,10 +274,13 @@ ORDER BY column_name;
 --                                     AND comment_* IS NOT NULL 
 --                                     AND incident_photos_* tiene fotos
 --                                     AND affects_commercialization_* = false
---                                     AND photos_* tiene fotos comerciales
---   Sección completa cuando TODAS las estancias están completas
+--                                     AND marketing_photos_* tiene fotos comerciales
+--   Sección completa cuando TODAS las estancias están en:
+--     - Buen Estado, O
+--     - Con Incidencias No Bloqueantes
+--   La sección NO está completa si alguna estancia tiene Incidencias Bloqueantes
 --
 -- Sección 4 (Lanzamiento Comercial):
 --   Bloqueada hasta que Secciones 1, 2 y 3 estén completas
---   Completa cuando: publish_online = 'no' 
---                  OR (publish_online = 'yes' AND idealista_description IS NOT NULL)
+--   Completa cuando: publish_online = false 
+--                  OR (publish_online = true AND idealista_description IS NOT NULL)

@@ -74,29 +74,25 @@ export interface Database {
           monthly_rent: number | null;
           announcement_price: number | null;
           owner_notified: boolean | null;
-          publish_online: "yes" | "no" | null;
-          idealista_price: number | null;
+          publish_online: boolean | null;
           idealista_description: string | null;
-          idealista_address: string | null;
-          idealista_city: string | null;
-          idealista_photos: string[] | null;
           // Sección 1: Presentación al Cliente
           client_presentation_done: boolean | null; // ¿Se ha realizado la presentación del servicio al cliente?
           client_presentation_date: string | null; // Fecha de presentación (DATE)
           client_presentation_channel: string | null; // Canal: "Llamada telefónica", "Correo electrónico", "Ambos"
           // Sección 2: Estrategia de Precio
           price_approval: boolean | null; // ¿Ha aprobado el cliente este precio de publicación?
-          // Property Photos (Listo para Alquilar phase)
-          photos_common_areas: Json | null; // Entorno y zonas comunes
-          photos_entry_hallways: Json | null; // Entrada y pasillos
-          photos_bedrooms: Json | null; // Habitaciones (array dinámico)
-          photos_living_room: Json | null; // Salón
-          photos_bathrooms: Json | null; // Baños (array dinámico)
-          photos_kitchen: Json | null; // Cocina
-          photos_exterior: Json | null; // Exteriores
-          photos_garage: Json | null; // Garaje (condicional)
-          photos_storage: Json | null; // Trastero (condicional)
-          photos_terrace: Json | null; // Terraza (condicional)
+          // Property Marketing Photos (Listo para Alquilar phase)
+          marketing_photos_common_areas: Json | null; // Entorno y zonas comunes
+          marketing_photos_entry_hallways: Json | null; // Entrada y pasillos
+          marketing_photos_bedrooms: Json | null; // Habitaciones (array dinámico)
+          marketing_photos_living_room: Json | null; // Salón
+          marketing_photos_bathrooms: Json | null; // Baños (array dinámico)
+          marketing_photos_kitchen: Json | null; // Cocina
+          marketing_photos_exterior: Json | null; // Exteriores
+          marketing_photos_garage: Json | null; // Garaje (condicional)
+          marketing_photos_storage: Json | null; // Trastero (condicional)
+          marketing_photos_terrace: Json | null; // Terraza (condicional)
           // Property Check Fields (Final check verification)
           check_common_areas: "good" | "incident" | null; // Entorno y zonas comunes
           check_entry_hallways: "good" | "incident" | null; // Entrada y pasillos
@@ -107,6 +103,7 @@ export interface Database {
           check_exterior: "good" | "incident" | null; // Exteriores
           check_garage: "good" | "incident" | null; // Garaje
           check_terrace: "good" | "incident" | null; // Terraza
+          check_storage: "good" | "incident" | null; // Trastero
           // Property Comment Fields (comentarios cuando el estado es repair o replace)
           comment_common_areas: string | null; // Comentario para entorno y zonas comunes
           comment_entry_hallways: string | null; // Comentario para entrada y pasillos
@@ -117,6 +114,7 @@ export interface Database {
           comment_exterior: string | null; // Comentario para exteriores
           comment_garage: string | null; // Comentario para garaje
           comment_terrace: string | null; // Comentario para terraza
+          comment_storage: string | null; // Comentario para trastero
           // Property Commercialization Impact Fields (si la incidencia afecta la comercialización)
           affects_commercialization_common_areas: boolean | null; // ¿Afecta la comercialización? - Entorno y zonas comunes
           affects_commercialization_entry_hallways: boolean | null; // ¿Afecta la comercialización? - Entrada y pasillos
@@ -127,6 +125,7 @@ export interface Database {
           affects_commercialization_exterior: boolean | null; // ¿Afecta la comercialización? - Exteriores
           affects_commercialization_garage: boolean | null; // ¿Afecta la comercialización? - Garaje
           affects_commercialization_terrace: boolean | null; // ¿Afecta la comercialización? - Terraza
+          affects_commercialization_storage: boolean | null; // ¿Afecta la comercialización? - Trastero
           // Property Incident Photos (Fotos de incidencias - diferentes de fotos comerciales)
           incident_photos_common_areas: Json | null; // Fotos de incidencias - Entorno y zonas comunes
           incident_photos_entry_hallways: Json | null; // Fotos de incidencias - Entrada y pasillos

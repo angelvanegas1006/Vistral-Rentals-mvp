@@ -37,12 +37,8 @@ export function mapPropertyFromSupabase(row: any) {
     monthlyRent: row.monthly_rent !== null && row.monthly_rent !== undefined ? Number(row.monthly_rent) : undefined,
     announcementPrice: row.announcement_price !== null && row.announcement_price !== undefined ? Number(row.announcement_price) : undefined,
     ownerNotified: row.owner_notified ?? undefined,
-    publishOnline: row.publish_online || undefined,
-    idealistaPrice: row.idealista_price !== null && row.idealista_price !== undefined ? Number(row.idealista_price) : undefined,
+    publishOnline: row.publish_online ?? undefined,
     idealistaDescription: row.idealista_description || undefined,
-    idealistaAddress: row.idealista_address || undefined,
-    idealistaCity: row.idealista_city || undefined,
-    idealistaPhotos: row.idealista_photos || undefined,
     // Sección 1: Presentación al Cliente
     clientPresentationDone: row.client_presentation_done ?? undefined,
     clientPresentationDate: row.client_presentation_date || undefined,
@@ -104,12 +100,8 @@ export function mapPropertyToSupabase(property: {
   monthlyRent?: number;
   announcementPrice?: number;
   ownerNotified?: boolean;
-  publishOnline?: "yes" | "no";
-  idealistaPrice?: number;
+  publishOnline?: boolean;
   idealistaDescription?: string;
-  idealistaAddress?: string;
-  idealistaCity?: string;
-  idealistaPhotos?: string[];
   // Sección 1: Presentación al Cliente
   clientPresentationDone?: boolean;
   clientPresentationDate?: string;
@@ -142,11 +134,7 @@ export function mapPropertyToSupabase(property: {
     announcement_price: property.announcementPrice || null,
     owner_notified: property.ownerNotified ?? null,
     publish_online: property.publishOnline || null,
-    idealista_price: property.idealistaPrice || null,
     idealista_description: property.idealistaDescription || null,
-    idealista_address: property.idealistaAddress || null,
-    idealista_city: property.idealistaCity || null,
-    idealista_photos: property.idealistaPhotos || null,
     // Sección 1: Presentación al Cliente
     client_presentation_done: property.clientPresentationDone ?? null,
     client_presentation_date: property.clientPresentationDate || null,
