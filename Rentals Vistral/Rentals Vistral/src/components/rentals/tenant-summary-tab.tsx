@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { User, Mail, Phone, CreditCard } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Copy, Check, User } from "lucide-react";
 import type { Database } from "@/lib/supabase/types";
 
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
@@ -18,6 +16,7 @@ interface TenantSummaryTabProps {
 export function TenantSummaryTab({ propertyId, currentPhase, property }: TenantSummaryTabProps) {
   // Local state for property data (enables instant updates without page refresh)
   const [localProperty, setLocalProperty] = useState(property);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Update local property when prop changes
   useEffect(() => {
@@ -26,112 +25,197 @@ export function TenantSummaryTab({ propertyId, currentPhase, property }: TenantS
     }
   }, [property]);
 
-  return (
-    <div className="space-y-6">
-      <Card className="bg-card rounded-lg border shadow-sm">
-        <CardHeader className="p-6 pb-4">
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Datos del Inquilino
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 pt-4 space-y-6">
-          {/* Full Name */}
-          <div className="space-y-2">
-            <Label htmlFor="tenantFullName" className="text-sm font-medium flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              Nombre Completo
-            </Label>
-            <Input
-              id="tenantFullName"
-              type="text"
-              placeholder="Nombre completo del inquilino"
-              value={localProperty?.tenant_full_name || ""}
-              readOnly
-              className="bg-muted/50"
-            />
-          </div>
+  // Copy to clipboard function
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
+  // Function to mask bank account number (show only last 4 digits)
+  const maskBankAccount = (accountNumber: string): string => {
+    if (!accountNumber) return "";
+    
+    // Extract only digits from the account number
+    const digits = accountNumber.replace(/\D/g, "");
+    
+    if (digits.length <= 4) {
+      // If 4 or fewer digits, return as is
+      return accountNumber;
+    }
+    
+    // Get last 4 digits
+    const lastFour = digits.slice(-4);
+    
+    // Replace all digits except the last 4 with asterisks, preserving non-digit characters
+    let masked = "";
+    let digitIndex = 0;
+    
+    for (let i = 0; i < accountNumber.length; i++) {
+      const char = accountNumber[i];
+      if (/\d/.test(char)) {
+        // It's a digit
+        if (digitIndex >= digits.length - 4) {
+          // This is one of the last 4 digits
+          masked += char;
+        } else {
+          // Replace with asterisk
+          masked += "*";
+        }
+        digitIndex++;
+      } else {
+        // It's a non-digit character (space, letter, etc.) - keep it
+        masked += char;
+      }
+    }
+    
+    return masked;
+  };
+
+  // Helper function to get initials from full name
+  const getInitials = (name: string | null | undefined): string => {
+    if (!name) return "??";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  if (!localProperty) {
+    return <div>Cargando...</div>;
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Tenant Information Section - Same format as Investor */}
+      <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm">
+        <h2 className="text-xl font-semibold mb-6">Inquilino</h2>
+        
+        {/* Tenant Profile */}
+        <div className="flex items-center gap-4 mb-8">
+          {/* Avatar with initials */}
+          <div className="w-12 h-12 rounded-full bg-[#E5E7EB] dark:bg-[#374151] flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-[#6B7280] dark:text-[#9CA3AF]">
+              {getInitials(localProperty?.tenant_full_name)}
+            </span>
+          </div>
+          
+          {/* Name and Role */}
+          <div>
+            <p className="text-base font-semibold text-[#111827] dark:text-[#F9FAFB]">
+              {localProperty?.tenant_full_name || "No disponible"}
+            </p>
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+              Inquilino
+            </p>
+          </div>
+        </div>
+
+        {/* Contact Details - Two Column Layout */}
+        <div className="space-y-4">
           {/* ID Number */}
-          <div className="space-y-2">
-            <Label htmlFor="tenantIdNumber" className="text-sm font-medium flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              Número de Identificación
-            </Label>
-            <Input
-              id="tenantIdNumber"
-              type="text"
-              placeholder="DNI/NIE"
-              value={localProperty?.tenant_nif || ""}
-              readOnly
-              className="bg-muted/50"
-            />
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">ID Number</p>
+            <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
+              {localProperty?.tenant_nif || "No disponible"}
+            </p>
           </div>
 
           {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="tenantEmail" className="text-sm font-medium flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              Email
-            </Label>
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Email</p>
             {localProperty?.tenant_email ? (
-              <a
-                href={`mailto:${localProperty.tenant_email}`}
-                className="block"
-              >
-                <Input
-                  id="tenantEmail"
-                  type="email"
-                  placeholder="ejemplo@email.com"
-                  value={localProperty.tenant_email}
-                  readOnly
-                  className="bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
-                />
-              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`mailto:${localProperty.tenant_email}`}
+                  className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] hover:text-[#2563EB] dark:hover:text-[#3B82F6] transition-colors"
+                >
+                  {localProperty.tenant_email}
+                </a>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyToClipboard(localProperty.tenant_email!, "tenant-email");
+                  }}
+                  className="p-1 hover:bg-[#F3F4F6] dark:hover:bg-[#374151] rounded transition-colors"
+                  title="Copiar email"
+                >
+                  {copiedField === "tenant-email" ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                  )}
+                </button>
+              </div>
             ) : (
-              <Input
-                id="tenantEmail"
-                type="email"
-                placeholder="ejemplo@email.com"
-                value=""
-                readOnly
-                className="bg-muted/50"
-              />
+              <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
+                No disponible
+              </p>
             )}
           </div>
 
           {/* Phone */}
-          <div className="space-y-2">
-            <Label htmlFor="tenantPhone" className="text-sm font-medium flex items-center gap-2">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              Teléfono
-            </Label>
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Phone number</p>
             {localProperty?.tenant_phone ? (
-              <a
-                href={`tel:${localProperty.tenant_phone.replace(/\s/g, "")}`}
-                className="block"
-              >
-                <Input
-                  id="tenantPhone"
-                  type="tel"
-                  placeholder="+34 600 000 000"
-                  value={localProperty.tenant_phone}
-                  readOnly
-                  className="bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
-                />
-              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`tel:${localProperty.tenant_phone.replace(/\s/g, "")}`}
+                  className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] hover:text-[#2563EB] dark:hover:text-[#3B82F6] transition-colors"
+                >
+                  {localProperty.tenant_phone}
+                </a>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyToClipboard(localProperty.tenant_phone!, "tenant-phone");
+                  }}
+                  className="p-1 hover:bg-[#F3F4F6] dark:hover:bg-[#374151] rounded transition-colors"
+                  title="Copiar teléfono"
+                >
+                  {copiedField === "tenant-phone" ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                  )}
+                </button>
+              </div>
             ) : (
-              <Input
-                id="tenantPhone"
-                type="tel"
-                placeholder="+34 600 000 000"
-                value=""
-                readOnly
-                className="bg-muted/50"
-              />
+              <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
+                No disponible
+              </p>
             )}
           </div>
-        </CardContent>
+
+          {/* IBAN */}
+          {localProperty?.tenant_iban && (
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Cuenta bancaria</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] font-mono">
+                  {maskBankAccount(localProperty.tenant_iban)}
+                </p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyToClipboard(localProperty.tenant_iban!, "tenant-iban");
+                  }}
+                  className="p-1 hover:bg-[#F3F4F6] dark:hover:bg-[#374151] rounded transition-colors"
+                  title="Copiar cuenta bancaria"
+                >
+                  {copiedField === "tenant-iban" ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </Card>
     </div>
   );

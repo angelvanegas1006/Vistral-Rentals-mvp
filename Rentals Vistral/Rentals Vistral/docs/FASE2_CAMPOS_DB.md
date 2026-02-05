@@ -26,7 +26,7 @@ La Fase 2 "Listo para Alquilar" utiliza **10 campos** de la tabla `properties`, 
 |-------|------|-------------|------------------|
 | `client_presentation_done` | `BOOLEAN` | ¿Se ha realizado la presentación del servicio al cliente? | `NULL` = no respondido<br>`true` = Sí<br>`false` = No |
 | `client_presentation_date` | `DATE` | Fecha en que se realizó la presentación del servicio al cliente | Se autocompleta con la fecha actual cuando `client_presentation_done = true` |
-| `client_presentation_channel` | `TEXT` | Canal de comunicación utilizado para la presentación | `"Llamada telefónica"`<br>`"Correo electrónico"`<br>`"Ambos"` |
+| `client_presentation_channel` | `ENUM` | Canal de comunicación utilizado para la presentación | `"Llamada telefónica"`<br>`"Correo electrónico"`<br>`"Ambos"` |
 
 ### Criterios de Completitud
 La sección está completa cuando:

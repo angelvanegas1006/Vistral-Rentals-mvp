@@ -76,6 +76,19 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "client/other",
   },
+  // Tenant custom documents (V2.1 Architecture)
+  tenant_custom_identity_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/identity",
+  },
+  tenant_custom_financial_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/financial",
+  },
+  tenant_custom_other_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/other",
+  },
   custom_insurance_documents: {
     bucket: "properties-restricted-docs",
     folder: "property/insurance",

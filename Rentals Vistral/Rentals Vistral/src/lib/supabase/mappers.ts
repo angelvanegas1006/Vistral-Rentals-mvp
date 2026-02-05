@@ -1,4 +1,4 @@
-import type { Database, PropheroSectionReviews } from "./types";
+import type { Database, PropheroSectionReviews, ClientPresentationChannel } from "./types";
 import { generateInitials } from "@/lib/utils";
 
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
@@ -42,7 +42,7 @@ export function mapPropertyFromSupabase(row: any) {
     // Sección 1: Presentación al Cliente
     clientPresentationDone: row.client_presentation_done ?? undefined,
     clientPresentationDate: row.client_presentation_date || undefined,
-    clientPresentationChannel: row.client_presentation_channel || undefined,
+    clientPresentationChannel: row.client_presentation_channel as ClientPresentationChannel | undefined,
     // Sección 2: Estrategia de Precio
     priceApproval: row.price_approval ?? undefined,
     // Prophero section reviews
@@ -105,7 +105,7 @@ export function mapPropertyToSupabase(property: {
   // Sección 1: Presentación al Cliente
   clientPresentationDone?: boolean;
   clientPresentationDate?: string;
-  clientPresentationChannel?: string;
+  clientPresentationChannel?: ClientPresentationChannel;
   // Sección 2: Estrategia de Precio
   priceApproval?: boolean;
   propheroSectionReviews?: PropheroSectionReviews;

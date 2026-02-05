@@ -19,35 +19,56 @@ export function useUpdateProperty() {
       setLoading(true);
       setError(null);
 
-      // Intentar actualizar por property_unique_id primero, luego por id
-      let updateError;
-      const { error: uniqueIdError } = await supabase
-        .from("properties")
-        .update(updates)
-        .eq("property_unique_id", propertyId);
-      
-      if (uniqueIdError) {
-        // Si falla, intentar por property_unique_id
-        const { error: refIdError } = await supabase
-          .from("properties")
-          .update(updates)
-          .eq("property_unique_id", propertyId);
-        
-        if (refIdError) {
-          // Si falla, intentar por id directamente
-          const { error: idError } = await supabase
-            .from("properties")
-            .update(updates)
-            .eq("id", propertyId);
-          updateError = idError;
-        } else {
-          updateError = null;
+      // Filtrar campos undefined antes de enviar (PostgREST no maneja bien undefined)
+      const filteredUpdates: Record<string, any> = {};
+      for (const [key, value] of Object.entries(updates)) {
+        if (value !== undefined) {
+          filteredUpdates[key] = value;
         }
-      } else {
-        updateError = null;
       }
 
-      if (updateError) throw updateError;
+      // Si no hay campos para actualizar después del filtrado, retornar éxito
+      if (Object.keys(filteredUpdates).length === 0) {
+        console.log("⚠️ No hay campos válidos para actualizar después del filtrado");
+        return true;
+      }
+
+      // Intentar actualizar por property_unique_id primero
+      console.log("🔄 Intentando actualizar propiedad:", { propertyId, updates: filteredUpdates });
+      const { data: updatedData, error: updateError } = await supabase
+        .from("properties")
+        .update(filteredUpdates)
+        .eq("property_unique_id", propertyId)
+        .select();
+      
+      if (updateError) {
+        console.error("❌ Error al actualizar por property_unique_id:", updateError);
+        
+        // Si el error es sobre schema cache, proporcionar información útil
+        if (updateError.code === 'PGRST204') {
+          console.error("⚠️ Error de schema cache de PostgREST:");
+          console.error("   - El schema cache de Supabase puede estar desactualizado");
+          console.error("   - Campos que se intentaron actualizar:", Object.keys(filteredUpdates));
+          console.error("   - Mensaje completo:", updateError.message);
+          console.error("   - Solución: Verificar que las columnas existen en la base de datos");
+          console.error("   - O refrescar el schema cache de Supabase");
+        }
+        
+        // Si falla, intentar por id directamente
+        const { error: idError } = await supabase
+          .from("properties")
+          .update(filteredUpdates)
+          .eq("id", propertyId);
+        
+        if (idError) {
+          console.error("❌ Error al actualizar por id:", idError);
+          throw idError;
+        } else {
+          console.log("✅ Actualización exitosa por id");
+        }
+      } else {
+        console.log("✅ Actualización exitosa por property_unique_id:", updatedData);
+      }
 
       return true;
     } catch (err) {

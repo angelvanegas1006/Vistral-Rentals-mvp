@@ -263,6 +263,41 @@ export function ProgressOverviewWidget({
   };
 
   const calculateSectionProgress = (section: Section) => {
+    // Special handling for client-presentation section
+    // Cuando clientPresentationDone está en blanco o es "No": mostrar 0/1
+    // Cuando clientPresentationDone es "Sí": mostrar 1/3 y calcular progreso de los otros campos
+    if (section.id === "client-presentation") {
+      const clientPresentationDone = formData["readyToRent.clientPresentationDone"];
+      
+      // Si está en blanco (null/undefined) o es false (No), mostrar 0/1
+      if (clientPresentationDone === null || clientPresentationDone === undefined || clientPresentationDone === false) {
+        return { completed: 0, total: 1 };
+      }
+      
+      // Si es true (Sí), mostrar 1/3 y calcular progreso de los otros 2 campos
+      if (clientPresentationDone === true) {
+        const clientPresentationDate = formData["readyToRent.clientPresentationDate"];
+        const clientPresentationChannel = formData["readyToRent.clientPresentationChannel"];
+        
+        let completedFields = 1; // Ya contamos clientPresentationDone como completado
+        
+        // Verificar si la fecha está completa
+        if (clientPresentationDate && typeof clientPresentationDate === 'string' && clientPresentationDate.trim() !== "") {
+          completedFields++;
+        }
+        
+        // Verificar si el canal está completo
+        if (clientPresentationChannel && typeof clientPresentationChannel === 'string' && clientPresentationChannel.trim() !== "") {
+          completedFields++;
+        }
+        
+        return { completed: completedFields, total: 3 };
+      }
+      
+      // Fallback (no debería llegar aquí)
+      return { completed: 0, total: 1 };
+    }
+
     // Special handling for technical inspection section
     if (section.id === "technical-inspection" && supabaseProperty) {
       const allRooms = getAllRooms();
@@ -270,6 +305,29 @@ export function ProgressOverviewWidget({
       const totalRooms = allRooms.length;
 
       return { completed: completedRooms, total: totalRooms };
+    }
+
+    // Special handling for commercial-launch section
+    // La sección está completa cuando:
+    // - publishOnline === false (no necesita idealistaDescription), O
+    // - publishOnline === true && idealistaDescription tiene contenido
+    if (section.id === "commercial-launch") {
+      const publishOnline = formData["readyToRent.publishOnline"];
+      const idealistaDescription = formData["readyToRent.idealistaDescription"] || "";
+      
+      // Si publishOnline es false, la sección está completa (1/1 campos requeridos)
+      if (publishOnline === false) {
+        return { completed: 1, total: 1 };
+      }
+      
+      // Si publishOnline es true, necesita idealistaDescription
+      if (publishOnline === true) {
+        const hasDescription = idealistaDescription && typeof idealistaDescription === 'string' && idealistaDescription.trim() !== "";
+        return { completed: hasDescription ? 1 : 0, total: 1 };
+      }
+      
+      // Si publishOnline es null/undefined, la sección no está completa
+      return { completed: 0, total: 1 };
     }
 
     // For Prophero sections, check review state first

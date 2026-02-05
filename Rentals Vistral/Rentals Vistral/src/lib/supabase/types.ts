@@ -39,6 +39,13 @@ export type PropheroSectionReviews = {
   _meta?: PropheroSectionReviewsMeta;
 };
 
+// Enum for Client Presentation Channel (Section 1: Presentación al Cliente)
+export enum ClientPresentationChannel {
+  PHONE = "Llamada telefónica",
+  EMAIL = "Correo electrónico",
+  BOTH = "Ambos",
+}
+
 // Types for Technical Inspection Report (Section 3: Inspección Técnica)
 export interface RoomInspectionData {
   status: "good" | "incident" | null;
@@ -101,7 +108,7 @@ export interface Database {
           // Sección 1: Presentación al Cliente
           client_presentation_done: boolean | null; // ¿Se ha realizado la presentación del servicio al cliente?
           client_presentation_date: string | null; // Fecha de presentación (DATE)
-          client_presentation_channel: string | null; // Canal: "Llamada telefónica", "Correo electrónico", "Ambos"
+          client_presentation_channel: ClientPresentationChannel | null; // Canal de comunicación utilizado para la presentación
           // Sección 2: Estrategia de Precio
           price_approval: boolean | null; // ¿Ha aprobado el cliente este precio de publicación?
           // Sección 3: Inspección Técnica y Reportaje
@@ -164,6 +171,10 @@ export interface Database {
           tenant_email: string | null;
           tenant_phone: string | null;
           tenant_nif: string | null;
+          tenant_iban: string | null;
+          tenant_custom_identity_documents: Json | null;
+          tenant_custom_financial_documents: Json | null;
+          tenant_custom_other_documents: Json | null;
           // Contract fields (Inquilino aceptado phase)
           contract_signed: boolean | null;
           contract_signature_date: string | null;

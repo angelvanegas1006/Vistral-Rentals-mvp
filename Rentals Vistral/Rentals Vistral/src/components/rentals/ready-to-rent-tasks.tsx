@@ -8,7 +8,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { usePropertyForm } from "./property-form-context";
 import { useProperty } from "@/hooks/use-property";
-import { Upload, X, XCircle } from "lucide-react";
+import { Upload, X, XCircle, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Phase2SectionWidget } from "./phase2-section-widget";
@@ -19,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { uploadDocument } from "@/lib/document-upload";
 import { deleteDocument } from "@/lib/document-upload";
 import { usePhaseSections } from "@/hooks/use-phase-sections";
-import { TechnicalInspectionReport, RoomInspectionData } from "@/lib/supabase/types";
+import { TechnicalInspectionReport, RoomInspectionData, ClientPresentationChannel } from "@/lib/supabase/types";
 
 interface ReadyToRentTasksProps {
   property: {
@@ -49,6 +50,8 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   const sectionId = "readyToRent";
   const hasInitializedRef = useRef(false);
   const lastPropertyIdRef = useRef<string | null>(null);
+  const announcementPriceInputRef = useRef<HTMLInputElement>(null);
+  const idealistaDescriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Helper para obtener las instrucciones de una sección
   const getSectionInstructions = (sectionId: string): string | undefined => {
@@ -59,7 +62,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   // Estados Sección 1: Presentación al Cliente
   const [clientPresentationDone, setClientPresentationDone] = useState<boolean | null>(null);
   const [clientPresentationDate, setClientPresentationDate] = useState<string>("");
-  const [clientPresentationChannel, setClientPresentationChannel] = useState<string>("");
+  const [clientPresentationChannel, setClientPresentationChannel] = useState<ClientPresentationChannel | "">("");
 
   // Estados Sección 2: Estrategia de Precio
   const [announcementPrice, setAnnouncementPrice] = useState<string>("");
@@ -144,11 +147,15 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   const [publishOnline, setPublishOnline] = useState<boolean | null>(null);
   const [idealistaDescription, setIdealistaDescription] = useState<string>("");
 
+  // Estado para controlar qué elementos del Accordion están abiertos
+  const [openRooms, setOpenRooms] = useState<string[]>([]);
+
   // Resetear ref cuando cambia la propiedad
   useEffect(() => {
     if (property.property_unique_id !== lastPropertyIdRef.current) {
       hasInitializedRef.current = false;
       lastPropertyIdRef.current = property.property_unique_id;
+      setOpenRooms([]); // Resetear el estado del Accordion cuando cambia la propiedad
     }
   }, [property.property_unique_id]);
 
@@ -172,17 +179,23 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       // pero guardar null en formData para que se guarde correctamente en Supabase
       const clientPresentationChannelValue = supabaseProperty.client_presentation_channel;
       // Para el estado local del componente, usar cadena vacía si es null/undefined
-      setClientPresentationChannel(clientPresentationChannelValue || "");
+      // Validar que el valor sea un enum válido antes de establecerlo
+      if (clientPresentationChannelValue && Object.values(ClientPresentationChannel).includes(clientPresentationChannelValue as ClientPresentationChannel)) {
+        setClientPresentationChannel(clientPresentationChannelValue as ClientPresentationChannel);
+      } else {
+        setClientPresentationChannel("");
+      }
       // Para formData, usar null si no hay valor (para que se guarde como null en DB)
       initialData[`${sectionId}.clientPresentationChannel`] = clientPresentationChannelValue || null;
 
       // Sección 2: Estrategia de Precio
+      // Cargar siempre, incluso si es null, para mantener sincronización
       if (supabaseProperty.announcement_price !== null && supabaseProperty.announcement_price !== undefined) {
         setAnnouncementPrice(String(supabaseProperty.announcement_price));
         initialData[`${sectionId}.announcementPrice`] = String(supabaseProperty.announcement_price);
       } else {
         setAnnouncementPrice("");
-        initialData[`${sectionId}.announcementPrice`] = "";
+        initialData[`${sectionId}.announcementPrice`] = null; // Guardar null en lugar de cadena vacía
       }
       
       // Cargar siempre, incluso si es null, para mantener sincronización
@@ -375,8 +388,11 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       updateField(sectionId, "clientPresentationChannel", null);
       return;
     }
-    setClientPresentationChannel(value);
-    updateField(sectionId, "clientPresentationChannel", value);
+    // Validar que el valor sea uno de los valores del enum
+    if (Object.values(ClientPresentationChannel).includes(value as ClientPresentationChannel)) {
+      setClientPresentationChannel(value as ClientPresentationChannel);
+      updateField(sectionId, "clientPresentationChannel", value as ClientPresentationChannel);
+    }
   };
 
   const handleClearPresentationChannel = () => {
@@ -386,8 +402,24 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
   // Handlers Sección 2
   const handleAnnouncementPriceChange = (value: string) => {
+    // Guardar el estado del foco antes de actualizar
+    const inputElement = announcementPriceInputRef.current;
+    const wasFocused = document.activeElement === inputElement;
+    
     setAnnouncementPrice(value);
     updateField(sectionId, "announcementPrice", value);
+    
+    // Restaurar el foco después del re-render
+    // Nota: Los inputs de tipo 'number' no soportan setSelectionRange
+    if (wasFocused && inputElement) {
+      // Usar requestAnimationFrame para asegurar que el re-render haya terminado
+      requestAnimationFrame(() => {
+        const currentInput = announcementPriceInputRef.current;
+        if (currentInput) {
+          currentInput.focus();
+        }
+      });
+    }
   };
 
   const handlePriceApprovalChange = (value: string) => {
@@ -414,8 +446,30 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   };
 
   const handleIdealistaDescriptionChange = (value: string) => {
+    // Guardar el estado del foco y la posición del cursor antes de actualizar
+    const textareaElement = idealistaDescriptionTextareaRef.current;
+    const wasFocused = document.activeElement === textareaElement;
+    const cursorPosition = textareaElement?.selectionStart ?? null;
+    
     setIdealistaDescription(value);
     updateField(sectionId, "idealistaDescription", value);
+    
+    // Restaurar el foco y la posición del cursor después del re-render
+    // Los textareas sí soportan setSelectionRange
+    if (wasFocused && textareaElement) {
+      // Usar requestAnimationFrame para asegurar que el re-render haya terminado
+      requestAnimationFrame(() => {
+        const currentTextarea = idealistaDescriptionTextareaRef.current;
+        if (currentTextarea) {
+          currentTextarea.focus();
+          // Restaurar la posición del cursor, ajustando si es necesario
+          if (cursorPosition !== null && cursorPosition !== undefined) {
+            const newCursorPosition = Math.min(cursorPosition, currentTextarea.value.length);
+            currentTextarea.setSelectionRange(newCursorPosition, newCursorPosition);
+          }
+        }
+      });
+    }
   };
 
   // Handlers Sección 3: Estados
@@ -479,10 +533,17 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
       // Save to Supabase
       const supabase = createClient();
-      await supabase
+      const { error: updateError } = await supabase
         .from("properties")
         .update({ technical_inspection_report: updatedReport! })
         .eq("property_unique_id", supabaseProperty.property_unique_id);
+      
+      if (!updateError) {
+        // Disparar evento para actualizar el widget de progreso y otros componentes
+        window.dispatchEvent(new CustomEvent('property-updated', {
+          detail: { propertyId: supabaseProperty.property_unique_id }
+        }));
+      }
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error(`Error al actualizar el estado: ${error instanceof Error ? error.message : "Error desconocido"}`);
@@ -546,10 +607,17 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       });
 
       const supabase = createClient();
-      await supabase
+      const { error: updateError } = await supabase
         .from("properties")
         .update({ technical_inspection_report: updatedReport! })
         .eq("property_unique_id", supabaseProperty.property_unique_id);
+      
+      if (!updateError) {
+        // Disparar evento para actualizar el widget de progreso y otros componentes
+        window.dispatchEvent(new CustomEvent('property-updated', {
+          detail: { propertyId: supabaseProperty.property_unique_id }
+        }));
+      }
     } catch (error) {
       console.error("Error updating comment:", error);
       toast.error(`Error al guardar el comentario: ${error instanceof Error ? error.message : "Error desconocido"}`);
@@ -613,10 +681,17 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       });
 
       const supabase = createClient();
-      await supabase
+      const { error: updateError } = await supabase
         .from("properties")
         .update({ technical_inspection_report: updatedReport! })
         .eq("property_unique_id", supabaseProperty.property_unique_id);
+      
+      if (!updateError) {
+        // Disparar evento para actualizar el widget de progreso y otros componentes
+        window.dispatchEvent(new CustomEvent('property-updated', {
+          detail: { propertyId: supabaseProperty.property_unique_id }
+        }));
+      }
     } catch (error) {
       console.error("Error updating affects commercialization:", error);
       toast.error(`Error al guardar: ${error instanceof Error ? error.message : "Error desconocido"}`);
@@ -723,10 +798,17 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         
         // Save to Supabase
         const supabase = createClient();
-        await supabase
+        const { error: updateError } = await supabase
           .from("properties")
           .update({ technical_inspection_report: updatedReport! })
           .eq("property_unique_id", supabaseProperty.property_unique_id);
+        
+        if (!updateError) {
+          // Disparar evento para actualizar el widget de progreso y otros componentes
+          window.dispatchEvent(new CustomEvent('property-updated', {
+            detail: { propertyId: supabaseProperty.property_unique_id }
+          }));
+        }
         
         toast.success(`${files.length} foto(s) subida(s) correctamente`);
       } else {
@@ -750,10 +832,17 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         
         // Save to Supabase
         const supabase = createClient();
-        await supabase
+        const { error: updateError } = await supabase
           .from("properties")
           .update({ technical_inspection_report: updatedReport! })
           .eq("property_unique_id", supabaseProperty.property_unique_id);
+        
+        if (!updateError) {
+          // Disparar evento para actualizar el widget de progreso y otros componentes
+          window.dispatchEvent(new CustomEvent('property-updated', {
+            detail: { propertyId: supabaseProperty.property_unique_id }
+          }));
+        }
         
         toast.success(`${newUrls.length} foto(s) subida(s) correctamente`);
       }
@@ -861,10 +950,17 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       
       // Save to Supabase
       const supabase = createClient();
-      await supabase
+      const { error: updateError } = await supabase
         .from("properties")
         .update({ technical_inspection_report: updatedReport! })
         .eq("property_unique_id", supabaseProperty.property_unique_id);
+      
+      if (!updateError) {
+        // Disparar evento para actualizar el widget de progreso y otros componentes
+        window.dispatchEvent(new CustomEvent('property-updated', {
+          detail: { propertyId: supabaseProperty.property_unique_id }
+        }));
+      }
       
       toast.success("Foto eliminada correctamente");
     } catch (error) {
@@ -873,7 +969,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     }
   };
 
-  // Componente para subida de fotos
+  // Componente para subida de fotos mejorado con drag & drop
   const PhotoUploadSection = ({
     title,
     fieldName,
@@ -888,6 +984,8 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     roomIndex?: number;
   }) => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isDragging, setIsDragging] = React.useState(false);
+    const dropZoneRef = React.useRef<HTMLDivElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
@@ -902,11 +1000,93 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       handlePhotoDelete(fieldName, photoUrl, photos, setPhotos, roomIndex);
     };
 
+    // Drag and drop handlers
+    const handleDragEnter = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer.types.includes("Files")) {
+        setIsDragging(true);
+      }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Only set dragging to false if we're leaving the drop zone itself
+      if (!dropZoneRef.current?.contains(e.relatedTarget as Node)) {
+        setIsDragging(false);
+      }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
+        file.type.startsWith("image/")
+      );
+
+      if (droppedFiles.length > 0) {
+        // Create a DataTransfer object to get a FileList
+        const dataTransfer = new DataTransfer();
+        droppedFiles.forEach((file) => dataTransfer.items.add(file));
+        handlePhotoUpload(fieldName, dataTransfer.files, photos, setPhotos, roomIndex);
+      }
+    };
+
+    const handleClick = () => {
+      fileInputRef.current?.click();
+    };
+
+    const hasPhotos = photos.length > 0;
+
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         {title && <Label className="text-sm font-medium">{title}</Label>}
-        <div className="border-2 border-dashed border-border rounded-lg p-4">
-          <div className="flex flex-col items-center justify-center space-y-4">
+        
+        {!hasPhotos ? (
+          // Estado inicial: sin fotos - mantener tamaño actual
+          <div
+            ref={dropZoneRef}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+            className={cn(
+              "border-2 border-dashed rounded-lg p-6 transition-all duration-200 cursor-pointer",
+              isDragging
+                ? "border-[var(--vistral-blue-500)] bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-950)]"
+                : "border-[var(--vistral-gray-300)] bg-[var(--vistral-gray-50)] hover:border-[var(--vistral-gray-400)] hover:bg-[var(--vistral-gray-100)] dark:border-[var(--vistral-gray-700)] dark:bg-[var(--vistral-gray-900)] dark:hover:border-[var(--vistral-gray-600)] dark:hover:bg-[var(--vistral-gray-800)]"
+            )}
+          >
+            <div className="flex flex-col items-center justify-center space-y-3">
+              <Upload className={cn(
+                "h-8 w-8 transition-colors",
+                isDragging 
+                  ? "text-[var(--vistral-blue-500)]" 
+                  : "text-[var(--vistral-gray-400)] dark:text-[var(--vistral-gray-500)]"
+              )} />
+              <div className="text-center space-y-1">
+                <span className={cn(
+                  "text-sm font-medium block",
+                  isDragging
+                    ? "text-[var(--vistral-blue-700)] dark:text-[var(--vistral-blue-300)]"
+                    : "text-[var(--vistral-gray-700)] dark:text-[var(--vistral-gray-300)]"
+                )}>
+                  {isDragging ? "Suelta las fotos aquí" : "Arrastra y suelta fotos o haz clic para seleccionar"}
+                </span>
+                <span className="text-xs text-[var(--vistral-gray-500)] dark:text-[var(--vistral-gray-400)]">
+                  PNG, JPG, GIF hasta 10MB
+                </span>
+              </div>
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -916,41 +1096,83 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
               className="hidden"
               id={`photo-upload-${fieldName}-${roomIndex ?? ""}`}
             />
-            <label
-              htmlFor={`photo-upload-${fieldName}-${roomIndex ?? ""}`}
-              className="flex flex-col items-center justify-center w-full cursor-pointer"
-            >
-              <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-              <span className="text-sm text-muted-foreground text-center">
-                Haz clic para subir fotos o arrastra y suelta
-              </span>
-              <span className="text-xs text-muted-foreground mt-1">
-                PNG, JPG, GIF hasta 10MB
-              </span>
-            </label>
           </div>
-
-          {photos.length > 0 && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+        ) : (
+          // Estado con fotos: mostrar grid y botón/drop zone para añadir más
+          <div className="space-y-4">
+            {/* Grid de fotos existentes */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {photos.map((imageUrl, index) => (
-                <div key={index} className="relative group">
+                <div
+                  key={`${imageUrl}-${index}`}
+                  className="relative group aspect-square rounded-lg overflow-hidden border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)]"
+                >
                   <img
                     src={imageUrl}
                     alt={`${title} ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-md border border-border"
+                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
+                  {/* Overlay oscuro al hacer hover */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
+                  {/* Botón de eliminar - debe estar encima del overlay */}
                   <button
                     type="button"
-                    onClick={() => handleDelete(imageUrl)}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(imageUrl);
+                    }}
+                    className="absolute top-2 right-2 z-10 p-1.5 bg-[var(--vistral-danger)] text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:opacity-100 shadow-lg"
+                    aria-label={`Eliminar foto ${index + 1}`}
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+
+            {/* Botón/Drop zone para añadir más fotos */}
+            <div
+              ref={dropZoneRef}
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleClick}
+              className={cn(
+                "border-2 border-dashed rounded-lg p-4 transition-all duration-200 cursor-pointer",
+                isDragging
+                  ? "border-[var(--vistral-blue-500)] bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-950)]"
+                  : "border-[var(--vistral-gray-300)] bg-[var(--vistral-gray-50)] hover:border-[var(--vistral-gray-400)] hover:bg-[var(--vistral-gray-100)] dark:border-[var(--vistral-gray-700)] dark:bg-[var(--vistral-gray-900)] dark:hover:border-[var(--vistral-gray-600)] dark:hover:bg-[var(--vistral-gray-800)]"
+              )}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Plus className={cn(
+                  "h-5 w-5 transition-colors",
+                  isDragging
+                    ? "text-[var(--vistral-blue-500)]"
+                    : "text-[var(--vistral-gray-500)] dark:text-[var(--vistral-gray-400)]"
+                )} />
+                <span className={cn(
+                  "text-sm font-medium",
+                  isDragging
+                    ? "text-[var(--vistral-blue-700)] dark:text-[var(--vistral-blue-300)]"
+                    : "text-[var(--vistral-gray-700)] dark:text-[var(--vistral-gray-300)]"
+                )}>
+                  {isDragging ? "Suelta para añadir más fotos" : "Añadir más fotos"}
+                </span>
+              </div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+              id={`photo-upload-${fieldName}-${roomIndex ?? ""}`}
+            />
+          </div>
+        )}
       </div>
     );
   };
@@ -1049,16 +1271,16 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                   className="flex gap-6"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Llamada telefónica" id="channel-phone" />
-                    <Label htmlFor="channel-phone" className="cursor-pointer">Llamada telefónica</Label>
+                    <RadioGroupItem value={ClientPresentationChannel.PHONE} id="channel-phone" />
+                    <Label htmlFor="channel-phone" className="cursor-pointer">{ClientPresentationChannel.PHONE}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Correo electrónico" id="channel-email" />
-                    <Label htmlFor="channel-email" className="cursor-pointer">Correo electrónico</Label>
+                    <RadioGroupItem value={ClientPresentationChannel.EMAIL} id="channel-email" />
+                    <Label htmlFor="channel-email" className="cursor-pointer">{ClientPresentationChannel.EMAIL}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Ambos" id="channel-both" />
-                    <Label htmlFor="channel-both" className="cursor-pointer">Ambos</Label>
+                    <RadioGroupItem value={ClientPresentationChannel.BOTH} id="channel-both" />
+                    <Label htmlFor="channel-both" className="cursor-pointer">{ClientPresentationChannel.BOTH}</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -1089,11 +1311,16 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
               Precio de Publicación <span className="text-red-500">*</span>
             </Label>
             <Input
+              ref={announcementPriceInputRef}
               id="announcement-price"
               type="number"
               placeholder="Ej: 1200"
-              value={announcementPrice}
-              onChange={(e) => handleAnnouncementPriceChange(e.target.value)}
+              value={announcementPrice || ""}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                // Permitir cadena vacía para que el usuario pueda escribir números seguidos
+                handleAnnouncementPriceChange(newValue);
+              }}
               min="0"
               step="0.01"
             />
@@ -1149,11 +1376,12 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         isComplete={isSection3Complete()}
       >
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Evalúa cada estancia/zona de la propiedad. Valida su estado y sube las fotos comerciales.
-          </p>
-          
-          <Accordion type="multiple" className="w-full space-y-4">
+          <Accordion 
+            type="multiple" 
+            className="w-full space-y-4"
+            value={openRooms}
+            onValueChange={setOpenRooms}
+          >
             {getAllRooms().map((room) => {
               const status = getRoomStatus(room);
               const comment = getRoomComment(room);
@@ -1483,6 +1711,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                 Descripción del Inmueble para el Anuncio <span className="text-red-500">*</span>
               </Label>
               <Textarea
+                ref={idealistaDescriptionTextareaRef}
                 id="idealista-description"
                 placeholder="Escribe la descripción del inmueble para el anuncio..."
                 value={idealistaDescription}

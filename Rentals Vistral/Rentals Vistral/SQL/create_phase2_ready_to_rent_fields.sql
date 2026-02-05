@@ -22,11 +22,13 @@ COMMENT ON COLUMN properties.client_presentation_date IS
 'Fecha en que se realizó la presentación del servicio al cliente. Se autocompleta con la fecha actual cuando client_presentation_done = true';
 
 -- Canal de comunicación utilizado
+-- NOTA: Este campo se migró a tipo ENUM en migrate_client_presentation_channel_to_enum.sql
+-- Si estás creando la columna por primera vez, usa el script de migración en su lugar
 ALTER TABLE properties 
 ADD COLUMN IF NOT EXISTS client_presentation_channel TEXT DEFAULT NULL;
 
 COMMENT ON COLUMN properties.client_presentation_channel IS 
-'Canal de comunicación utilizado para la presentación. Valores: "Llamada telefónica", "Correo electrónico", "Ambos"';
+'Canal de comunicación utilizado para la presentación. Valores: "Llamada telefónica", "Correo electrónico", "Ambos". NOTA: Migrado a ENUM - ver migrate_client_presentation_channel_to_enum.sql';
 
 -- ============================================================================
 -- SECCIÓN 2: ESTRATEGIA DE PRECIO
@@ -39,7 +41,7 @@ ADD COLUMN IF NOT EXISTS price_approval BOOLEAN DEFAULT NULL;
 COMMENT ON COLUMN properties.price_approval IS 
 'Indica si el cliente ha aprobado el precio de publicación (announcement_price). NULL = no respondido, true = Sí, false = No';
 
--- Nota: Los campos announcement_price, target_rent_price, expected_yield ya existen en la tabla
+-- Nota: Los campos announcement_price, target_rent_price, expected_yield deben crearse con el script create_announcement_price_fields.sql
 
 -- ============================================================================
 -- SECCIÓN 3: INSPECCIÓN TÉCNICA Y REPORTAJE

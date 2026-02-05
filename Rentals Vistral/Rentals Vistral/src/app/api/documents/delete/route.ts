@@ -84,6 +84,19 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "owner_financial/custom",
   },
+  // Tenant custom documents
+  tenant_custom_identity_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/identity",
+  },
+  tenant_custom_financial_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/financial",
+  },
+  tenant_custom_other_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/other",
+  },
   // Property Marketing Photos (Listo para Alquilar phase)
   marketing_photos_common_areas: {
     bucket: "properties-public-docs",
@@ -193,7 +206,7 @@ const JSONB_ARRAY_FIELDS = [
   "incident_photos_terrace",
   "incident_photos_storage",
 ];
-const CUSTOM_DOCUMENT_FIELDS = ["custom_legal_documents", "custom_insurance_documents", "custom_supplies_documents", "custom_investor_documents"];
+const CUSTOM_DOCUMENT_FIELDS = ["custom_legal_documents", "custom_insurance_documents", "custom_supplies_documents", "custom_investor_documents", "tenant_custom_identity_documents", "tenant_custom_financial_documents", "tenant_custom_other_documents"];
 
 /**
  * Extract storage path from a Supabase Storage URL

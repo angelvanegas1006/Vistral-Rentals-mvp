@@ -72,6 +72,9 @@ export default function PropertyDetailPage() {
   const [propheroSectionReviews, setPropheroSectionReviews] = useState<PropheroSectionReviews | undefined>(undefined);
   const previousPropheroReviewsRef = useRef<PropheroSectionReviews | undefined>(undefined);
   
+  // Estado para progreso de fase 2
+  const [phase2Progress, setPhase2Progress] = useState<number>(0);
+  
   // Función estabilizada para actualizar propheroSectionReviews
   // Solo actualiza si los valores realmente cambiaron para evitar re-renderizados innecesarios
   const handlePropheroReviewsChange = useCallback((reviews: PropheroSectionReviews | undefined) => {
@@ -316,17 +319,27 @@ export default function PropertyDetailPage() {
 
   // Check if phase advancement is blocked
   const isPhaseBlocked = useMemo(() => {
-    // Only block if we're in Prophero phase AND sections are not complete
-    if (property.currentPhase !== "Viviendas Prophero") {
-      return false;
+    // Block phase 1 (Viviendas Prophero) if sections are not complete
+    if (property.currentPhase === "Viviendas Prophero") {
+      const blocked = !checkPropheroSectionsComplete;
+      console.log(`🔒 Phase blocked check - currentPhase: ${property.currentPhase}, checkComplete: ${checkPropheroSectionsComplete}, blocked: ${blocked}`);
+      console.log(`🔒 propheroSectionReviews state:`, propheroSectionReviews);
+      console.log(`🔒 supabaseProperty.prophero_section_reviews:`, supabaseProperty?.prophero_section_reviews);
+      return blocked;
     }
-    const blocked = !checkPropheroSectionsComplete;
-    console.log(`🔒 Phase blocked check - currentPhase: ${property.currentPhase}, checkComplete: ${checkPropheroSectionsComplete}, blocked: ${blocked}`);
-    console.log(`🔒 propheroSectionReviews state:`, propheroSectionReviews);
-    console.log(`🔒 supabaseProperty.prophero_section_reviews:`, supabaseProperty?.prophero_section_reviews);
-    return blocked;
-  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews]);
-  const blockedMessage = "Avance bloqueado - Completa todas las secciones requeridas";
+    
+    // Block phase 2 (Listo para Alquilar) if progress is not 100%
+    if (property.currentPhase === "Listo para Alquilar") {
+      const blocked = phase2Progress < 100;
+      console.log(`🔒 Phase 2 blocked check - currentPhase: ${property.currentPhase}, progress: ${phase2Progress}%, blocked: ${blocked}`);
+      return blocked;
+    }
+    
+    return false;
+  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews, phase2Progress]);
+  const blockedMessage = property.currentPhase === "Listo para Alquilar" 
+    ? "Avance bloqueado - Completa el Progreso General de la fase"
+    : "Avance bloqueado - Completa todas las secciones requeridas";
 
   // Función para avanzar a la siguiente fase
   const handleNextPhase = async () => {
@@ -389,6 +402,7 @@ export default function PropertyDetailPage() {
             onCanSubmitCommentsRef={canSubmitCommentsRef}
             onHasAnySectionWithNoChange={setHasAnySectionWithNo}
             onCanSubmitCommentsChange={setCanSubmitComments}
+            onPhase2ProgressChange={setPhase2Progress}
           />
         );
       case "property-summary":
@@ -419,6 +433,7 @@ export default function PropertyDetailPage() {
             onCanSubmitCommentsRef={canSubmitCommentsRef}
             onHasAnySectionWithNoChange={setHasAnySectionWithNo}
             onCanSubmitCommentsChange={setCanSubmitComments}
+            onPhase2ProgressChange={setPhase2Progress}
           />
         );
     }
