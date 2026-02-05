@@ -56,6 +56,49 @@ Type: `jsonb` | Default: `[]`
 | :--- | :--- | :--- |
 | `pics_urls` | `/{property_unique_id}/gallery/` | Main property marketing photos. |
 
+### B. Property Photos - Phase 2 "Listo para Alquilar" (Bucket: `properties-public-docs`)
+
+**Context:** Phase 2 requires two types of photos: Marketing/Commercial photos and Incident photos. These are stored separately to maintain clear organization.
+
+#### 1. Marketing/Commercial Photos
+*Used for property listings, advertisements, and marketing materials.*
+
+| SQL Variable (Supabase) | Folder Path | Description |
+| :--- | :--- | :--- |
+| `marketing_photos_common_areas` | `/{property_unique_id}/photos/marketing/common_areas/` | Marketing photos - Common areas |
+| `marketing_photos_entry_hallways` | `/{property_unique_id}/photos/marketing/entry_hallways/` | Marketing photos - Entry and hallways |
+| `marketing_photos_bedrooms` | `/{property_unique_id}/photos/marketing/bedrooms/` | Marketing photos - Bedrooms (array of arrays, one per bedroom) |
+| `marketing_photos_living_room` | `/{property_unique_id}/photos/marketing/living_room/` | Marketing photos - Living room |
+| `marketing_photos_bathrooms` | `/{property_unique_id}/photos/marketing/bathrooms/` | Marketing photos - Bathrooms (array of arrays, one per bathroom) |
+| `marketing_photos_kitchen` | `/{property_unique_id}/photos/marketing/kitchen/` | Marketing photos - Kitchen |
+| `marketing_photos_exterior` | `/{property_unique_id}/photos/marketing/exterior/` | Marketing photos - Exterior |
+| `marketing_photos_garage` | `/{property_unique_id}/photos/marketing/garage/` | Marketing photos - Garage (conditional) |
+| `marketing_photos_terrace` | `/{property_unique_id}/photos/marketing/terrace/` | Marketing photos - Terrace (conditional) |
+| `marketing_photos_storage` | `/{property_unique_id}/photos/marketing/storage/` | Marketing photos - Storage room (conditional) |
+
+#### 2. Incident Photos
+*Used to document damages, technical issues, or problems found during inspection.*
+
+| SQL Variable (Supabase) | Folder Path | Description |
+| :--- | :--- | :--- |
+| `incident_photos_common_areas` | `/{property_unique_id}/photos/incidents/common_areas/` | Incident photos - Common areas |
+| `incident_photos_entry_hallways` | `/{property_unique_id}/photos/incidents/entry_hallways/` | Incident photos - Entry and hallways |
+| `incident_photos_bedrooms` | `/{property_unique_id}/photos/incidents/bedrooms/` | Incident photos - Bedrooms (array of arrays, one per bedroom) |
+| `incident_photos_living_room` | `/{property_unique_id}/photos/incidents/living_room/` | Incident photos - Living room |
+| `incident_photos_bathrooms` | `/{property_unique_id}/photos/incidents/bathrooms/` | Incident photos - Bathrooms (array of arrays, one per bathroom) |
+| `incident_photos_kitchen` | `/{property_unique_id}/photos/incidents/kitchen/` | Incident photos - Kitchen |
+| `incident_photos_exterior` | `/{property_unique_id}/photos/incidents/exterior/` | Incident photos - Exterior |
+| `incident_photos_garage` | `/{property_unique_id}/photos/incidents/garage/` | Incident photos - Garage (conditional) |
+| `incident_photos_terrace` | `/{property_unique_id}/photos/incidents/terrace/` | Incident photos - Terrace (conditional) |
+| `incident_photos_storage` | `/{property_unique_id}/photos/incidents/storage/` | Incident photos - Storage room (conditional) |
+
+**Notes:**
+- **Bucket:** All photos are stored in `properties-public-docs` (public access)
+- **Folder Structure:** Photos are organized by type (`marketing/` vs `incidents/`) and then by room/area
+- **Conditional Fields:** Garage, terrace, and storage photos are only used if the property has these features
+- **Array Fields:** Bedrooms and bathrooms use arrays of arrays to support multiple rooms
+- **Full Path Pattern:** `{property_unique_id}/photos/{type}/{estancia}/{filename}`
+
 ### B. Restricted Documents (Bucket: `properties-restricted-docs`)
 
 #### A. CLIENT SECTION (Folder 1: `client`)

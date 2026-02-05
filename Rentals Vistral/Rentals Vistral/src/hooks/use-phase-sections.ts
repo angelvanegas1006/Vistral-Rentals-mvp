@@ -160,7 +160,7 @@ export function usePhaseSections(currentPhase: string) {
       required: true,
       fields: [
         { id: "check_common_areas", type: "select", label: "Estado de estancias", required: true },
-        { id: "photos_common_areas", type: "document", label: "Fotos comerciales", required: true },
+        { id: "marketing_photos_common_areas", type: "document", label: "Fotos comerciales", required: true },
         { id: "incident_photos_common_areas", type: "document", label: "Fotos de incidencias", required: false },
       ],
     },

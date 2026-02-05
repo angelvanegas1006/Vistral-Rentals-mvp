@@ -211,7 +211,7 @@ export function PropertyTasksTab({
             fields: [
               // Esta sección se valida mediante la lógica de completitud en ReadyToRentTasks
               // Los campos se guardan directamente en Supabase, no en formData
-              // Por ahora, usamos un campo placeholder que se validará de forma especial
+              // Se calculará el progreso basado en cuántas instancias están completas
               { id: "technicalInspectionComplete", required: true },
             ],
           },
@@ -512,21 +512,21 @@ export function PropertyTasksTab({
 
       const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
         if (room.type === "bedrooms" && room.index !== undefined) {
-          const arr = supabaseProperty.photos_bedrooms;
+          const arr = supabaseProperty.marketing_photos_bedrooms;
           return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
         }
         if (room.type === "bathrooms" && room.index !== undefined) {
-          const arr = supabaseProperty.photos_bathrooms;
+          const arr = supabaseProperty.marketing_photos_bathrooms;
           return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
         }
         const photosMap: Record<string, string[] | null> = {
-          common_areas: supabaseProperty.photos_common_areas,
-          entry_hallways: supabaseProperty.photos_entry_hallways,
-          living_room: supabaseProperty.photos_living_room,
-          kitchen: supabaseProperty.photos_kitchen,
-          exterior: supabaseProperty.photos_exterior,
-          garage: supabaseProperty.photos_garage,
-          terrace: supabaseProperty.photos_terrace,
+          common_areas: supabaseProperty.marketing_photos_common_areas,
+          entry_hallways: supabaseProperty.marketing_photos_entry_hallways,
+          living_room: supabaseProperty.marketing_photos_living_room,
+          kitchen: supabaseProperty.marketing_photos_kitchen,
+          exterior: supabaseProperty.marketing_photos_exterior,
+          garage: supabaseProperty.marketing_photos_garage,
+          terrace: supabaseProperty.marketing_photos_terrace,
         };
         return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
       };
@@ -605,7 +605,18 @@ export function PropertyTasksTab({
         visibleSections={progressSections.map(s => s.id)}
         fieldErrors={{}}
         propheroSectionReviews={propheroSectionReviews}
+        supabaseProperty={supabaseProperty}
       />
+
+      {/* Texto descriptivo para fase "Listo para Alquilar" */}
+      {isReadyToRent && (
+        <div className="border-b pb-2">
+          <h2 className="text-xl font-semibold">Listo para Alquilar</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Presenta el servicio al cliente, define la estrategia de precio, realiza la inspección técnica y prepara el lanzamiento comercial de la propiedad.
+          </p>
+        </div>
+      )}
 
       {isProphero ? (
         <PropheroTasks 

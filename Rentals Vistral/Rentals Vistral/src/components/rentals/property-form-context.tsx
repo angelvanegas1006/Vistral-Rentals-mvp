@@ -33,14 +33,13 @@ export function PropertyFormProvider({
   // Inicializar formData con datos externos (desde Supabase)
   // Usar useCallback para memoizar y evitar recrear la función en cada render
   const initializeFormData = useCallback((data: Record<string, any>) => {
-    // Solo inicializar si no se ha inicializado antes
-    if (!initializedRef.current) {
-      setFormData((prevData) => {
-        // Merge con datos existentes en lugar de reemplazar completamente
-        return { ...prevData, ...data };
-      });
-      initializedRef.current = true;
-    }
+    setFormData((prevData) => {
+      // Merge con datos existentes, pero sobrescribir con los nuevos datos de Supabase
+      // Esto asegura que los valores guardados se carguen correctamente
+      return { ...prevData, ...data };
+    });
+    // Marcar como inicializado después de establecer los datos
+    initializedRef.current = true;
   }, []); // Sin dependencias para que la función sea estable
 
   const updateField = (sectionId: string, fieldId: string, value: any) => {
@@ -72,36 +71,132 @@ export function PropertyFormProvider({
     const updates: Record<string, any> = {};
     
     if (sectionId === "readyToRent") {
-      // Para booleanos, usar verificación explícita de undefined/null
-      const technicalValidation = data[`${sectionId}.technicalValidation`];
-      updates.technical_validation = technicalValidation !== undefined && technicalValidation !== null ? technicalValidation : null;
+      // Sección 1: Presentación al Cliente
+      // Guardar siempre que el campo esté presente en formData, incluso si es null
+      if (`${sectionId}.clientPresentationDone` in data) {
+        const clientPresentationDone = data[`${sectionId}.clientPresentationDone`];
+        updates.client_presentation_done = clientPresentationDone === null ? null : clientPresentationDone;
+      }
       
-      updates.monthly_rent = data[`${sectionId}.monthlyRent`] ? Number(data[`${sectionId}.monthlyRent`]) : null;
-      updates.announcement_price = data[`${sectionId}.announcementPrice`] ? Number(data[`${sectionId}.announcementPrice`]) : null;
+      if (`${sectionId}.clientPresentationDate` in data) {
+        const clientPresentationDate = data[`${sectionId}.clientPresentationDate`];
+        // Manejar string vacío, null, o undefined
+        if (clientPresentationDate === null || clientPresentationDate === undefined || clientPresentationDate === "") {
+          updates.client_presentation_date = null;
+        } else {
+          const dateStr = String(clientPresentationDate).trim();
+          updates.client_presentation_date = dateStr !== "" ? dateStr : null;
+        }
+      }
       
-      const ownerNotified = data[`${sectionId}.ownerNotified`];
-      updates.owner_notified = ownerNotified !== undefined && ownerNotified !== null ? ownerNotified : null;
-      updates.publish_online = data[`${sectionId}.publishOnline`] || null;
-      updates.idealista_price = data[`${sectionId}.idealistaPrice`] ? Number(data[`${sectionId}.idealistaPrice`]) : null;
-      updates.idealista_description = data[`${sectionId}.idealistaDescription`] || null;
-      updates.idealista_address = data[`${sectionId}.idealistaAddress`] || null;
-      updates.idealista_city = data[`${sectionId}.idealistaCity`] || null;
-      // idealista_photos: guardar solo si hay URLs válidas (no blob URLs temporales)
-      const photos = data[`${sectionId}.idealistaPhotos`];
-      if (photos && Array.isArray(photos) && photos.length > 0) {
-        // Filtrar solo URLs permanentes (que empiezan con http/https)
-        const permanentPhotos = photos.filter((url: string) => url.startsWith('http://') || url.startsWith('https://'));
-        updates.idealista_photos = permanentPhotos.length > 0 ? permanentPhotos : null;
-      } else {
-        updates.idealista_photos = null;
+      if (`${sectionId}.clientPresentationChannel` in data) {
+        const clientPresentationChannel = data[`${sectionId}.clientPresentationChannel`];
+        // Manejar string vacío, null, o undefined
+        if (clientPresentationChannel === null || clientPresentationChannel === undefined || clientPresentationChannel === "") {
+          updates.client_presentation_channel = null;
+        } else {
+          const channelStr = String(clientPresentationChannel).trim();
+          updates.client_presentation_channel = channelStr !== "" ? channelStr : null;
+        }
+      }
+      
+      // Sección 2: Estrategia de Precio
+      if (`${sectionId}.announcementPrice` in data) {
+        const announcementPrice = data[`${sectionId}.announcementPrice`];
+        // Manejar string vacío, null, undefined, o número
+        if (announcementPrice === null || announcementPrice === undefined || announcementPrice === "") {
+          updates.announcement_price = null;
+        } else {
+          const priceStr = String(announcementPrice).trim();
+          if (priceStr !== "" && !isNaN(Number(priceStr))) {
+            updates.announcement_price = Number(priceStr);
+          } else {
+            updates.announcement_price = null;
+          }
+        }
+      }
+      
+      // Guardar target_rent_price y expected_yield si están presentes
+      if (`${sectionId}.targetRentPrice` in data) {
+        const targetRentPrice = data[`${sectionId}.targetRentPrice`];
+        if (targetRentPrice === null || targetRentPrice === undefined || targetRentPrice === "") {
+          updates.target_rent_price = null;
+        } else {
+          const priceStr = String(targetRentPrice).trim();
+          if (priceStr !== "" && !isNaN(Number(priceStr))) {
+            updates.target_rent_price = Number(priceStr);
+          } else {
+            updates.target_rent_price = null;
+          }
+        }
+      }
+      
+      if (`${sectionId}.expectedYield` in data) {
+        const expectedYield = data[`${sectionId}.expectedYield`];
+        if (expectedYield === null || expectedYield === undefined || expectedYield === "") {
+          updates.expected_yield = null;
+        } else {
+          const yieldStr = String(expectedYield).trim();
+          if (yieldStr !== "" && !isNaN(Number(yieldStr))) {
+            updates.expected_yield = Number(yieldStr);
+          } else {
+            updates.expected_yield = null;
+          }
+        }
+      }
+      
+      if (`${sectionId}.priceApproval` in data) {
+        const priceApproval = data[`${sectionId}.priceApproval`];
+        updates.price_approval = priceApproval === null ? null : priceApproval;
+      }
+      
+      // Campos legacy (mantener compatibilidad)
+      if (`${sectionId}.technicalValidation` in data) {
+        const technicalValidation = data[`${sectionId}.technicalValidation`];
+        updates.technical_validation = technicalValidation === null ? null : technicalValidation;
+      }
+      
+      if (`${sectionId}.monthlyRent` in data) {
+        const monthlyRent = data[`${sectionId}.monthlyRent`];
+        if (monthlyRent === null || monthlyRent === undefined || monthlyRent === "") {
+          updates.monthly_rent = null;
+        } else {
+          const rentStr = String(monthlyRent).trim();
+          if (rentStr !== "" && !isNaN(Number(rentStr))) {
+            updates.monthly_rent = Number(rentStr);
+          } else {
+            updates.monthly_rent = null;
+          }
+        }
+      }
+      
+      if (`${sectionId}.ownerNotified` in data) {
+        const ownerNotified = data[`${sectionId}.ownerNotified`];
+        updates.owner_notified = ownerNotified === null ? null : ownerNotified;
+      }
+      
+      // Sección 4: Lanzamiento Comercial
+      if (`${sectionId}.publishOnline` in data) {
+        const publishOnlineValue = data[`${sectionId}.publishOnline`];
+        updates.publish_online = publishOnlineValue === null ? null : publishOnlineValue;
+      }
+      
+      if (`${sectionId}.idealistaDescription` in data) {
+        const idealistaDescription = data[`${sectionId}.idealistaDescription`];
+        if (idealistaDescription === null || idealistaDescription === undefined || idealistaDescription === "") {
+          updates.idealista_description = null;
+        } else {
+          const descStr = String(idealistaDescription).trim();
+          updates.idealista_description = descStr !== "" ? descStr : null;
+        }
       }
     }
 
     if (Object.keys(updates).length > 0) {
-      console.log("💾 Guardando en Supabase:", { propertyId, updates });
+      console.log("💾 Guardando en Supabase:", { propertyId, sectionId, updates });
       const success = await updateProperty(propertyId, updates);
       if (success) {
-        console.log("✅ Guardado exitoso en Supabase");
+        console.log("✅ Guardado exitoso en Supabase:", updates);
         
         // Detectar cambios en campos de secciones Prophero y resetear si es necesario
         // Esto se ejecuta incluso si la tarjeta no está abierta
@@ -117,13 +212,16 @@ export function PropertyFormProvider({
         console.error("❌ Error al guardar en Supabase");
       }
     } else {
-      console.warn("⚠️ No hay actualizaciones para guardar");
+      console.warn("⚠️ No hay actualizaciones para guardar en sección:", sectionId);
     }
   };
 
-  // Resetear initializedRef cuando cambia el propertyId
+  // Resetear initializedRef cuando cambia el propertyId o cuando se limpia el formData
   useEffect(() => {
-    initializedRef.current = false;
+    if (propertyId) {
+      // Solo resetear si cambia el propertyId, no en cada render
+      initializedRef.current = false;
+    }
   }, [propertyId]);
 
   // Limpiar timeout al desmontar

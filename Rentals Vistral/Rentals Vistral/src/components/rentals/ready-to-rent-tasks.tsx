@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
 import { usePropertyForm } from "./property-form-context";
 import { useProperty } from "@/hooks/use-property";
-import { Upload, X } from "lucide-react";
+import { Upload, X, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Phase2SectionWidget } from "./phase2-section-widget";
@@ -46,6 +47,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   const { sections: phaseSections } = usePhaseSections("Listo para Alquilar");
   const sectionId = "readyToRent";
   const hasInitializedRef = useRef(false);
+  const lastPropertyIdRef = useRef<string | null>(null);
   
   // Helper para obtener las instrucciones de una sección
   const getSectionInstructions = (sectionId: string): string | undefined => {
@@ -125,76 +127,92 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   const [incidentPhotosBathrooms, setIncidentPhotosBathrooms] = useState<Record<number, string[]>>({});
 
   // Estados Sección 4: Lanzamiento Comercial
-  const [publishOnline, setPublishOnline] = useState<"yes" | "no" | "">("");
+  const [publishOnline, setPublishOnline] = useState<boolean | null>(null);
   const [idealistaDescription, setIdealistaDescription] = useState<string>("");
+
+  // Resetear ref cuando cambia la propiedad
+  useEffect(() => {
+    if (property.property_unique_id !== lastPropertyIdRef.current) {
+      hasInitializedRef.current = false;
+      lastPropertyIdRef.current = property.property_unique_id;
+    }
+  }, [property.property_unique_id]);
 
   // Inicializar datos desde Supabase
   useEffect(() => {
     if (supabaseProperty && !loading && !hasInitializedRef.current) {
       const initialData: Record<string, any> = {};
 
-      // Sección 1
-      if (supabaseProperty.client_presentation_done !== null && supabaseProperty.client_presentation_done !== undefined) {
-        setClientPresentationDone(supabaseProperty.client_presentation_done);
-        initialData[`${sectionId}.clientPresentationDone`] = supabaseProperty.client_presentation_done;
-      }
-      if (supabaseProperty.client_presentation_date) {
-        setClientPresentationDate(supabaseProperty.client_presentation_date);
-        initialData[`${sectionId}.clientPresentationDate`] = supabaseProperty.client_presentation_date;
-      }
-      if (supabaseProperty.client_presentation_channel) {
-        setClientPresentationChannel(supabaseProperty.client_presentation_channel);
-        initialData[`${sectionId}.clientPresentationChannel`] = supabaseProperty.client_presentation_channel;
-      }
+      // Sección 1: Presentación al Cliente
+      // Cargar siempre, incluso si es null, para mantener sincronización
+      const clientPresentationDoneValue = supabaseProperty.client_presentation_done ?? null;
+      setClientPresentationDone(clientPresentationDoneValue);
+      initialData[`${sectionId}.clientPresentationDone`] = clientPresentationDoneValue;
+      
+      // Cargar fecha - usar null si no existe, no cadena vacía
+      const clientPresentationDateValue = supabaseProperty.client_presentation_date || "";
+      setClientPresentationDate(clientPresentationDateValue);
+      initialData[`${sectionId}.clientPresentationDate`] = clientPresentationDateValue || null;
+      
+      // Cargar canal - usar cadena vacía para el estado local si es null/undefined
+      // pero guardar null en formData para que se guarde correctamente en Supabase
+      const clientPresentationChannelValue = supabaseProperty.client_presentation_channel;
+      // Para el estado local del componente, usar cadena vacía si es null/undefined
+      setClientPresentationChannel(clientPresentationChannelValue || "");
+      // Para formData, usar null si no hay valor (para que se guarde como null en DB)
+      initialData[`${sectionId}.clientPresentationChannel`] = clientPresentationChannelValue || null;
 
-      // Sección 2
+      // Sección 2: Estrategia de Precio
       if (supabaseProperty.announcement_price !== null && supabaseProperty.announcement_price !== undefined) {
         setAnnouncementPrice(String(supabaseProperty.announcement_price));
         initialData[`${sectionId}.announcementPrice`] = String(supabaseProperty.announcement_price);
+      } else {
+        setAnnouncementPrice("");
+        initialData[`${sectionId}.announcementPrice`] = "";
       }
-      if (supabaseProperty.price_approval !== null && supabaseProperty.price_approval !== undefined) {
-        setPriceApproval(supabaseProperty.price_approval);
-        initialData[`${sectionId}.priceApproval`] = supabaseProperty.price_approval;
-      }
+      
+      // Cargar siempre, incluso si es null, para mantener sincronización
+      setPriceApproval(supabaseProperty.price_approval ?? null);
+      initialData[`${sectionId}.priceApproval`] = supabaseProperty.price_approval ?? null;
 
       // Sección 3 - Cargar estados, comentarios, fotos comerciales e incidencias
       // Cargar fotos comerciales
-      if (supabaseProperty.photos_common_areas && Array.isArray(supabaseProperty.photos_common_areas)) {
-        setPhotosCommonAreas(supabaseProperty.photos_common_areas.filter((url): url is string => typeof url === "string"));
+      if (supabaseProperty.marketing_photos_common_areas && Array.isArray(supabaseProperty.marketing_photos_common_areas)) {
+        setPhotosCommonAreas(supabaseProperty.marketing_photos_common_areas.filter((url): url is string => typeof url === "string"));
       }
-      if (supabaseProperty.photos_entry_hallways && Array.isArray(supabaseProperty.photos_entry_hallways)) {
-        setPhotosEntryHallways(supabaseProperty.photos_entry_hallways.filter((url): url is string => typeof url === "string"));
+      if (supabaseProperty.marketing_photos_entry_hallways && Array.isArray(supabaseProperty.marketing_photos_entry_hallways)) {
+        setPhotosEntryHallways(supabaseProperty.marketing_photos_entry_hallways.filter((url): url is string => typeof url === "string"));
       }
-      if (supabaseProperty.photos_living_room && Array.isArray(supabaseProperty.photos_living_room)) {
-        setPhotosLivingRoom(supabaseProperty.photos_living_room.filter((url): url is string => typeof url === "string"));
+      if (supabaseProperty.marketing_photos_living_room && Array.isArray(supabaseProperty.marketing_photos_living_room)) {
+        setPhotosLivingRoom(supabaseProperty.marketing_photos_living_room.filter((url): url is string => typeof url === "string"));
       }
-      if (supabaseProperty.photos_kitchen && Array.isArray(supabaseProperty.photos_kitchen)) {
-        setPhotosKitchen(supabaseProperty.photos_kitchen.filter((url): url is string => typeof url === "string"));
+      if (supabaseProperty.marketing_photos_kitchen && Array.isArray(supabaseProperty.marketing_photos_kitchen)) {
+        setPhotosKitchen(supabaseProperty.marketing_photos_kitchen.filter((url): url is string => typeof url === "string"));
       }
-      if (supabaseProperty.photos_exterior && Array.isArray(supabaseProperty.photos_exterior)) {
-        setPhotosExterior(supabaseProperty.photos_exterior.filter((url): url is string => typeof url === "string"));
+      if (supabaseProperty.marketing_photos_exterior && Array.isArray(supabaseProperty.marketing_photos_exterior)) {
+        setPhotosExterior(supabaseProperty.marketing_photos_exterior.filter((url): url is string => typeof url === "string"));
       }
-      if (supabaseProperty.photos_garage && Array.isArray(supabaseProperty.photos_garage)) {
-        setPhotosGarage(supabaseProperty.photos_garage.filter((url): url is string => typeof url === "string"));
+      if (supabaseProperty.marketing_photos_garage && Array.isArray(supabaseProperty.marketing_photos_garage)) {
+        setPhotosGarage(supabaseProperty.marketing_photos_garage.filter((url): url is string => typeof url === "string"));
       }
-      if (supabaseProperty.photos_terrace && Array.isArray(supabaseProperty.photos_terrace)) {
-        setPhotosTerrace(supabaseProperty.photos_terrace.filter((url): url is string => typeof url === "string"));
+      if (supabaseProperty.marketing_photos_terrace && Array.isArray(supabaseProperty.marketing_photos_terrace)) {
+        setPhotosTerrace(supabaseProperty.marketing_photos_terrace.filter((url): url is string => typeof url === "string"));
       }
-      if (supabaseProperty.photos_storage && Array.isArray(supabaseProperty.photos_storage)) {
-        setPhotosStorage(supabaseProperty.photos_storage.filter((url): url is string => typeof url === "string"));
+      if (supabaseProperty.marketing_photos_storage && Array.isArray(supabaseProperty.marketing_photos_storage)) {
+        setPhotosStorage(supabaseProperty.marketing_photos_storage.filter((url): url is string => typeof url === "string"));
       }
-      if (supabaseProperty.photos_bedrooms && Array.isArray(supabaseProperty.photos_bedrooms)) {
+      if (supabaseProperty.marketing_photos_bedrooms && Array.isArray(supabaseProperty.marketing_photos_bedrooms)) {
         const bedroomsPhotos: Record<number, string[]> = {};
-        supabaseProperty.photos_bedrooms.forEach((roomPhotos, index) => {
+        supabaseProperty.marketing_photos_bedrooms.forEach((roomPhotos, index) => {
           if (Array.isArray(roomPhotos)) {
             bedroomsPhotos[index] = roomPhotos.filter((url): url is string => typeof url === "string");
           }
         });
         setPhotosBedrooms(bedroomsPhotos);
       }
-      if (supabaseProperty.photos_bathrooms && Array.isArray(supabaseProperty.photos_bathrooms)) {
+      if (supabaseProperty.marketing_photos_bathrooms && Array.isArray(supabaseProperty.marketing_photos_bathrooms)) {
         const bathroomsPhotos: Record<number, string[]> = {};
-        supabaseProperty.photos_bathrooms.forEach((bathPhotos, index) => {
+        supabaseProperty.marketing_photos_bathrooms.forEach((bathPhotos, index) => {
           if (Array.isArray(bathPhotos)) {
             bathroomsPhotos[index] = bathPhotos.filter((url): url is string => typeof url === "string");
           }
@@ -365,7 +383,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       }
 
       // Sección 4
-      if (supabaseProperty.publish_online) {
+      if (supabaseProperty.publish_online !== null && supabaseProperty.publish_online !== undefined) {
         setPublishOnline(supabaseProperty.publish_online);
         initialData[`${sectionId}.publishOnline`] = supabaseProperty.publish_online;
       }
@@ -374,6 +392,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         initialData[`${sectionId}.idealistaDescription`] = supabaseProperty.idealista_description;
       }
 
+      // Inicializar formData - siempre sincronizar con Supabase
       initializeFormData(initialData);
       hasInitializedRef.current = true;
     }
@@ -411,10 +430,10 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         
         if (!comment || incidentPhotos.length === 0 || affects === null) return false;
         
-        // Si afecta comercialización: fin (no necesita fotos comerciales)
-        if (affects === true) return true;
+        // Si afecta comercialización (BLOQUEANTE): la sección NO está completa
+        if (affects === true) return false;
         
-        // Si no afecta: debe tener fotos comerciales también
+        // Si no afecta (NO BLOQUEANTE): debe tener fotos comerciales también
         return getRoomCommercialPhotos(room).length > 0;
       }
       
@@ -457,6 +476,44 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     return rooms;
   };
   
+  // Helper para determinar el estado de una instancia
+  const getRoomState = (room: { type: string; index?: number }): "incomplete" | "good" | "blocking" | "non-blocking" => {
+    const status = getRoomStatus(room);
+    if (!status) return "incomplete";
+
+    // Estado 1: Buen Estado
+    // check_* = 'good' y marketing_photos_* tiene fotos comerciales
+    if (status === "good") {
+      const commercialPhotos = getRoomCommercialPhotos(room);
+      return commercialPhotos.length > 0 ? "good" : "incomplete";
+    }
+
+    // Estado 2 y 3: Con Incidencias
+    if (status === "incident") {
+      const comment = getRoomComment(room);
+      const incidentPhotos = getRoomIncidentPhotos(room);
+      const affects = getRoomAffectsCommercialization(room);
+
+      // Si no tiene los datos mínimos, está incompleto
+      if (!comment.trim() || incidentPhotos.length === 0 || affects === null) {
+        return "incomplete";
+      }
+
+      // Estado 2: Con Incidencias Bloqueantes
+      // affects_commercialization_* = true
+      if (affects === true) {
+        return "blocking";
+      }
+
+      // Estado 3: Con Incidencias No Bloqueantes
+      // affects_commercialization_* = false y marketing_photos_* tiene fotos comerciales
+      const commercialPhotos = getRoomCommercialPhotos(room);
+      return commercialPhotos.length > 0 ? "non-blocking" : "incomplete";
+    }
+
+    return "incomplete";
+  };
+
   // Helpers para obtener estado/comentarios/fotos por estancia
   const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
     if (room.type === "bedrooms" && room.index !== undefined) {
@@ -559,12 +616,17 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   };
 
   const isSection4Complete = () => {
-    return publishOnline === "no" || 
-           (publishOnline === "yes" && idealistaDescription.trim() !== "");
+    return publishOnline === false || 
+           (publishOnline === true && idealistaDescription.trim() !== "");
   };
 
   // Handlers Sección 1
   const handlePresentationDoneChange = (value: string) => {
+    if (value === "") {
+      setClientPresentationDone(null);
+      updateField(sectionId, "clientPresentationDone", null);
+      return;
+    }
     const isDone = value === "yes";
     setClientPresentationDone(isDone);
     updateField(sectionId, "clientPresentationDone", isDone);
@@ -577,14 +639,29 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     }
   };
 
+  const handleClearPresentationDone = () => {
+    setClientPresentationDone(null);
+    updateField(sectionId, "clientPresentationDone", null);
+  };
+
   const handlePresentationDateChange = (value: string) => {
     setClientPresentationDate(value);
     updateField(sectionId, "clientPresentationDate", value);
   };
 
   const handlePresentationChannelChange = (value: string) => {
+    if (value === "") {
+      setClientPresentationChannel("");
+      updateField(sectionId, "clientPresentationChannel", null);
+      return;
+    }
     setClientPresentationChannel(value);
     updateField(sectionId, "clientPresentationChannel", value);
+  };
+
+  const handleClearPresentationChannel = () => {
+    setClientPresentationChannel("");
+    updateField(sectionId, "clientPresentationChannel", null);
   };
 
   // Handlers Sección 2
@@ -594,15 +671,26 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   };
 
   const handlePriceApprovalChange = (value: string) => {
+    if (value === "") {
+      setPriceApproval(null);
+      updateField(sectionId, "priceApproval", null);
+      return;
+    }
     const approved = value === "yes";
     setPriceApproval(approved);
     updateField(sectionId, "priceApproval", approved);
   };
 
+  const handleClearPriceApproval = () => {
+    setPriceApproval(null);
+    updateField(sectionId, "priceApproval", null);
+  };
+
   // Handlers Sección 4
   const handlePublishOnlineChange = (value: string) => {
-    setPublishOnline(value as "yes" | "no");
-    updateField(sectionId, "publishOnline", value);
+    const boolValue = value === "yes" ? true : value === "no" ? false : null;
+    setPublishOnline(boolValue);
+    updateField(sectionId, "publishOnline", boolValue);
   };
 
   const handleIdealistaDescriptionChange = (value: string) => {
@@ -739,7 +827,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   // Handlers Sección 3: Afecta comercialización
   const handleAffectsCommercializationChange = async (
     fieldName: string,
-    affects: boolean,
+    affects: boolean | null,
     roomIndex?: number
   ) => {
     if (!supabaseProperty?.property_unique_id) {
@@ -759,10 +847,10 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
         const currentArray = (Array.isArray(currentProperty?.[fieldName])
           ? currentProperty[fieldName]
-          : []) as boolean[];
+          : []) as (boolean | null)[];
 
         while (currentArray.length <= roomIndex) {
-          currentArray.push(false);
+          currentArray.push(null);
         }
 
         currentArray[roomIndex] = affects;
@@ -814,7 +902,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
     try {
       const isArrayOfArrays = roomIndex !== undefined && (
-        fieldName === "photos_bedrooms" || fieldName === "photos_bathrooms" ||
+        fieldName === "marketing_photos_bedrooms" || fieldName === "marketing_photos_bathrooms" ||
         fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms"
       );
       
@@ -887,7 +975,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
     try {
       const isArrayOfArrays = roomIndex !== undefined && (
-        fieldName === "photos_bedrooms" || fieldName === "photos_bathrooms" ||
+        fieldName === "marketing_photos_bedrooms" || fieldName === "marketing_photos_bathrooms" ||
         fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms"
       );
       
@@ -1021,9 +1109,26 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              ¿Se ha realizado la presentación del servicio al cliente?
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">
+                ¿Se ha realizado la presentación del servicio al cliente?
+              </Label>
+              {clientPresentationDone !== null && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleClearPresentationDone();
+                  }}
+                  className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Borrar selección
+                </Button>
+              )}
+            </div>
             <RadioGroup
               value={clientPresentationDone === null ? "" : clientPresentationDone ? "yes" : "no"}
               onValueChange={handlePresentationDoneChange}
@@ -1056,11 +1161,28 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Canal de Comunicación <span className="text-red-500">*</span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">
+                    Canal de Comunicación <span className="text-red-500">*</span>
+                  </Label>
+                  {clientPresentationChannel && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleClearPresentationChannel();
+                      }}
+                      className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Borrar selección
+                    </Button>
+                  )}
+                </div>
                 <RadioGroup
-                  value={clientPresentationChannel}
+                  value={clientPresentationChannel || ""}
                   onValueChange={handlePresentationChannelChange}
                   className="flex gap-6"
                 >
@@ -1117,9 +1239,26 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
           {announcementPrice && parseFloat(announcementPrice) > 0 && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                ¿Ha aprobado el cliente este precio de publicación? <span className="text-red-500">*</span>
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  ¿Ha aprobado el cliente este precio de publicación? <span className="text-red-500">*</span>
+                </Label>
+                {priceApproval !== null && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleClearPriceApproval();
+                    }}
+                    className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Borrar selección
+                  </Button>
+                )}
+              </div>
               <RadioGroup
                 value={priceApproval === null ? "" : priceApproval ? "yes" : "no"}
                 onValueChange={handlePriceApprovalChange}
@@ -1167,7 +1306,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                     check: "check_bedrooms",
                     comment: "comment_bedrooms",
                     affects: "affects_commercialization_bedrooms",
-                    photos: "photos_bedrooms",
+                    photos: "marketing_photos_bedrooms",
                     incidentPhotos: "incident_photos_bedrooms",
                   };
                 }
@@ -1176,7 +1315,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                     check: "check_bathrooms",
                     comment: "comment_bathrooms",
                     affects: "affects_commercialization_bathrooms",
-                    photos: "photos_bathrooms",
+                    photos: "marketing_photos_bathrooms",
                     incidentPhotos: "incident_photos_bathrooms",
                   };
                 }
@@ -1185,56 +1324,56 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                     check: "check_common_areas",
                     comment: "comment_common_areas",
                     affects: "affects_commercialization_common_areas",
-                    photos: "photos_common_areas",
+                    photos: "marketing_photos_common_areas",
                     incidentPhotos: "incident_photos_common_areas",
                   },
                   entry_hallways: {
                     check: "check_entry_hallways",
                     comment: "comment_entry_hallways",
                     affects: "affects_commercialization_entry_hallways",
-                    photos: "photos_entry_hallways",
+                    photos: "marketing_photos_entry_hallways",
                     incidentPhotos: "incident_photos_entry_hallways",
                   },
                   living_room: {
                     check: "check_living_room",
                     comment: "comment_living_room",
                     affects: "affects_commercialization_living_room",
-                    photos: "photos_living_room",
+                    photos: "marketing_photos_living_room",
                     incidentPhotos: "incident_photos_living_room",
                   },
                   kitchen: {
                     check: "check_kitchen",
                     comment: "comment_kitchen",
                     affects: "affects_commercialization_kitchen",
-                    photos: "photos_kitchen",
+                    photos: "marketing_photos_kitchen",
                     incidentPhotos: "incident_photos_kitchen",
                   },
                   exterior: {
                     check: "check_exterior",
                     comment: "comment_exterior",
                     affects: "affects_commercialization_exterior",
-                    photos: "photos_exterior",
+                    photos: "marketing_photos_exterior",
                     incidentPhotos: "incident_photos_exterior",
                   },
                   garage: {
                     check: "check_garage",
                     comment: "comment_garage",
                     affects: "affects_commercialization_garage",
-                    photos: "photos_garage",
+                    photos: "marketing_photos_garage",
                     incidentPhotos: "incident_photos_garage",
                   },
                   terrace: {
                     check: "check_terrace",
                     comment: "comment_terrace",
                     affects: "affects_commercialization_terrace",
-                    photos: "photos_terrace",
+                    photos: "marketing_photos_terrace",
                     incidentPhotos: "incident_photos_terrace",
                   },
                   storage: {
                     check: "check_storage",
                     comment: "comment_storage",
                     affects: "affects_commercialization_storage",
-                    photos: "photos_storage",
+                    photos: "marketing_photos_storage",
                     incidentPhotos: "incident_photos_storage",
                   },
                 };
@@ -1326,12 +1465,44 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
               
               const setters = getSetters();
               
+              const roomState = getRoomState(room);
+              
+              // Función para obtener la clase de color según el estado
+              const getColorClass = () => {
+                switch (roomState) {
+                  case "good":
+                    return "bg-green-500";
+                  case "blocking":
+                    return "bg-red-500";
+                  case "non-blocking":
+                    return "bg-orange-500";
+                  default:
+                    return "bg-gray-300";
+                }
+              };
+
+              const getStateLabel = () => {
+                switch (roomState) {
+                  case "good":
+                    return "Buen Estado";
+                  case "blocking":
+                    return "Incidencias Bloqueantes";
+                  case "non-blocking":
+                    return "Incidencias No Bloqueantes";
+                  default:
+                    return "Sin completar";
+                }
+              };
+
               return (
                 <AccordionItem key={`${room.type}-${room.index ?? ""}`} value={`${room.type}-${room.index ?? ""}`} className="border rounded-lg overflow-hidden">
                   <Card>
                     <CardHeader className="pb-3 p-6">
                       <AccordionTrigger className="hover:no-underline py-0 items-center">
-                        <CardTitle className="text-base font-semibold flex-1 text-left">{room.label}</CardTitle>
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className={`h-3 w-3 rounded-full ${getColorClass()}`} title={getStateLabel()} />
+                          <CardTitle className="text-base font-semibold text-left">{room.label}</CardTitle>
+                        </div>
                       </AccordionTrigger>
                     </CardHeader>
                     <AccordionContent>
@@ -1377,12 +1548,33 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                 />
                                 
                                 <div className="space-y-2">
-                                  <Label className="text-sm font-medium">
-                                    ¿Afecta esta incidencia a la comercialización? <span className="text-red-500">*</span>
-                                  </Label>
+                                  <div className="flex items-center justify-between">
+                                    <Label className="text-sm font-medium">
+                                      ¿Afecta esta incidencia a la comercialización? <span className="text-red-500">*</span>
+                                    </Label>
+                                    {affects !== null && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={async (e) => {
+                                          e.preventDefault();
+                                          await handleAffectsCommercializationChange(fieldNames.affects, null, room.index);
+                                        }}
+                                        className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                      >
+                                        <X className="h-3 w-3 mr-1" />
+                                        Borrar selección
+                                      </Button>
+                                    )}
+                                  </div>
                                   <RadioGroup
                                     value={affects === null ? "" : affects ? "yes" : "no"}
                                     onValueChange={(value) => {
+                                      if (value === "") {
+                                        handleAffectsCommercializationChange(fieldNames.affects, null, room.index);
+                                        return;
+                                      }
                                       const newAffects = value === "yes";
                                       setters.setAffects(newAffects);
                                       handleAffectsCommercializationChange(fieldNames.affects, newAffects, room.index);
@@ -1444,11 +1636,29 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              ¿Se publicará la propiedad en portales inmobiliarios? <span className="text-red-500">*</span>
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">
+                ¿Se publicará la propiedad en portales inmobiliarios? <span className="text-red-500">*</span>
+              </Label>
+              {publishOnline !== null && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPublishOnline(null);
+                    updateField(sectionId, "publishOnline", null);
+                  }}
+                  className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Borrar selección
+                </Button>
+              )}
+            </div>
             <RadioGroup
-              value={publishOnline}
+              value={publishOnline === true ? "yes" : publishOnline === false ? "no" : ""}
               onValueChange={handlePublishOnlineChange}
               className="flex gap-6"
             >
@@ -1463,7 +1673,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
             </RadioGroup>
           </div>
 
-          {publishOnline === "yes" && (
+          {publishOnline === true && (
             <div className="space-y-2">
               <Label htmlFor="idealista-description" className="text-sm font-medium">
                 Descripción del Inmueble para el Anuncio <span className="text-red-500">*</span>

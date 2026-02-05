@@ -17,6 +17,7 @@ interface ProgressOverviewWidgetProps {
   visibleSections?: string[]; // For conditional logic - sections that should be visible
   fieldErrors?: Record<string, string>; // Validation errors for each field
   propheroSectionReviews?: Record<string, { isCorrect: boolean | null }>; // Review state for Prophero sections
+  supabaseProperty?: any; // Property data from Supabase for technical inspection validation
 }
 
 export function ProgressOverviewWidget({
@@ -25,6 +26,7 @@ export function ProgressOverviewWidget({
   visibleSections,
   fieldErrors = {},
   propheroSectionReviews,
+  supabaseProperty,
 }: ProgressOverviewWidgetProps) {
   
   // Dynamic/Conditional Logic: Filter sections based on form state
@@ -103,7 +105,321 @@ export function ProgressOverviewWidget({
     "property-management",
   ];
 
+  // Helper para determinar el estado de una instancia
+  const getRoomState = (room: { type: string; index?: number }): "incomplete" | "good" | "blocking" | "non-blocking" => {
+    if (!supabaseProperty) return "incomplete";
+
+    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.check_bedrooms;
+        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
+          return arr[room.index] as "good" | "incident";
+        }
+        return null;
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.check_bathrooms;
+        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
+          return arr[room.index] as "good" | "incident";
+        }
+        return null;
+      }
+      const statusMap: Record<string, string | null> = {
+        common_areas: supabaseProperty.check_common_areas,
+        entry_hallways: supabaseProperty.check_entry_hallways,
+        living_room: supabaseProperty.check_living_room,
+        kitchen: supabaseProperty.check_kitchen,
+        exterior: supabaseProperty.check_exterior,
+        garage: supabaseProperty.check_garage,
+        terrace: supabaseProperty.check_terrace,
+      };
+      const status = statusMap[room.type];
+      return (status === "good" || status === "incident") ? status : null;
+    };
+
+    const getRoomComment = (room: { type: string; index?: number }): string => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.comment_bedrooms;
+        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.comment_bathrooms;
+        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
+      }
+      const commentMap: Record<string, string | null> = {
+        common_areas: supabaseProperty.comment_common_areas,
+        entry_hallways: supabaseProperty.comment_entry_hallways,
+        living_room: supabaseProperty.comment_living_room,
+        kitchen: supabaseProperty.comment_kitchen,
+        exterior: supabaseProperty.comment_exterior,
+        garage: supabaseProperty.comment_garage,
+        terrace: supabaseProperty.comment_terrace,
+      };
+      return commentMap[room.type] || "";
+    };
+
+    const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.affects_commercialization_bedrooms;
+        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.affects_commercialization_bathrooms;
+        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
+      }
+      const affectsMap: Record<string, boolean | null> = {
+        common_areas: supabaseProperty.affects_commercialization_common_areas,
+        entry_hallways: supabaseProperty.affects_commercialization_entry_hallways,
+        living_room: supabaseProperty.affects_commercialization_living_room,
+        kitchen: supabaseProperty.affects_commercialization_kitchen,
+        exterior: supabaseProperty.affects_commercialization_exterior,
+        garage: supabaseProperty.affects_commercialization_garage,
+        terrace: supabaseProperty.affects_commercialization_terrace,
+      };
+      return affectsMap[room.type] ?? null;
+    };
+
+    const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.marketing_photos_bedrooms;
+        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.marketing_photos_bathrooms;
+        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+      }
+      const photosMap: Record<string, string[] | null> = {
+        common_areas: supabaseProperty.marketing_photos_common_areas,
+        entry_hallways: supabaseProperty.marketing_photos_entry_hallways,
+        living_room: supabaseProperty.marketing_photos_living_room,
+        kitchen: supabaseProperty.marketing_photos_kitchen,
+        exterior: supabaseProperty.marketing_photos_exterior,
+        garage: supabaseProperty.marketing_photos_garage,
+        terrace: supabaseProperty.marketing_photos_terrace,
+      };
+      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+    };
+
+    const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.incident_photos_bedrooms;
+        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.incident_photos_bathrooms;
+        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+      }
+      const photosMap: Record<string, string[] | null> = {
+        common_areas: supabaseProperty.incident_photos_common_areas,
+        entry_hallways: supabaseProperty.incident_photos_entry_hallways,
+        living_room: supabaseProperty.incident_photos_living_room,
+        kitchen: supabaseProperty.incident_photos_kitchen,
+        exterior: supabaseProperty.incident_photos_exterior,
+        garage: supabaseProperty.incident_photos_garage,
+        terrace: supabaseProperty.incident_photos_terrace,
+      };
+      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+    };
+
+    const status = getRoomStatus(room);
+    if (!status) return "incomplete";
+
+    // Estado 1: Buen Estado
+    // check_* = 'good' y marketing_photos_* tiene fotos comerciales
+    if (status === "good") {
+      const commercialPhotos = getRoomCommercialPhotos(room);
+      return commercialPhotos.length > 0 ? "good" : "incomplete";
+    }
+
+    // Estado 2 y 3: Con Incidencias
+    if (status === "incident") {
+      const comment = getRoomComment(room);
+      const incidentPhotos = getRoomIncidentPhotos(room);
+      const affects = getRoomAffectsCommercialization(room);
+
+      // Si no tiene los datos mínimos, está incompleto
+      if (!comment.trim() || incidentPhotos.length === 0 || affects === null) {
+        return "incomplete";
+      }
+
+      // Estado 2: Con Incidencias Bloqueantes
+      // affects_commercialization_* = true
+      if (affects === true) {
+        return "blocking";
+      }
+
+      // Estado 3: Con Incidencias No Bloqueantes
+      // affects_commercialization_* = false y marketing_photos_* tiene fotos comerciales
+      const commercialPhotos = getRoomCommercialPhotos(room);
+      return commercialPhotos.length > 0 ? "non-blocking" : "incomplete";
+    }
+
+    return "incomplete";
+  };
+
+  // Helper para validar si una instancia de inspección técnica está completa
+  const isRoomComplete = (room: { type: string; index?: number }): boolean => {
+    if (!supabaseProperty) return false;
+
+    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.check_bedrooms;
+        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
+          return arr[room.index] as "good" | "incident";
+        }
+        return null;
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.check_bathrooms;
+        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
+          return arr[room.index] as "good" | "incident";
+        }
+        return null;
+      }
+      const statusMap: Record<string, string | null> = {
+        common_areas: supabaseProperty.check_common_areas,
+        entry_hallways: supabaseProperty.check_entry_hallways,
+        living_room: supabaseProperty.check_living_room,
+        kitchen: supabaseProperty.check_kitchen,
+        exterior: supabaseProperty.check_exterior,
+        garage: supabaseProperty.check_garage,
+        terrace: supabaseProperty.check_terrace,
+      };
+      const status = statusMap[room.type];
+      return (status === "good" || status === "incident") ? status : null;
+    };
+
+    const getRoomComment = (room: { type: string; index?: number }): string => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.comment_bedrooms;
+        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.comment_bathrooms;
+        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
+      }
+      const commentMap: Record<string, string | null> = {
+        common_areas: supabaseProperty.comment_common_areas,
+        entry_hallways: supabaseProperty.comment_entry_hallways,
+        living_room: supabaseProperty.comment_living_room,
+        kitchen: supabaseProperty.comment_kitchen,
+        exterior: supabaseProperty.comment_exterior,
+        garage: supabaseProperty.comment_garage,
+        terrace: supabaseProperty.comment_terrace,
+      };
+      return commentMap[room.type] || "";
+    };
+
+    const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.affects_commercialization_bedrooms;
+        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.affects_commercialization_bathrooms;
+        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
+      }
+      const affectsMap: Record<string, boolean | null> = {
+        common_areas: supabaseProperty.affects_commercialization_common_areas,
+        entry_hallways: supabaseProperty.affects_commercialization_entry_hallways,
+        living_room: supabaseProperty.affects_commercialization_living_room,
+        kitchen: supabaseProperty.affects_commercialization_kitchen,
+        exterior: supabaseProperty.affects_commercialization_exterior,
+        garage: supabaseProperty.affects_commercialization_garage,
+        terrace: supabaseProperty.affects_commercialization_terrace,
+      };
+      return affectsMap[room.type] ?? null;
+    };
+
+    const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.marketing_photos_bedrooms;
+        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.marketing_photos_bathrooms;
+        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+      }
+      const photosMap: Record<string, string[] | null> = {
+        common_areas: supabaseProperty.marketing_photos_common_areas,
+        entry_hallways: supabaseProperty.marketing_photos_entry_hallways,
+        living_room: supabaseProperty.marketing_photos_living_room,
+        kitchen: supabaseProperty.marketing_photos_kitchen,
+        exterior: supabaseProperty.marketing_photos_exterior,
+        garage: supabaseProperty.marketing_photos_garage,
+        terrace: supabaseProperty.marketing_photos_terrace,
+      };
+      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+    };
+
+    const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.incident_photos_bedrooms;
+        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+      }
+      if (room.type === "bathrooms" && room.index !== undefined) {
+        const arr = supabaseProperty.incident_photos_bathrooms;
+        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
+      }
+      const photosMap: Record<string, string[] | null> = {
+        common_areas: supabaseProperty.incident_photos_common_areas,
+        entry_hallways: supabaseProperty.incident_photos_entry_hallways,
+        living_room: supabaseProperty.incident_photos_living_room,
+        kitchen: supabaseProperty.incident_photos_kitchen,
+        exterior: supabaseProperty.incident_photos_exterior,
+        garage: supabaseProperty.incident_photos_garage,
+        terrace: supabaseProperty.incident_photos_terrace,
+      };
+      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+    };
+
+    const state = getRoomState(room);
+    // Una instancia está completa si está en estado "good" o "non-blocking"
+    return state === "good" || state === "non-blocking";
+  };
+
+  // Helper para obtener todas las estancias
+  const getAllRooms = (): Array<{ type: string; index?: number; label: string }> => {
+    if (!supabaseProperty) return [];
+    
+    const rooms: Array<{ type: string; index?: number; label: string }> = [
+      { type: "common_areas", label: "Entorno y zonas comunes" },
+      { type: "entry_hallways", label: "Entrada y pasillos" },
+      { type: "living_room", label: "Salón" },
+      { type: "kitchen", label: "Cocina" },
+      { type: "exterior", label: "Exteriores" },
+    ];
+
+    const bedrooms = supabaseProperty.bedrooms || 0;
+    for (let i = 0; i < bedrooms; i++) {
+      rooms.push({ type: "bedrooms", index: i, label: `Habitación ${i + 1}` });
+    }
+
+    const bathrooms = supabaseProperty.bathrooms || 0;
+    for (let i = 0; i < bathrooms; i++) {
+      rooms.push({ type: "bathrooms", index: i, label: `Baño ${i + 1}` });
+    }
+
+    if (supabaseProperty.garage && supabaseProperty.garage !== "No tiene") {
+      rooms.push({ type: "garage", label: "Garaje" });
+    }
+    if (supabaseProperty.has_terrace) {
+      rooms.push({ type: "terrace", label: "Terraza" });
+    }
+
+    return rooms;
+  };
+
   const calculateSectionProgress = (section: Section) => {
+    // Special handling for technical inspection section
+    if (section.id === "technical-inspection" && supabaseProperty) {
+      const allRooms = getAllRooms();
+      const completedRooms = allRooms.filter(room => isRoomComplete(room)).length;
+      const totalRooms = allRooms.length;
+
+      return { completed: completedRooms, total: totalRooms };
+    }
+
     // For Prophero sections, check review state first
     // Prophero sections ONLY count as complete if isCorrect === true in review state
     const isPropheroSection = PROPHERO_SECTION_IDS.includes(section.id);
@@ -291,48 +607,93 @@ export function ProgressOverviewWidget({
             const isRequired = section.required;
             const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
+            // Obtener estados de las estancias para la sección de inspección técnica
+            const roomStates = section.id === "technical-inspection" && supabaseProperty
+              ? getAllRooms().map(room => ({
+                  ...room,
+                  state: getRoomState(room),
+                }))
+              : [];
+
             return (
-              <button
-                key={section.id}
-                onClick={() => scrollToSection(section.id)}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all hover:shadow-sm ${
-                  isComplete
-                    ? "bg-green-50/50 hover:bg-green-50"
-                    : "bg-blue-50/50 hover:bg-blue-50"
-                }`}
-              >
-                {isComplete ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                ) : (
-                  <Circle className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                )}
-                <span
-                  className={`flex-1 text-sm font-medium ${
-                    isComplete ? "text-green-700" : "text-gray-900"
+              <div key={section.id} className="space-y-1.5">
+                <button
+                  onClick={() => scrollToSection(section.id)}
+                  className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all hover:shadow-sm ${
+                    isComplete
+                      ? "bg-green-50/50 hover:bg-green-50"
+                      : "bg-blue-50/50 hover:bg-blue-50"
                   }`}
                 >
-                  {section.title}
-                </span>
-                {isRequired && !isComplete && (
-                  <span className="flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
-                    <Info className="h-3 w-3" />
-                    Obligatorio
+                  {isComplete ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  )}
+                  <span
+                    className={`flex-1 text-sm font-medium ${
+                      isComplete ? "text-green-700" : "text-gray-900"
+                    }`}
+                  >
+                    {section.id === "technical-inspection" && !isComplete
+                      ? `${section.title} (${completed}/${total})`
+                      : section.title}
                   </span>
-                )}
-                {!isComplete && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500 rounded-full transition-all"
-                        style={{ width: `${progressPercent}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-gray-600 min-w-[2.5rem] text-right">
-                      {completed}/{total}
+                  {isRequired && !isComplete && (
+                    <span className="flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                      <Info className="h-3 w-3" />
+                      Obligatorio
                     </span>
+                  )}
+                  {!isComplete && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 rounded-full transition-all"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-600 min-w-[2.5rem] text-right">
+                        {completed}/{total}
+                      </span>
+                    </div>
+                  )}
+                </button>
+                {/* Mostrar indicadores de color para las estancias de inspección técnica */}
+                {section.id === "technical-inspection" && roomStates.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+                    {roomStates.map((room) => {
+                      const getColorClass = () => {
+                        switch (room.state) {
+                          case "good":
+                            return "bg-green-500";
+                          case "blocking":
+                            return "bg-red-500";
+                          case "non-blocking":
+                            return "bg-orange-500";
+                          default:
+                            return "bg-gray-300";
+                        }
+                      };
+                      return (
+                        <div
+                          key={`${room.type}-${room.index ?? ""}`}
+                          className={`h-2 w-2 rounded-full ${getColorClass()}`}
+                          title={`${room.label}: ${
+                            room.state === "good"
+                              ? "Buen Estado"
+                              : room.state === "blocking"
+                              ? "Incidencias Bloqueantes"
+                              : room.state === "non-blocking"
+                              ? "Incidencias No Bloqueantes"
+                              : "Sin completar"
+                          }`}
+                        />
+                      );
+                    })}
                   </div>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>

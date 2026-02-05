@@ -84,46 +84,46 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "owner_financial/custom",
   },
-  // Property Photos (Listo para Alquilar phase)
-  photos_common_areas: {
+  // Property Marketing Photos (Listo para Alquilar phase)
+  marketing_photos_common_areas: {
     bucket: "properties-public-docs",
-    folder: "photos/common_areas",
+    folder: "photos/marketing/common_areas",
   },
-  photos_entry_hallways: {
+  marketing_photos_entry_hallways: {
     bucket: "properties-public-docs",
-    folder: "photos/entry_hallways",
+    folder: "photos/marketing/entry_hallways",
   },
-  photos_bedrooms: {
+  marketing_photos_bedrooms: {
     bucket: "properties-public-docs",
-    folder: "photos/bedrooms",
+    folder: "photos/marketing/bedrooms",
   },
-  photos_living_room: {
+  marketing_photos_living_room: {
     bucket: "properties-public-docs",
-    folder: "photos/living_room",
+    folder: "photos/marketing/living_room",
   },
-  photos_bathrooms: {
+  marketing_photos_bathrooms: {
     bucket: "properties-public-docs",
-    folder: "photos/bathrooms",
+    folder: "photos/marketing/bathrooms",
   },
-  photos_kitchen: {
+  marketing_photos_kitchen: {
     bucket: "properties-public-docs",
-    folder: "photos/kitchen",
+    folder: "photos/marketing/kitchen",
   },
-  photos_exterior: {
+  marketing_photos_exterior: {
     bucket: "properties-public-docs",
-    folder: "photos/exterior",
+    folder: "photos/marketing/exterior",
   },
-  photos_garage: {
+  marketing_photos_garage: {
     bucket: "properties-public-docs",
-    folder: "photos/garage",
+    folder: "photos/marketing/garage",
   },
-  photos_storage: {
+  marketing_photos_storage: {
     bucket: "properties-public-docs",
-    folder: "photos/storage",
+    folder: "photos/marketing/storage",
   },
-  photos_terrace: {
+  marketing_photos_terrace: {
     bucket: "properties-public-docs",
-    folder: "photos/terrace",
+    folder: "photos/marketing/terrace",
   },
   // Property Incident Photos (Fotos de incidencias - diferentes de fotos comerciales)
   incident_photos_common_areas: {
@@ -172,16 +172,16 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
 const JSONB_ARRAY_FIELDS = [
   "doc_renovation_files",
   "pics_urls",
-  "photos_common_areas",
-  "photos_entry_hallways",
-  "photos_bedrooms",
-  "photos_living_room",
-  "photos_bathrooms",
-  "photos_kitchen",
-  "photos_exterior",
-  "photos_garage",
-  "photos_storage",
-  "photos_terrace",
+  "marketing_photos_common_areas",
+  "marketing_photos_entry_hallways",
+  "marketing_photos_bedrooms",
+  "marketing_photos_living_room",
+  "marketing_photos_bathrooms",
+  "marketing_photos_kitchen",
+  "marketing_photos_exterior",
+  "marketing_photos_garage",
+  "marketing_photos_storage",
+  "marketing_photos_terrace",
   "incident_photos_common_areas",
   "incident_photos_entry_hallways",
   "incident_photos_bedrooms",
@@ -289,7 +289,7 @@ export async function DELETE(request: NextRequest) {
       updateData = { [fieldName]: updatedArray };
     } else if (JSONB_ARRAY_FIELDS.includes(fieldName)) {
       // Special handling for bedrooms and bathrooms (arrays of arrays)
-      if ((fieldName === "photos_bedrooms" || fieldName === "photos_bathrooms" || fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms") && roomIndex !== undefined && roomIndex !== null) {
+      if ((fieldName === "marketing_photos_bedrooms" || fieldName === "marketing_photos_bathrooms" || fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms") && roomIndex !== undefined && roomIndex !== null) {
         const roomIdx = typeof roomIndex === "string" ? parseInt(roomIndex, 10) : roomIndex;
         if (isNaN(roomIdx)) {
           return NextResponse.json(
