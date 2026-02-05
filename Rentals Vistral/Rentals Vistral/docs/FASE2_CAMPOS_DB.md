@@ -7,12 +7,14 @@
 
 ## Resumen Ejecutivo
 
-La Fase 2 "Listo para Alquilar" utiliza **54 campos** de la tabla `properties`, organizados en 4 secciones principales:
+La Fase 2 "Listo para Alquilar" utiliza **10 campos** de la tabla `properties`, organizados en 4 secciones principales:
 
 1. **Presentación al Cliente** (3 campos nuevos)
 2. **Estrategia de Precio** (1 campo nuevo + 3 campos existentes)
-3. **Inspección Técnica y Reportaje** (45 campos nuevos)
+3. **Inspección Técnica y Reportaje** (1 campo nuevo JSONB que consolida toda la información)
 4. **Lanzamiento Comercial** (2 campos nuevos)
+
+**Nota:** La Sección 3 ahora utiliza un único campo JSONB `technical_inspection_report` en lugar de las 45 columnas individuales que existían anteriormente.
 
 ---
 
@@ -59,108 +61,131 @@ La sección está completa cuando:
 
 ## SECCIÓN 3: INSPECCIÓN TÉCNICA Y REPORTAGE
 
-### Campos Nuevos - Fotos de Incidencias (Creados en Phase 2)
+### Campo Nuevo - Reporte de Inspección Técnica (Creado en Phase 2)
 
-Las fotos de incidencias son diferentes de las fotos comerciales. Se guardan en:
-- **Bucket:** `properties-public-docs`
-- **Folders:** `photos/incidents/{estancia}/`
+**Migración:** Todas las columnas individuales de inspección técnica han sido consolidadas en un único campo JSONB para optimizar la arquitectura de la base de datos.
 
 | Campo | Tipo | Descripción | Estructura |
 |-------|------|-------------|------------|
-| `incident_photos_common_areas` | `JSONB` | Fotos de incidencias - Entorno y zonas comunes | Array de strings (URLs) |
-| `incident_photos_entry_hallways` | `JSONB` | Fotos de incidencias - Entrada y pasillos | Array de strings (URLs) |
-| `incident_photos_bedrooms` | `JSONB` | Fotos de incidencias - Habitaciones | Array de arrays de strings (una por habitación) |
-| `incident_photos_living_room` | `JSONB` | Fotos de incidencias - Salón | Array de strings (URLs) |
-| `incident_photos_bathrooms` | `JSONB` | Fotos de incidencias - Baños | Array de arrays de strings (uno por baño) |
-| `incident_photos_kitchen` | `JSONB` | Fotos de incidencias - Cocina | Array de strings (URLs) |
-| `incident_photos_exterior` | `JSONB` | Fotos de incidencias - Exteriores | Array de strings (URLs) |
-| `incident_photos_garage` | `JSONB` | Fotos de incidencias - Garaje | Array de strings (URLs)<br>*Solo si la propiedad tiene garaje* |
-| `incident_photos_terrace` | `JSONB` | Fotos de incidencias - Terraza | Array de strings (URLs)<br>*Solo si la propiedad tiene terraza* |
+| `technical_inspection_report` | `JSONB` | Reporte completo de inspección técnica agrupado por estancia | Objeto JSON con datos por estancia |
 
-### Campos Nuevos - Fotos Comerciales/Marketing (Creados en Phase 2)
+### Estructura del Campo `technical_inspection_report`
 
-Las fotos comerciales se guardan en:
-- **Bucket:** `properties-public-docs`
-- **Folders:** `photos/marketing/{estancia}/`
+El campo `technical_inspection_report` es un objeto JSONB que agrupa toda la información de inspección técnica por estancia. Cada estancia puede tener los siguientes datos:
 
-| Campo | Tipo | Descripción | Estructura |
-|-------|------|-------------|------------|
-| `marketing_photos_common_areas` | `JSONB` | Fotos comerciales/marketing - Entorno y zonas comunes | Array de strings (URLs) |
-| `marketing_photos_entry_hallways` | `JSONB` | Fotos comerciales/marketing - Entrada y pasillos | Array de strings (URLs) |
-| `marketing_photos_bedrooms` | `JSONB` | Fotos comerciales/marketing - Habitaciones | Array de arrays de strings (una por habitación) |
-| `marketing_photos_living_room` | `JSONB` | Fotos comerciales/marketing - Salón | Array de strings (URLs) |
-| `marketing_photos_bathrooms` | `JSONB` | Fotos comerciales/marketing - Baños | Array de arrays de strings (uno por baño) |
-| `marketing_photos_kitchen` | `JSONB` | Fotos comerciales/marketing - Cocina | Array de strings (URLs) |
-| `marketing_photos_exterior` | `JSONB` | Fotos comerciales/marketing - Exteriores | Array de strings (URLs) |
-| `marketing_photos_garage` | `JSONB` | Fotos comerciales/marketing - Garaje | Array de strings (URLs)<br>*Solo si la propiedad tiene garaje* |
-| `marketing_photos_terrace` | `JSONB` | Fotos comerciales/marketing - Terraza | Array de strings (URLs)<br>*Solo si la propiedad tiene terraza* |
+#### Estructura de Datos por Estancia
 
-### Campos Nuevos - Estado de Estancias (Creados en Phase 2)
+```typescript
+interface RoomInspectionData {
+  status: "good" | "incident" | null;           // Estado de la estancia
+  comment: string | null;                       // Comentario descriptivo (si hay incidencias)
+  affects_commercialization: boolean | null;     // ¿Afecta a la comercialización? (si hay incidencias)
+  incident_photos: string[];                     // Array de URLs de fotos de incidencias
+  marketing_photos: string[];                   // Array de URLs de fotos comerciales/marketing
+}
+```
 
-| Campo | Tipo | Descripción | Valores Posibles |
-|-------|------|-------------|------------------|
-| `check_common_areas` | `TEXT` | Estado - Entorno y zonas comunes | `"good"` = Buen estado<br>`"incident"` = Con incidencias<br>`NULL` = No evaluado |
-| `check_entry_hallways` | `TEXT` | Estado - Entrada y pasillos | `"good"` = Buen estado<br>`"incident"` = Con incidencias<br>`NULL` = No evaluado |
-| `check_bedrooms` | `JSONB` | Estado - Habitaciones | Array de textos: `"good"` o `"incident"`<br>(una por habitación) |
-| `check_living_room` | `TEXT` | Estado - Salón | `"good"` = Buen estado<br>`"incident"` = Con incidencias<br>`NULL` = No evaluado |
-| `check_bathrooms` | `JSONB` | Estado - Baños | Array de textos: `"good"` o `"incident"`<br>(uno por baño) |
-| `check_kitchen` | `TEXT` | Estado - Cocina | `"good"` = Buen estado<br>`"incident"` = Con incidencias<br>`NULL` = No evaluado |
-| `check_exterior` | `TEXT` | Estado - Exteriores | `"good"` = Buen estado<br>`"incident"` = Con incidencias<br>`NULL` = No evaluado |
-| `check_garage` | `TEXT` | Estado - Garaje | `"good"` = Buen estado<br>`"incident"` = Con incidencias<br>`NULL` = No evaluado |
-| `check_terrace` | `TEXT` | Estado - Terraza | `"good"` = Buen estado<br>`"incident"` = Con incidencias<br>`NULL` = No evaluado |
+#### Estancias Simples (Objetos Únicos)
 
-### Campos Nuevos - Comentarios (Creados en Phase 2)
+Las siguientes estancias se almacenan como objetos únicos dentro del JSON:
 
-Se usan cuando el estado es `"incident"`:
+- `common_areas` - Entorno y zonas comunes
+- `entry_hallways` - Entrada y pasillos
+- `living_room` - Salón
+- `kitchen` - Cocina
+- `exterior` - Exteriores
+- `garage` - Garaje (condicional)
+- `terrace` - Terraza (condicional)
+- `storage` - Trastero (condicional)
 
-| Campo | Tipo | Descripción | Estructura |
-|-------|------|-------------|------------|
-| `comment_common_areas` | `TEXT` | Comentario - Entorno y zonas comunes | String |
-| `comment_entry_hallways` | `TEXT` | Comentario - Entrada y pasillos | String |
-| `comment_bedrooms` | `JSONB` | Comentarios - Habitaciones | Array de textos (uno por habitación) |
-| `comment_living_room` | `TEXT` | Comentario - Salón | String |
-| `comment_bathrooms` | `JSONB` | Comentarios - Baños | Array de textos (uno por baño) |
-| `comment_kitchen` | `TEXT` | Comentario - Cocina | String |
-| `comment_exterior` | `TEXT` | Comentario - Exteriores | String |
-| `comment_garage` | `TEXT` | Comentario - Garaje | String |
-| `comment_terrace` | `TEXT` | Comentario - Terraza | String |
+**Ejemplo de estructura para estancias simples:**
+```json
+{
+  "common_areas": {
+    "status": "good",
+    "comment": null,
+    "affects_commercialization": null,
+    "incident_photos": [],
+    "marketing_photos": ["url1", "url2"]
+  },
+  "kitchen": {
+    "status": "incident",
+    "comment": "Fugas en el grifo",
+    "affects_commercialization": false,
+    "incident_photos": ["url3", "url4"],
+    "marketing_photos": ["url5"]
+  }
+}
+```
 
-### Campos Nuevos - Impacto en Comercialización (Creados en Phase 2)
+#### Estancias Múltiples (Arrays)
 
-Se usan cuando hay incidencias (`check_* = "incident"`):
+Las siguientes estancias se almacenan como arrays porque cada propiedad puede tener múltiples instancias:
 
-| Campo | Tipo | Descripción | Valores Posibles |
-|-------|------|-------------|------------------|
-| `affects_commercialization_common_areas` | `BOOLEAN` | ¿Afecta la comercialización? - Entorno y zonas comunes | `true` = Sí<br>`false` = No<br>`NULL` = No aplica |
-| `affects_commercialization_entry_hallways` | `BOOLEAN` | ¿Afecta la comercialización? - Entrada y pasillos | `true` = Sí<br>`false` = No<br>`NULL` = No aplica |
-| `affects_commercialization_bedrooms` | `JSONB` | ¿Afecta la comercialización? - Habitaciones | Array de booleanos (uno por habitación) |
-| `affects_commercialization_living_room` | `BOOLEAN` | ¿Afecta la comercialización? - Salón | `true` = Sí<br>`false` = No<br>`NULL` = No aplica |
-| `affects_commercialization_bathrooms` | `JSONB` | ¿Afecta la comercialización? - Baños | Array de booleanos (uno por baño) |
-| `affects_commercialization_kitchen` | `BOOLEAN` | ¿Afecta la comercialización? - Cocina | `true` = Sí<br>`false` = No<br>`NULL` = No aplica |
-| `affects_commercialization_exterior` | `BOOLEAN` | ¿Afecta la comercialización? - Exteriores | `true` = Sí<br>`false` = No<br>`NULL` = No aplica |
-| `affects_commercialization_garage` | `BOOLEAN` | ¿Afecta la comercialización? - Garaje | `true` = Sí<br>`false` = No<br>`NULL` = No aplica |
-| `affects_commercialization_terrace` | `BOOLEAN` | ¿Afecta la comercialización? - Terraza | `true` = Sí<br>`false` = No<br>`NULL` = No aplica |
+- `bedrooms` - Array de objetos (una por habitación)
+- `bathrooms` - Array de objetos (uno por baño)
+
+**Ejemplo de estructura para estancias múltiples:**
+```json
+{
+  "bedrooms": [
+    {
+      "status": "good",
+      "comment": null,
+      "affects_commercialization": null,
+      "incident_photos": [],
+      "marketing_photos": ["url1", "url2"]
+    },
+    {
+      "status": "incident",
+      "comment": "Pared con humedad",
+      "affects_commercialization": true,
+      "incident_photos": ["url3"],
+      "marketing_photos": []
+    }
+  ],
+  "bathrooms": [
+    {
+      "status": "good",
+      "comment": null,
+      "affects_commercialization": null,
+      "incident_photos": [],
+      "marketing_photos": ["url4"]
+    }
+  ]
+}
+```
+
+### Almacenamiento de Fotos
+
+Las fotos se almacenan en Supabase Storage con la siguiente estructura:
+
+- **Bucket:** `properties-public-docs` (acceso público)
+- **Fotos Comerciales/Marketing:** `/{property_unique_id}/photos/marketing/{estancia}/`
+- **Fotos de Incidencias:** `/{property_unique_id}/photos/incidents/{estancia}/`
+
+**Nota:** Los nombres de campos antiguos (`marketing_photos_common_areas`, `incident_photos_bedrooms`, etc.) se siguen utilizando en las rutas API para determinar la ruta de almacenamiento en Supabase Storage, pero las URLs de las fotos se almacenan dentro del campo JSONB `technical_inspection_report`.
 
 ### Criterios de Completitud por Estancia
 
-Cada estancia puede estar en uno de estos estados:
+Cada estancia puede estar en uno de estos estados (según los datos dentro de `technical_inspection_report`):
 
 #### 1. Buen Estado
-- `check_* = 'good'`
-- `marketing_photos_*` tiene fotos comerciales
+- `status = 'good'`
+- `marketing_photos` tiene al menos una foto comercial
 
 #### 2. Con Incidencias Bloqueantes
-- `check_* = 'incident'`
-- `comment_* IS NOT NULL`
-- `incident_photos_*` tiene fotos
-- `affects_commercialization_* = true`
+- `status = 'incident'`
+- `comment IS NOT NULL`
+- `incident_photos` tiene al menos una foto
+- `affects_commercialization = true`
 
 #### 3. Con Incidencias No Bloqueantes
-- `check_* = 'incident'`
-- `comment_* IS NOT NULL`
-- `incident_photos_*` tiene fotos
-- `affects_commercialization_* = false`
-- `marketing_photos_*` tiene fotos comerciales
+- `status = 'incident'`
+- `comment IS NOT NULL`
+- `incident_photos` tiene al menos una foto
+- `affects_commercialization = false`
+- `marketing_photos` tiene al menos una foto comercial
 
 ### Criterios de Completitud de la Sección
 
@@ -169,7 +194,7 @@ Cada estancia puede estar en uno de estos estados:
 - **Con Incidencias No Bloqueantes** (Estado 3)
 
 **La Sección 3 NO está completa si alguna estancia tiene:**
-- **Con Incidencias Bloqueantes** (Estado 2) - `affects_commercialization_* = true`
+- **Con Incidencias Bloqueantes** (Estado 2) - `affects_commercialization = true`
 
 En otras palabras, la sección solo se completa cuando todas las estancias están listas para comercializar (ya sea porque están en buen estado o porque tienen incidencias que no bloquean la comercialización).
 
@@ -197,15 +222,13 @@ La sección está completa cuando:
 ## Resumen de Campos por Tipo
 
 ### Campos Nuevos (Creados en Phase 2)
-- **Total:** 51 campos nuevos
+- **Total:** 7 campos nuevos
   - 3 campos de Presentación al Cliente
   - 1 campo de Estrategia de Precio
-  - 9 campos de Fotos de Incidencias (incident_photos_*)
-  - 9 campos de Fotos Comerciales/Marketing (marketing_photos_*)
-  - 9 campos de Estado de Estancias (check_*)
-  - 9 campos de Comentarios (comment_*)
-  - 9 campos de Impacto en Comercialización (affects_commercialization_*)
+  - 1 campo de Inspección Técnica (`technical_inspection_report` JSONB que consolida toda la información)
   - 2 campos de Lanzamiento Comercial
+
+**Nota:** El campo `technical_inspection_report` reemplaza a las 45 columnas individuales que existían anteriormente (`check_*`, `comment_*`, `affects_commercialization_*`, `incident_photos_*`, `marketing_photos_*`), optimizando significativamente la estructura de la base de datos.
 
 ### Campos Existentes (Ya en la tabla)
 - **Total:** 3 campos existentes
@@ -235,10 +258,19 @@ Las siguientes estancias tienen campos asociados:
 
 ### Estructura de Datos para Arrays
 
-- **Habitaciones y Baños:** Se usan arrays dinámicos porque cada propiedad puede tener un número variable de habitaciones/baños.
-  - `check_bedrooms`: `["good", "incident", "good"]` (una entrada por habitación)
-  - `marketing_photos_bedrooms`: `[["url1", "url2"], ["url3"], ["url4", "url5"]]` (array de arrays, uno por habitación)
-  - `incident_photos_bedrooms`: Similar estructura
+- **Habitaciones y Baños:** Se almacenan como arrays dentro del objeto `technical_inspection_report` porque cada propiedad puede tener un número variable de habitaciones/baños.
+  - `bedrooms`: Array de objetos `RoomInspectionData` (uno por habitación)
+  - `bathrooms`: Array de objetos `RoomInspectionData` (uno por baño)
+  
+**Ejemplo:**
+```json
+{
+  "bedrooms": [
+    { "status": "good", "comment": null, "affects_commercialization": null, "incident_photos": [], "marketing_photos": ["url1"] },
+    { "status": "incident", "comment": "Humedad", "affects_commercialization": false, "incident_photos": ["url2"], "marketing_photos": ["url3"] }
+  ]
+}
+```
 
 ### Campos Condicionales
 
@@ -254,11 +286,20 @@ Los campos de **garaje** y **terraza** solo se usan si la propiedad tiene estas 
 
 ## Referencias
 
-- **SQL Migration:** `SQL/create_phase2_ready_to_rent_fields.sql`
-- **TypeScript Types:** `src/lib/supabase/types.ts`
+- **SQL Migration:** `SQL/migrate_technical_inspection_to_json.sql` (migración a JSONB)
+- **SQL Migration Original:** `SQL/create_phase2_ready_to_rent_fields.sql` (deprecated - columnas individuales eliminadas)
+- **TypeScript Types:** `src/lib/supabase/types.ts` (interfaces `TechnicalInspectionReport` y `RoomInspectionData`)
 - **Componente Principal:** `src/components/rentals/ready-to-rent-tasks.tsx`
-- **Análisis de Columnas:** `PROPERTIES_COLUMNS_ANALYSIS.md`
+- **Rutas API:** `src/app/api/documents/upload/route.ts` y `src/app/api/documents/delete/route.ts`
 
 ---
 
-**Última actualización:** 2026-02-04
+## Historial de Cambios
+
+### 2026-02-05 - Migración a JSONB
+- **Cambio:** Todas las columnas individuales de inspección técnica (`check_*`, `comment_*`, `affects_commercialization_*`, `incident_photos_*`, `marketing_photos_*`) han sido eliminadas y consolidadas en un único campo JSONB `technical_inspection_report`.
+- **Razón:** Optimización de la arquitectura de la base de datos, reduciendo de 45 columnas a 1 campo estructurado.
+- **Migración:** Ver `SQL/migrate_technical_inspection_to_json.sql`
+- **Nota:** No se migraron datos existentes - se empezó limpio con la nueva estructura.
+
+**Última actualización:** 2026-02-05

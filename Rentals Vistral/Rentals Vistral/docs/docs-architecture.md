@@ -60,44 +60,49 @@ Type: `jsonb` | Default: `[]`
 
 **Context:** Phase 2 requires two types of photos: Marketing/Commercial photos and Incident photos. These are stored separately to maintain clear organization.
 
+**Important:** As of 2026-02-05, photo URLs are stored within the `technical_inspection_report` JSONB field in the database, not in individual columns. However, the field names listed below are still used by the API routes to determine the correct storage folder path.
+
 #### 1. Marketing/Commercial Photos
 *Used for property listings, advertisements, and marketing materials.*
 
-| SQL Variable (Supabase) | Folder Path | Description |
-| :--- | :--- | :--- |
-| `marketing_photos_common_areas` | `/{property_unique_id}/photos/marketing/common_areas/` | Marketing photos - Common areas |
-| `marketing_photos_entry_hallways` | `/{property_unique_id}/photos/marketing/entry_hallways/` | Marketing photos - Entry and hallways |
-| `marketing_photos_bedrooms` | `/{property_unique_id}/photos/marketing/bedrooms/` | Marketing photos - Bedrooms (array of arrays, one per bedroom) |
-| `marketing_photos_living_room` | `/{property_unique_id}/photos/marketing/living_room/` | Marketing photos - Living room |
-| `marketing_photos_bathrooms` | `/{property_unique_id}/photos/marketing/bathrooms/` | Marketing photos - Bathrooms (array of arrays, one per bathroom) |
-| `marketing_photos_kitchen` | `/{property_unique_id}/photos/marketing/kitchen/` | Marketing photos - Kitchen |
-| `marketing_photos_exterior` | `/{property_unique_id}/photos/marketing/exterior/` | Marketing photos - Exterior |
-| `marketing_photos_garage` | `/{property_unique_id}/photos/marketing/garage/` | Marketing photos - Garage (conditional) |
-| `marketing_photos_terrace` | `/{property_unique_id}/photos/marketing/terrace/` | Marketing photos - Terrace (conditional) |
-| `marketing_photos_storage` | `/{property_unique_id}/photos/marketing/storage/` | Marketing photos - Storage room (conditional) |
+| Field Name (API Mapping) | Folder Path | Database Storage | Description |
+| :--- | :--- | :--- | :--- |
+| `marketing_photos_common_areas` | `/{property_unique_id}/photos/marketing/common_areas/` | `technical_inspection_report.common_areas.marketing_photos[]` | Marketing photos - Common areas |
+| `marketing_photos_entry_hallways` | `/{property_unique_id}/photos/marketing/entry_hallways/` | `technical_inspection_report.entry_hallways.marketing_photos[]` | Marketing photos - Entry and hallways |
+| `marketing_photos_bedrooms` | `/{property_unique_id}/photos/marketing/bedrooms/` | `technical_inspection_report.bedrooms[].marketing_photos[]` | Marketing photos - Bedrooms (one array per bedroom) |
+| `marketing_photos_living_room` | `/{property_unique_id}/photos/marketing/living_room/` | `technical_inspection_report.living_room.marketing_photos[]` | Marketing photos - Living room |
+| `marketing_photos_bathrooms` | `/{property_unique_id}/photos/marketing/bathrooms/` | `technical_inspection_report.bathrooms[].marketing_photos[]` | Marketing photos - Bathrooms (one array per bathroom) |
+| `marketing_photos_kitchen` | `/{property_unique_id}/photos/marketing/kitchen/` | `technical_inspection_report.kitchen.marketing_photos[]` | Marketing photos - Kitchen |
+| `marketing_photos_exterior` | `/{property_unique_id}/photos/marketing/exterior/` | `technical_inspection_report.exterior.marketing_photos[]` | Marketing photos - Exterior |
+| `marketing_photos_garage` | `/{property_unique_id}/photos/marketing/garage/` | `technical_inspection_report.garage.marketing_photos[]` | Marketing photos - Garage (conditional) |
+| `marketing_photos_terrace` | `/{property_unique_id}/photos/marketing/terrace/` | `technical_inspection_report.terrace.marketing_photos[]` | Marketing photos - Terrace (conditional) |
+| `marketing_photos_storage` | `/{property_unique_id}/photos/marketing/storage/` | `technical_inspection_report.storage.marketing_photos[]` | Marketing photos - Storage room (conditional) |
 
 #### 2. Incident Photos
 *Used to document damages, technical issues, or problems found during inspection.*
 
-| SQL Variable (Supabase) | Folder Path | Description |
-| :--- | :--- | :--- |
-| `incident_photos_common_areas` | `/{property_unique_id}/photos/incidents/common_areas/` | Incident photos - Common areas |
-| `incident_photos_entry_hallways` | `/{property_unique_id}/photos/incidents/entry_hallways/` | Incident photos - Entry and hallways |
-| `incident_photos_bedrooms` | `/{property_unique_id}/photos/incidents/bedrooms/` | Incident photos - Bedrooms (array of arrays, one per bedroom) |
-| `incident_photos_living_room` | `/{property_unique_id}/photos/incidents/living_room/` | Incident photos - Living room |
-| `incident_photos_bathrooms` | `/{property_unique_id}/photos/incidents/bathrooms/` | Incident photos - Bathrooms (array of arrays, one per bathroom) |
-| `incident_photos_kitchen` | `/{property_unique_id}/photos/incidents/kitchen/` | Incident photos - Kitchen |
-| `incident_photos_exterior` | `/{property_unique_id}/photos/incidents/exterior/` | Incident photos - Exterior |
-| `incident_photos_garage` | `/{property_unique_id}/photos/incidents/garage/` | Incident photos - Garage (conditional) |
-| `incident_photos_terrace` | `/{property_unique_id}/photos/incidents/terrace/` | Incident photos - Terrace (conditional) |
-| `incident_photos_storage` | `/{property_unique_id}/photos/incidents/storage/` | Incident photos - Storage room (conditional) |
+| Field Name (API Mapping) | Folder Path | Database Storage | Description |
+| :--- | :--- | :--- | :--- |
+| `incident_photos_common_areas` | `/{property_unique_id}/photos/incidents/common_areas/` | `technical_inspection_report.common_areas.incident_photos[]` | Incident photos - Common areas |
+| `incident_photos_entry_hallways` | `/{property_unique_id}/photos/incidents/entry_hallways/` | `technical_inspection_report.entry_hallways.incident_photos[]` | Incident photos - Entry and hallways |
+| `incident_photos_bedrooms` | `/{property_unique_id}/photos/incidents/bedrooms/` | `technical_inspection_report.bedrooms[].incident_photos[]` | Incident photos - Bedrooms (one array per bedroom) |
+| `incident_photos_living_room` | `/{property_unique_id}/photos/incidents/living_room/` | `technical_inspection_report.living_room.incident_photos[]` | Incident photos - Living room |
+| `incident_photos_bathrooms` | `/{property_unique_id}/photos/incidents/bathrooms/` | `technical_inspection_report.bathrooms[].incident_photos[]` | Incident photos - Bathrooms (one array per bathroom) |
+| `incident_photos_kitchen` | `/{property_unique_id}/photos/incidents/kitchen/` | `technical_inspection_report.kitchen.incident_photos[]` | Incident photos - Kitchen |
+| `incident_photos_exterior` | `/{property_unique_id}/photos/incidents/exterior/` | `technical_inspection_report.exterior.incident_photos[]` | Incident photos - Exterior |
+| `incident_photos_garage` | `/{property_unique_id}/photos/incidents/garage/` | `technical_inspection_report.garage.incident_photos[]` | Incident photos - Garage (conditional) |
+| `incident_photos_terrace` | `/{property_unique_id}/photos/incidents/terrace/` | `technical_inspection_report.terrace.incident_photos[]` | Incident photos - Terrace (conditional) |
+| `incident_photos_storage` | `/{property_unique_id}/photos/incidents/storage/` | `technical_inspection_report.storage.incident_photos[]` | Incident photos - Storage room (conditional) |
 
 **Notes:**
 - **Bucket:** All photos are stored in `properties-public-docs` (public access)
 - **Folder Structure:** Photos are organized by type (`marketing/` vs `incidents/`) and then by room/area
+- **Database Storage:** Photo URLs are stored within the `technical_inspection_report` JSONB field, grouped by room
+- **Field Name Mapping:** The field names (e.g., `marketing_photos_common_areas`) are used by API routes to determine the correct storage folder path, but the actual URLs are stored in the JSONB structure
 - **Conditional Fields:** Garage, terrace, and storage photos are only used if the property has these features
-- **Array Fields:** Bedrooms and bathrooms use arrays of arrays to support multiple rooms
+- **Array Fields:** Bedrooms and bathrooms store photos as arrays within their respective room objects in the JSONB structure
 - **Full Path Pattern:** `{property_unique_id}/photos/{type}/{estancia}/{filename}`
+- **Migration:** See `SQL/migrate_technical_inspection_to_json.sql` for details on the migration from individual columns to JSONB
 
 ### B. Restricted Documents (Bucket: `properties-restricted-docs`)
 

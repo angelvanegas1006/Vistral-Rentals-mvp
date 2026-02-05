@@ -332,9 +332,96 @@ export async function POST(request: NextRequest) {
           [fieldName]: [...currentArray, newDocument],
         };
       }
-    } else if (fieldName === "doc_renovation_files" || fieldName.startsWith("marketing_photos_") || fieldName.startsWith("incident_photos_")) {
-      // Special handling for bedrooms and bathrooms (arrays of arrays)
-      if ((fieldName === "marketing_photos_bedrooms" || fieldName === "marketing_photos_bathrooms" || fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms") && roomIndex !== null) {
+    } else if (fieldName === "doc_renovation_files") {
+      // Get current array value for simple array fields
+      const { data: currentProperty } = await supabase
+        .from("properties")
+        .select(fieldName)
+        .eq("property_unique_id", propertyId)
+        .single();
+
+      const currentArray = Array.isArray(currentProperty?.[fieldName])
+        ? currentProperty[fieldName]
+        : [];
+
+      // If oldValue is provided (editing existing file), replace it in the array
+      // Otherwise, append new URL to array
+      if (oldValue && currentArray.includes(oldValue)) {
+        // Replace the old URL with the new one
+        const updatedArray = currentArray.map((url: string) =>
+          url === oldValue ? documentUrl : url
+        );
+        updateData = { [fieldName]: updatedArray };
+      } else {
+        // Append new URL to array (or create new array if empty)
+        updateData = {
+          [fieldName]: [...currentArray, documentUrl],
+        };
+      }
+    } else if (fieldName.startsWith("marketing_photos_") || fieldName.startsWith("incident_photos_")) {
+      // Handle technical inspection photos - write to technical_inspection_report JSONB
+      const fieldToRoomMap: Record<string, { roomType: string; photoType: "marketing_photos" | "incident_photos" }> = {
+        "marketing_photos_common_areas": { roomType: "common_areas", photoType: "marketing_photos" },
+        "marketing_photos_entry_hallways": { roomType: "entry_hallways", photoType: "marketing_photos" },
+        "marketing_photos_living_room": { roomType: "living_room", photoType: "marketing_photos" },
+        "marketing_photos_kitchen": { roomType: "kitchen", photoType: "marketing_photos" },
+        "marketing_photos_exterior": { roomType: "exterior", photoType: "marketing_photos" },
+        "marketing_photos_garage": { roomType: "garage", photoType: "marketing_photos" },
+        "marketing_photos_terrace": { roomType: "terrace", photoType: "marketing_photos" },
+        "marketing_photos_storage": { roomType: "storage", photoType: "marketing_photos" },
+        "marketing_photos_bedrooms": { roomType: "bedrooms", photoType: "marketing_photos" },
+        "marketing_photos_bathrooms": { roomType: "bathrooms", photoType: "marketing_photos" },
+        "incident_photos_common_areas": { roomType: "common_areas", photoType: "incident_photos" },
+        "incident_photos_entry_hallways": { roomType: "entry_hallways", photoType: "incident_photos" },
+        "incident_photos_living_room": { roomType: "living_room", photoType: "incident_photos" },
+        "incident_photos_kitchen": { roomType: "kitchen", photoType: "incident_photos" },
+        "incident_photos_exterior": { roomType: "exterior", photoType: "incident_photos" },
+        "incident_photos_garage": { roomType: "garage", photoType: "incident_photos" },
+        "incident_photos_terrace": { roomType: "terrace", photoType: "incident_photos" },
+        "incident_photos_storage": { roomType: "storage", photoType: "incident_photos" },
+        "incident_photos_bedrooms": { roomType: "bedrooms", photoType: "incident_photos" },
+        "incident_photos_bathrooms": { roomType: "bathrooms", photoType: "incident_photos" },
+      };
+
+      const roomMapping = fieldToRoomMap[fieldName];
+      if (!roomMapping) {
+        return NextResponse.json(
+          { error: `Unknown photo field: ${fieldName}` },
+          { status: 400 }
+        );
+      }
+
+      // Get current technical_inspection_report
+      const { data: currentProperty } = await supabase
+        .from("properties")
+        .select("technical_inspection_report")
+        .eq("property_unique_id", propertyId)
+        .single();
+
+      if (!currentProperty) {
+        return NextResponse.json(
+          { error: "Property not found" },
+          { status: 404 }
+        );
+      }
+
+      // Parse the JSONB field
+      let report = currentProperty.technical_inspection_report;
+      if (typeof report === 'string') {
+        try {
+          report = JSON.parse(report);
+        } catch {
+          report = {};
+        }
+      }
+      if (!report || typeof report !== 'object') {
+        report = {};
+      }
+
+      const updatedReport = { ...report };
+
+      // Handle bedrooms and bathrooms (arrays)
+      if ((roomMapping.roomType === "bedrooms" || roomMapping.roomType === "bathrooms") && roomIndex !== null) {
         const roomIdx = parseInt(roomIndex, 10);
         if (isNaN(roomIdx)) {
           return NextResponse.json(
@@ -343,63 +430,45 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Get current array of arrays
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", propertyId)
-          .single();
-
-        const currentArrayOfArrays = Array.isArray(currentProperty?.[fieldName])
-          ? (currentProperty[fieldName] as string[][])
-          : [];
-
+        const roomArray = roomMapping.roomType === "bedrooms" ? "bedrooms" : "bathrooms";
+        const rooms = Array.isArray(updatedReport[roomArray]) ? [...updatedReport[roomArray]] : [];
+        
         // Ensure array has enough elements
-        while (currentArrayOfArrays.length <= roomIdx) {
-          currentArrayOfArrays.push([]);
+        while (rooms.length <= roomIdx) {
+          rooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
         }
 
-        // Get the specific room's photo array
-        const roomPhotos = Array.isArray(currentArrayOfArrays[roomIdx])
-          ? currentArrayOfArrays[roomIdx]
+        // Get current photos array
+        const currentPhotos = Array.isArray(rooms[roomIdx]?.[roomMapping.photoType]) 
+          ? [...rooms[roomIdx][roomMapping.photoType]] 
           : [];
 
         // If oldValue is provided, replace it; otherwise append
-        if (oldValue && roomPhotos.includes(oldValue)) {
-          roomPhotos[roomPhotos.indexOf(oldValue)] = documentUrl;
+        if (oldValue && currentPhotos.includes(oldValue)) {
+          currentPhotos[currentPhotos.indexOf(oldValue)] = documentUrl;
         } else {
-          roomPhotos.push(documentUrl);
+          currentPhotos.push(documentUrl);
         }
 
-        currentArrayOfArrays[roomIdx] = roomPhotos;
-        updateData = { [fieldName]: currentArrayOfArrays };
+        rooms[roomIdx] = { ...rooms[roomIdx], [roomMapping.photoType]: currentPhotos };
+        updatedReport[roomArray] = rooms;
       } else {
-        // Get current array value for simple array fields
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", propertyId)
-          .single();
+        // Handle simple rooms (single objects)
+        const roomKey = roomMapping.roomType as keyof typeof updatedReport;
+        const currentRoom = updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] };
+        const currentPhotos = Array.isArray(currentRoom[roomMapping.photoType]) ? [...currentRoom[roomMapping.photoType]] : [];
 
-        const currentArray = Array.isArray(currentProperty?.[fieldName])
-          ? currentProperty[fieldName]
-          : [];
-
-        // If oldValue is provided (editing existing file), replace it in the array
-        // Otherwise, append new URL to array
-        if (oldValue && currentArray.includes(oldValue)) {
-          // Replace the old URL with the new one
-          const updatedArray = currentArray.map((url: string) =>
-            url === oldValue ? documentUrl : url
-          );
-          updateData = { [fieldName]: updatedArray };
+        // If oldValue is provided, replace it; otherwise append
+        if (oldValue && currentPhotos.includes(oldValue)) {
+          currentPhotos[currentPhotos.indexOf(oldValue)] = documentUrl;
         } else {
-          // Append new URL to array (or create new array if empty)
-          updateData = {
-            [fieldName]: [...currentArray, documentUrl],
-          };
+          currentPhotos.push(documentUrl);
         }
+
+        updatedReport[roomKey] = { ...currentRoom, [roomMapping.photoType]: currentPhotos };
       }
+
+      updateData = { technical_inspection_report: updatedReport };
     } else {
       // Single string value for other fields
       updateData = { [fieldName]: documentUrl };

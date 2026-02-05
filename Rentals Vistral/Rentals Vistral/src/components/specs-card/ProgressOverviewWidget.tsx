@@ -109,116 +109,42 @@ export function ProgressOverviewWidget({
   const getRoomState = (room: { type: string; index?: number }): "incomplete" | "good" | "blocking" | "non-blocking" => {
     if (!supabaseProperty) return "incomplete";
 
-    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+    const getRoomData = (room: { type: string; index?: number }) => {
+      const report = supabaseProperty.technical_inspection_report as any;
+      if (!report) return null;
+      
       if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.check_bedrooms;
-        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
-          return arr[room.index] as "good" | "incident";
-        }
-        return null;
+        return report.bedrooms?.[room.index] || null;
       }
       if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.check_bathrooms;
-        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
-          return arr[room.index] as "good" | "incident";
-        }
-        return null;
+        return report.bathrooms?.[room.index] || null;
       }
-      const statusMap: Record<string, string | null> = {
-        common_areas: supabaseProperty.check_common_areas,
-        entry_hallways: supabaseProperty.check_entry_hallways,
-        living_room: supabaseProperty.check_living_room,
-        kitchen: supabaseProperty.check_kitchen,
-        exterior: supabaseProperty.check_exterior,
-        garage: supabaseProperty.check_garage,
-        terrace: supabaseProperty.check_terrace,
-      };
-      const status = statusMap[room.type];
-      return (status === "good" || status === "incident") ? status : null;
+      return report[room.type] || null;
+    };
+
+    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+      const data = getRoomData(room);
+      return data?.status || null;
     };
 
     const getRoomComment = (room: { type: string; index?: number }): string => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.comment_bedrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.comment_bathrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
-      }
-      const commentMap: Record<string, string | null> = {
-        common_areas: supabaseProperty.comment_common_areas,
-        entry_hallways: supabaseProperty.comment_entry_hallways,
-        living_room: supabaseProperty.comment_living_room,
-        kitchen: supabaseProperty.comment_kitchen,
-        exterior: supabaseProperty.comment_exterior,
-        garage: supabaseProperty.comment_garage,
-        terrace: supabaseProperty.comment_terrace,
-      };
-      return commentMap[room.type] || "";
+      const data = getRoomData(room);
+      return data?.comment || "";
     };
 
     const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.affects_commercialization_bedrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.affects_commercialization_bathrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
-      }
-      const affectsMap: Record<string, boolean | null> = {
-        common_areas: supabaseProperty.affects_commercialization_common_areas,
-        entry_hallways: supabaseProperty.affects_commercialization_entry_hallways,
-        living_room: supabaseProperty.affects_commercialization_living_room,
-        kitchen: supabaseProperty.affects_commercialization_kitchen,
-        exterior: supabaseProperty.affects_commercialization_exterior,
-        garage: supabaseProperty.affects_commercialization_garage,
-        terrace: supabaseProperty.affects_commercialization_terrace,
-      };
-      return affectsMap[room.type] ?? null;
+      const data = getRoomData(room);
+      return data?.affects_commercialization ?? null;
     };
 
     const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.marketing_photos_bedrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.marketing_photos_bathrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      const photosMap: Record<string, string[] | null> = {
-        common_areas: supabaseProperty.marketing_photos_common_areas,
-        entry_hallways: supabaseProperty.marketing_photos_entry_hallways,
-        living_room: supabaseProperty.marketing_photos_living_room,
-        kitchen: supabaseProperty.marketing_photos_kitchen,
-        exterior: supabaseProperty.marketing_photos_exterior,
-        garage: supabaseProperty.marketing_photos_garage,
-        terrace: supabaseProperty.marketing_photos_terrace,
-      };
-      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      const data = getRoomData(room);
+      return Array.isArray(data?.marketing_photos) ? data.marketing_photos : [];
     };
 
     const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.incident_photos_bedrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.incident_photos_bathrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      const photosMap: Record<string, string[] | null> = {
-        common_areas: supabaseProperty.incident_photos_common_areas,
-        entry_hallways: supabaseProperty.incident_photos_entry_hallways,
-        living_room: supabaseProperty.incident_photos_living_room,
-        kitchen: supabaseProperty.incident_photos_kitchen,
-        exterior: supabaseProperty.incident_photos_exterior,
-        garage: supabaseProperty.incident_photos_garage,
-        terrace: supabaseProperty.incident_photos_terrace,
-      };
-      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      const data = getRoomData(room);
+      return Array.isArray(data?.incident_photos) ? data.incident_photos : [];
     };
 
     const status = getRoomStatus(room);
@@ -261,116 +187,42 @@ export function ProgressOverviewWidget({
   const isRoomComplete = (room: { type: string; index?: number }): boolean => {
     if (!supabaseProperty) return false;
 
-    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+    const getRoomData = (room: { type: string; index?: number }) => {
+      const report = supabaseProperty.technical_inspection_report as any;
+      if (!report) return null;
+      
       if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.check_bedrooms;
-        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
-          return arr[room.index] as "good" | "incident";
-        }
-        return null;
+        return report.bedrooms?.[room.index] || null;
       }
       if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.check_bathrooms;
-        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
-          return arr[room.index] as "good" | "incident";
-        }
-        return null;
+        return report.bathrooms?.[room.index] || null;
       }
-      const statusMap: Record<string, string | null> = {
-        common_areas: supabaseProperty.check_common_areas,
-        entry_hallways: supabaseProperty.check_entry_hallways,
-        living_room: supabaseProperty.check_living_room,
-        kitchen: supabaseProperty.check_kitchen,
-        exterior: supabaseProperty.check_exterior,
-        garage: supabaseProperty.check_garage,
-        terrace: supabaseProperty.check_terrace,
-      };
-      const status = statusMap[room.type];
-      return (status === "good" || status === "incident") ? status : null;
+      return report[room.type] || null;
+    };
+
+    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+      const data = getRoomData(room);
+      return data?.status || null;
     };
 
     const getRoomComment = (room: { type: string; index?: number }): string => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.comment_bedrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.comment_bathrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
-      }
-      const commentMap: Record<string, string | null> = {
-        common_areas: supabaseProperty.comment_common_areas,
-        entry_hallways: supabaseProperty.comment_entry_hallways,
-        living_room: supabaseProperty.comment_living_room,
-        kitchen: supabaseProperty.comment_kitchen,
-        exterior: supabaseProperty.comment_exterior,
-        garage: supabaseProperty.comment_garage,
-        terrace: supabaseProperty.comment_terrace,
-      };
-      return commentMap[room.type] || "";
+      const data = getRoomData(room);
+      return data?.comment || "";
     };
 
     const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.affects_commercialization_bedrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.affects_commercialization_bathrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
-      }
-      const affectsMap: Record<string, boolean | null> = {
-        common_areas: supabaseProperty.affects_commercialization_common_areas,
-        entry_hallways: supabaseProperty.affects_commercialization_entry_hallways,
-        living_room: supabaseProperty.affects_commercialization_living_room,
-        kitchen: supabaseProperty.affects_commercialization_kitchen,
-        exterior: supabaseProperty.affects_commercialization_exterior,
-        garage: supabaseProperty.affects_commercialization_garage,
-        terrace: supabaseProperty.affects_commercialization_terrace,
-      };
-      return affectsMap[room.type] ?? null;
+      const data = getRoomData(room);
+      return data?.affects_commercialization ?? null;
     };
 
     const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.marketing_photos_bedrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.marketing_photos_bathrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      const photosMap: Record<string, string[] | null> = {
-        common_areas: supabaseProperty.marketing_photos_common_areas,
-        entry_hallways: supabaseProperty.marketing_photos_entry_hallways,
-        living_room: supabaseProperty.marketing_photos_living_room,
-        kitchen: supabaseProperty.marketing_photos_kitchen,
-        exterior: supabaseProperty.marketing_photos_exterior,
-        garage: supabaseProperty.marketing_photos_garage,
-        terrace: supabaseProperty.marketing_photos_terrace,
-      };
-      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      const data = getRoomData(room);
+      return Array.isArray(data?.marketing_photos) ? data.marketing_photos : [];
     };
 
     const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.incident_photos_bedrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.incident_photos_bathrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      const photosMap: Record<string, string[] | null> = {
-        common_areas: supabaseProperty.incident_photos_common_areas,
-        entry_hallways: supabaseProperty.incident_photos_entry_hallways,
-        living_room: supabaseProperty.incident_photos_living_room,
-        kitchen: supabaseProperty.incident_photos_kitchen,
-        exterior: supabaseProperty.incident_photos_exterior,
-        garage: supabaseProperty.incident_photos_garage,
-        terrace: supabaseProperty.incident_photos_terrace,
-      };
-      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      const data = getRoomData(room);
+      return Array.isArray(data?.incident_photos) ? data.incident_photos : [];
     };
 
     const state = getRoomState(room);

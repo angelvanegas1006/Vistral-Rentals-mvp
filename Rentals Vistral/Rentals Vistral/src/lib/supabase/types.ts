@@ -39,6 +39,28 @@ export type PropheroSectionReviews = {
   _meta?: PropheroSectionReviewsMeta;
 };
 
+// Types for Technical Inspection Report (Section 3: Inspección Técnica)
+export interface RoomInspectionData {
+  status: "good" | "incident" | null;
+  comment: string | null;
+  affects_commercialization: boolean | null;
+  incident_photos: string[];
+  marketing_photos: string[];
+}
+
+export interface TechnicalInspectionReport {
+  common_areas?: RoomInspectionData;
+  entry_hallways?: RoomInspectionData;
+  living_room?: RoomInspectionData;
+  kitchen?: RoomInspectionData;
+  exterior?: RoomInspectionData;
+  garage?: RoomInspectionData;
+  terrace?: RoomInspectionData;
+  storage?: RoomInspectionData;
+  bedrooms?: RoomInspectionData[];
+  bathrooms?: RoomInspectionData[];
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -82,61 +104,8 @@ export interface Database {
           client_presentation_channel: string | null; // Canal: "Llamada telefónica", "Correo electrónico", "Ambos"
           // Sección 2: Estrategia de Precio
           price_approval: boolean | null; // ¿Ha aprobado el cliente este precio de publicación?
-          // Property Marketing Photos (Listo para Alquilar phase)
-          marketing_photos_common_areas: Json | null; // Entorno y zonas comunes
-          marketing_photos_entry_hallways: Json | null; // Entrada y pasillos
-          marketing_photos_bedrooms: Json | null; // Habitaciones (array dinámico)
-          marketing_photos_living_room: Json | null; // Salón
-          marketing_photos_bathrooms: Json | null; // Baños (array dinámico)
-          marketing_photos_kitchen: Json | null; // Cocina
-          marketing_photos_exterior: Json | null; // Exteriores
-          marketing_photos_garage: Json | null; // Garaje (condicional)
-          marketing_photos_storage: Json | null; // Trastero (condicional)
-          marketing_photos_terrace: Json | null; // Terraza (condicional)
-          // Property Check Fields (Final check verification)
-          check_common_areas: "good" | "incident" | null; // Entorno y zonas comunes
-          check_entry_hallways: "good" | "incident" | null; // Entrada y pasillos
-          check_bedrooms: Json | null; // Habitaciones (array de textos: good, incident)
-          check_living_room: "good" | "incident" | null; // Salón
-          check_bathrooms: Json | null; // Baños (array de textos: good, incident)
-          check_kitchen: "good" | "incident" | null; // Cocina
-          check_exterior: "good" | "incident" | null; // Exteriores
-          check_garage: "good" | "incident" | null; // Garaje
-          check_terrace: "good" | "incident" | null; // Terraza
-          check_storage: "good" | "incident" | null; // Trastero
-          // Property Comment Fields (comentarios cuando el estado es repair o replace)
-          comment_common_areas: string | null; // Comentario para entorno y zonas comunes
-          comment_entry_hallways: string | null; // Comentario para entrada y pasillos
-          comment_bedrooms: Json | null; // Comentarios para habitaciones (array de textos)
-          comment_living_room: string | null; // Comentario para salón
-          comment_bathrooms: Json | null; // Comentarios para baños (array de textos)
-          comment_kitchen: string | null; // Comentario para cocina
-          comment_exterior: string | null; // Comentario para exteriores
-          comment_garage: string | null; // Comentario para garaje
-          comment_terrace: string | null; // Comentario para terraza
-          comment_storage: string | null; // Comentario para trastero
-          // Property Commercialization Impact Fields (si la incidencia afecta la comercialización)
-          affects_commercialization_common_areas: boolean | null; // ¿Afecta la comercialización? - Entorno y zonas comunes
-          affects_commercialization_entry_hallways: boolean | null; // ¿Afecta la comercialización? - Entrada y pasillos
-          affects_commercialization_bedrooms: Json | null; // ¿Afecta la comercialización? - Habitaciones (array de booleanos)
-          affects_commercialization_living_room: boolean | null; // ¿Afecta la comercialización? - Salón
-          affects_commercialization_bathrooms: Json | null; // ¿Afecta la comercialización? - Baños (array de booleanos)
-          affects_commercialization_kitchen: boolean | null; // ¿Afecta la comercialización? - Cocina
-          affects_commercialization_exterior: boolean | null; // ¿Afecta la comercialización? - Exteriores
-          affects_commercialization_garage: boolean | null; // ¿Afecta la comercialización? - Garaje
-          affects_commercialization_terrace: boolean | null; // ¿Afecta la comercialización? - Terraza
-          affects_commercialization_storage: boolean | null; // ¿Afecta la comercialización? - Trastero
-          // Property Incident Photos (Fotos de incidencias - diferentes de fotos comerciales)
-          incident_photos_common_areas: Json | null; // Fotos de incidencias - Entorno y zonas comunes
-          incident_photos_entry_hallways: Json | null; // Fotos de incidencias - Entrada y pasillos
-          incident_photos_bedrooms: Json | null; // Fotos de incidencias - Habitaciones (array dinámico)
-          incident_photos_living_room: Json | null; // Fotos de incidencias - Salón
-          incident_photos_bathrooms: Json | null; // Fotos de incidencias - Baños (array dinámico)
-          incident_photos_kitchen: Json | null; // Fotos de incidencias - Cocina
-          incident_photos_exterior: Json | null; // Fotos de incidencias - Exteriores
-          incident_photos_garage: Json | null; // Fotos de incidencias - Garaje (condicional)
-          incident_photos_terrace: Json | null; // Fotos de incidencias - Terraza (condicional)
-          incident_photos_storage: Json | null; // Fotos de incidencias - Trastero (condicional)
+          // Sección 3: Inspección Técnica y Reportaje
+          technical_inspection_report: Json | null; // Reporte completo de inspección técnica agrupado por estancia (JSONB)
           // Property Details
           square_meters: number | null;
           bedrooms: number | null;

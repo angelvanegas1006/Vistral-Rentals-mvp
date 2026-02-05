@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { uploadDocument } from "@/lib/document-upload";
 import { deleteDocument } from "@/lib/document-upload";
 import { usePhaseSections } from "@/hooks/use-phase-sections";
+import { TechnicalInspectionReport, RoomInspectionData } from "@/lib/supabase/types";
 
 interface ReadyToRentTasksProps {
   property: {
@@ -64,67 +65,80 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   const [announcementPrice, setAnnouncementPrice] = useState<string>("");
   const [priceApproval, setPriceApproval] = useState<boolean | null>(null);
 
-  // Estados Sección 3: Inspección Técnica (por estancia)
-  // Fijas
-  const [statusCommonAreas, setStatusCommonAreas] = useState<"good" | "incident" | null>(null);
-  const [statusEntryHallways, setStatusEntryHallways] = useState<"good" | "incident" | null>(null);
-  const [statusLivingRoom, setStatusLivingRoom] = useState<"good" | "incident" | null>(null);
-  const [statusKitchen, setStatusKitchen] = useState<"good" | "incident" | null>(null);
-  const [statusExterior, setStatusExterior] = useState<"good" | "incident" | null>(null);
-  const [statusGarage, setStatusGarage] = useState<"good" | "incident" | null>(null);
-  const [statusTerrace, setStatusTerrace] = useState<"good" | "incident" | null>(null);
-  const [statusStorage, setStatusStorage] = useState<"good" | "incident" | null>(null);
-  // Dinámicas
-  const [statusBedrooms, setStatusBedrooms] = useState<Record<number, "good" | "incident" | null>>({});
-  const [statusBathrooms, setStatusBathrooms] = useState<Record<number, "good" | "incident" | null>>({});
-  
-  // Comentarios
-  const [commentCommonAreas, setCommentCommonAreas] = useState<string>("");
-  const [commentEntryHallways, setCommentEntryHallways] = useState<string>("");
-  const [commentLivingRoom, setCommentLivingRoom] = useState<string>("");
-  const [commentKitchen, setCommentKitchen] = useState<string>("");
-  const [commentExterior, setCommentExterior] = useState<string>("");
-  const [commentGarage, setCommentGarage] = useState<string>("");
-  const [commentTerrace, setCommentTerrace] = useState<string>("");
-  const [commentStorage, setCommentStorage] = useState<string>("");
-  const [commentBedrooms, setCommentBedrooms] = useState<Record<number, string>>({});
-  const [commentBathrooms, setCommentBathrooms] = useState<Record<number, string>>({});
-  
-  // Afecta comercialización
-  const [affectsCommercializationCommonAreas, setAffectsCommercializationCommonAreas] = useState<boolean | null>(null);
-  const [affectsCommercializationEntryHallways, setAffectsCommercializationEntryHallways] = useState<boolean | null>(null);
-  const [affectsCommercializationLivingRoom, setAffectsCommercializationLivingRoom] = useState<boolean | null>(null);
-  const [affectsCommercializationKitchen, setAffectsCommercializationKitchen] = useState<boolean | null>(null);
-  const [affectsCommercializationExterior, setAffectsCommercializationExterior] = useState<boolean | null>(null);
-  const [affectsCommercializationGarage, setAffectsCommercializationGarage] = useState<boolean | null>(null);
-  const [affectsCommercializationTerrace, setAffectsCommercializationTerrace] = useState<boolean | null>(null);
-  const [affectsCommercializationStorage, setAffectsCommercializationStorage] = useState<boolean | null>(null);
-  const [affectsCommercializationBedrooms, setAffectsCommercializationBedrooms] = useState<Record<number, boolean | null>>({});
-  const [affectsCommercializationBathrooms, setAffectsCommercializationBathrooms] = useState<Record<number, boolean | null>>({});
-  
-  // Fotos comerciales
-  const [photosCommonAreas, setPhotosCommonAreas] = useState<string[]>([]);
-  const [photosEntryHallways, setPhotosEntryHallways] = useState<string[]>([]);
-  const [photosLivingRoom, setPhotosLivingRoom] = useState<string[]>([]);
-  const [photosKitchen, setPhotosKitchen] = useState<string[]>([]);
-  const [photosExterior, setPhotosExterior] = useState<string[]>([]);
-  const [photosGarage, setPhotosGarage] = useState<string[]>([]);
-  const [photosTerrace, setPhotosTerrace] = useState<string[]>([]);
-  const [photosStorage, setPhotosStorage] = useState<string[]>([]);
-  const [photosBedrooms, setPhotosBedrooms] = useState<Record<number, string[]>>({});
-  const [photosBathrooms, setPhotosBathrooms] = useState<Record<number, string[]>>({});
-  
-  // Fotos incidencias
-  const [incidentPhotosCommonAreas, setIncidentPhotosCommonAreas] = useState<string[]>([]);
-  const [incidentPhotosEntryHallways, setIncidentPhotosEntryHallways] = useState<string[]>([]);
-  const [incidentPhotosLivingRoom, setIncidentPhotosLivingRoom] = useState<string[]>([]);
-  const [incidentPhotosKitchen, setIncidentPhotosKitchen] = useState<string[]>([]);
-  const [incidentPhotosExterior, setIncidentPhotosExterior] = useState<string[]>([]);
-  const [incidentPhotosGarage, setIncidentPhotosGarage] = useState<string[]>([]);
-  const [incidentPhotosTerrace, setIncidentPhotosTerrace] = useState<string[]>([]);
-  const [incidentPhotosStorage, setIncidentPhotosStorage] = useState<string[]>([]);
-  const [incidentPhotosBedrooms, setIncidentPhotosBedrooms] = useState<Record<number, string[]>>({});
-  const [incidentPhotosBathrooms, setIncidentPhotosBathrooms] = useState<Record<number, string[]>>({});
+  // Estado Sección 3: Inspección Técnica (consolidado en JSON)
+  const [technicalInspectionReport, setTechnicalInspectionReport] = useState<TechnicalInspectionReport>({});
+
+  // Helper functions para trabajar con technical_inspection_report
+  const getRoomData = (room: { type: string; index?: number }): RoomInspectionData | null => {
+    const report = technicalInspectionReport;
+    if (room.type === "bedrooms" && room.index !== undefined) {
+      return report.bedrooms?.[room.index] || null;
+    }
+    if (room.type === "bathrooms" && room.index !== undefined) {
+      return report.bathrooms?.[room.index] || null;
+    }
+    const roomMap: Record<string, RoomInspectionData | undefined> = {
+      common_areas: report.common_areas,
+      entry_hallways: report.entry_hallways,
+      living_room: report.living_room,
+      kitchen: report.kitchen,
+      exterior: report.exterior,
+      garage: report.garage,
+      terrace: report.terrace,
+      storage: report.storage,
+    };
+    return roomMap[room.type] || null;
+  };
+
+  const updateRoomData = (room: { type: string; index?: number }, updates: Partial<RoomInspectionData>) => {
+    setTechnicalInspectionReport((prev) => {
+      const updated = { ...prev };
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const bedrooms = [...(updated.bedrooms || [])];
+        while (bedrooms.length <= room.index) {
+          bedrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+        }
+        bedrooms[room.index] = { ...bedrooms[room.index], ...updates };
+        updated.bedrooms = bedrooms;
+      } else if (room.type === "bathrooms" && room.index !== undefined) {
+        const bathrooms = [...(updated.bathrooms || [])];
+        while (bathrooms.length <= room.index) {
+          bathrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+        }
+        bathrooms[room.index] = { ...bathrooms[room.index], ...updates };
+        updated.bathrooms = bathrooms;
+      } else {
+        const roomKey = room.type as keyof Omit<TechnicalInspectionReport, "bedrooms" | "bathrooms">;
+        updated[roomKey] = { ...(updated[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] }), ...updates };
+      }
+      return updated;
+    });
+  };
+
+  const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+    const data = getRoomData(room);
+    return data?.status || null;
+  };
+
+  const getRoomComment = (room: { type: string; index?: number }): string => {
+    const data = getRoomData(room);
+    return data?.comment || "";
+  };
+
+  const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
+    const data = getRoomData(room);
+    return data?.affects_commercialization ?? null;
+  };
+
+  const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
+    const data = getRoomData(room);
+    return data?.marketing_photos || [];
+  };
+
+  const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
+    const data = getRoomData(room);
+    return data?.incident_photos || [];
+  };
 
   // Estados Sección 4: Lanzamiento Comercial
   const [publishOnline, setPublishOnline] = useState<boolean | null>(null);
@@ -175,211 +189,17 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       setPriceApproval(supabaseProperty.price_approval ?? null);
       initialData[`${sectionId}.priceApproval`] = supabaseProperty.price_approval ?? null;
 
-      // Sección 3 - Cargar estados, comentarios, fotos comerciales e incidencias
-      // Cargar fotos comerciales
-      if (supabaseProperty.marketing_photos_common_areas && Array.isArray(supabaseProperty.marketing_photos_common_areas)) {
-        setPhotosCommonAreas(supabaseProperty.marketing_photos_common_areas.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.marketing_photos_entry_hallways && Array.isArray(supabaseProperty.marketing_photos_entry_hallways)) {
-        setPhotosEntryHallways(supabaseProperty.marketing_photos_entry_hallways.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.marketing_photos_living_room && Array.isArray(supabaseProperty.marketing_photos_living_room)) {
-        setPhotosLivingRoom(supabaseProperty.marketing_photos_living_room.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.marketing_photos_kitchen && Array.isArray(supabaseProperty.marketing_photos_kitchen)) {
-        setPhotosKitchen(supabaseProperty.marketing_photos_kitchen.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.marketing_photos_exterior && Array.isArray(supabaseProperty.marketing_photos_exterior)) {
-        setPhotosExterior(supabaseProperty.marketing_photos_exterior.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.marketing_photos_garage && Array.isArray(supabaseProperty.marketing_photos_garage)) {
-        setPhotosGarage(supabaseProperty.marketing_photos_garage.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.marketing_photos_terrace && Array.isArray(supabaseProperty.marketing_photos_terrace)) {
-        setPhotosTerrace(supabaseProperty.marketing_photos_terrace.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.marketing_photos_storage && Array.isArray(supabaseProperty.marketing_photos_storage)) {
-        setPhotosStorage(supabaseProperty.marketing_photos_storage.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.marketing_photos_bedrooms && Array.isArray(supabaseProperty.marketing_photos_bedrooms)) {
-        const bedroomsPhotos: Record<number, string[]> = {};
-        supabaseProperty.marketing_photos_bedrooms.forEach((roomPhotos, index) => {
-          if (Array.isArray(roomPhotos)) {
-            bedroomsPhotos[index] = roomPhotos.filter((url): url is string => typeof url === "string");
-          }
-        });
-        setPhotosBedrooms(bedroomsPhotos);
-      }
-      if (supabaseProperty.marketing_photos_bathrooms && Array.isArray(supabaseProperty.marketing_photos_bathrooms)) {
-        const bathroomsPhotos: Record<number, string[]> = {};
-        supabaseProperty.marketing_photos_bathrooms.forEach((bathPhotos, index) => {
-          if (Array.isArray(bathPhotos)) {
-            bathroomsPhotos[index] = bathPhotos.filter((url): url is string => typeof url === "string");
-          }
-        });
-        setPhotosBathrooms(bathroomsPhotos);
-      }
-      
-      // Cargar fotos de incidencias
-      if (supabaseProperty.incident_photos_common_areas && Array.isArray(supabaseProperty.incident_photos_common_areas)) {
-        setIncidentPhotosCommonAreas(supabaseProperty.incident_photos_common_areas.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.incident_photos_entry_hallways && Array.isArray(supabaseProperty.incident_photos_entry_hallways)) {
-        setIncidentPhotosEntryHallways(supabaseProperty.incident_photos_entry_hallways.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.incident_photos_living_room && Array.isArray(supabaseProperty.incident_photos_living_room)) {
-        setIncidentPhotosLivingRoom(supabaseProperty.incident_photos_living_room.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.incident_photos_kitchen && Array.isArray(supabaseProperty.incident_photos_kitchen)) {
-        setIncidentPhotosKitchen(supabaseProperty.incident_photos_kitchen.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.incident_photos_exterior && Array.isArray(supabaseProperty.incident_photos_exterior)) {
-        setIncidentPhotosExterior(supabaseProperty.incident_photos_exterior.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.incident_photos_garage && Array.isArray(supabaseProperty.incident_photos_garage)) {
-        setIncidentPhotosGarage(supabaseProperty.incident_photos_garage.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.incident_photos_terrace && Array.isArray(supabaseProperty.incident_photos_terrace)) {
-        setIncidentPhotosTerrace(supabaseProperty.incident_photos_terrace.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.incident_photos_storage && Array.isArray(supabaseProperty.incident_photos_storage)) {
-        setIncidentPhotosStorage(supabaseProperty.incident_photos_storage.filter((url): url is string => typeof url === "string"));
-      }
-      if (supabaseProperty.incident_photos_bedrooms && Array.isArray(supabaseProperty.incident_photos_bedrooms)) {
-        const bedroomsIncidentPhotos: Record<number, string[]> = {};
-        supabaseProperty.incident_photos_bedrooms.forEach((roomPhotos, index) => {
-          if (Array.isArray(roomPhotos)) {
-            bedroomsIncidentPhotos[index] = roomPhotos.filter((url): url is string => typeof url === "string");
-          }
-        });
-        setIncidentPhotosBedrooms(bedroomsIncidentPhotos);
-      }
-      if (supabaseProperty.incident_photos_bathrooms && Array.isArray(supabaseProperty.incident_photos_bathrooms)) {
-        const bathroomsIncidentPhotos: Record<number, string[]> = {};
-        supabaseProperty.incident_photos_bathrooms.forEach((bathPhotos, index) => {
-          if (Array.isArray(bathPhotos)) {
-            bathroomsIncidentPhotos[index] = bathPhotos.filter((url): url is string => typeof url === "string");
-          }
-        });
-        setIncidentPhotosBathrooms(bathroomsIncidentPhotos);
-      }
-      
-      // Cargar estados
-      const normalizeStatus = (status: string | null | undefined): "good" | "incident" | null => {
-        if (!status) return null;
-        if (status === "repair" || status === "replace") return "incident";
-        if (status === "not_applicable") return "good";
-        if (status === "good" || status === "incident") return status;
-        return null;
-      };
-      
-      if (supabaseProperty.check_common_areas) {
-        const normalized = normalizeStatus(supabaseProperty.check_common_areas);
-        if (normalized) setStatusCommonAreas(normalized);
-      }
-      if (supabaseProperty.check_entry_hallways) {
-        const normalized = normalizeStatus(supabaseProperty.check_entry_hallways);
-        if (normalized) setStatusEntryHallways(normalized);
-      }
-      if (supabaseProperty.check_living_room) {
-        const normalized = normalizeStatus(supabaseProperty.check_living_room);
-        if (normalized) setStatusLivingRoom(normalized);
-      }
-      if (supabaseProperty.check_kitchen) {
-        const normalized = normalizeStatus(supabaseProperty.check_kitchen);
-        if (normalized) setStatusKitchen(normalized);
-      }
-      if (supabaseProperty.check_exterior) {
-        const normalized = normalizeStatus(supabaseProperty.check_exterior);
-        if (normalized) setStatusExterior(normalized);
-      }
-      if (supabaseProperty.check_garage) {
-        const normalized = normalizeStatus(supabaseProperty.check_garage);
-        if (normalized) setStatusGarage(normalized);
-      }
-      if (supabaseProperty.check_terrace) {
-        const normalized = normalizeStatus(supabaseProperty.check_terrace);
-        if (normalized) setStatusTerrace(normalized);
-      }
-      if (supabaseProperty.check_bedrooms && Array.isArray(supabaseProperty.check_bedrooms)) {
-        const bedroomsStatus: Record<number, "good" | "incident" | null> = {};
-        supabaseProperty.check_bedrooms.forEach((status, index) => {
-          if (typeof status === "string") {
-            const normalized = normalizeStatus(status);
-            if (normalized) bedroomsStatus[index] = normalized;
-          }
-        });
-        setStatusBedrooms(bedroomsStatus);
-      }
-      if (supabaseProperty.check_bathrooms && Array.isArray(supabaseProperty.check_bathrooms)) {
-        const bathroomsStatus: Record<number, "good" | "incident" | null> = {};
-        supabaseProperty.check_bathrooms.forEach((status, index) => {
-          if (typeof status === "string") {
-            const normalized = normalizeStatus(status);
-            if (normalized) bathroomsStatus[index] = normalized;
-          }
-        });
-        setStatusBathrooms(bathroomsStatus);
-      }
-      
-      // Cargar comentarios
-      if (supabaseProperty.comment_common_areas) setCommentCommonAreas(supabaseProperty.comment_common_areas);
-      if (supabaseProperty.comment_entry_hallways) setCommentEntryHallways(supabaseProperty.comment_entry_hallways);
-      if (supabaseProperty.comment_living_room) setCommentLivingRoom(supabaseProperty.comment_living_room);
-      if (supabaseProperty.comment_kitchen) setCommentKitchen(supabaseProperty.comment_kitchen);
-      if (supabaseProperty.comment_exterior) setCommentExterior(supabaseProperty.comment_exterior);
-      if (supabaseProperty.comment_garage) setCommentGarage(supabaseProperty.comment_garage);
-      if (supabaseProperty.comment_terrace) setCommentTerrace(supabaseProperty.comment_terrace);
-      if (supabaseProperty.comment_bedrooms && Array.isArray(supabaseProperty.comment_bedrooms)) {
-        const bedroomsComments: Record<number, string> = {};
-        supabaseProperty.comment_bedrooms.forEach((comment, index) => {
-          if (typeof comment === "string") bedroomsComments[index] = comment;
-        });
-        setCommentBedrooms(bedroomsComments);
-      }
-      if (supabaseProperty.comment_bathrooms && Array.isArray(supabaseProperty.comment_bathrooms)) {
-        const bathroomsComments: Record<number, string> = {};
-        supabaseProperty.comment_bathrooms.forEach((comment, index) => {
-          if (typeof comment === "string") bathroomsComments[index] = comment;
-        });
-        setCommentBathrooms(bathroomsComments);
-      }
-      
-      // Cargar afecta comercialización
-      if (supabaseProperty.affects_commercialization_common_areas !== null && supabaseProperty.affects_commercialization_common_areas !== undefined) {
-        setAffectsCommercializationCommonAreas(supabaseProperty.affects_commercialization_common_areas);
-      }
-      if (supabaseProperty.affects_commercialization_entry_hallways !== null && supabaseProperty.affects_commercialization_entry_hallways !== undefined) {
-        setAffectsCommercializationEntryHallways(supabaseProperty.affects_commercialization_entry_hallways);
-      }
-      if (supabaseProperty.affects_commercialization_living_room !== null && supabaseProperty.affects_commercialization_living_room !== undefined) {
-        setAffectsCommercializationLivingRoom(supabaseProperty.affects_commercialization_living_room);
-      }
-      if (supabaseProperty.affects_commercialization_kitchen !== null && supabaseProperty.affects_commercialization_kitchen !== undefined) {
-        setAffectsCommercializationKitchen(supabaseProperty.affects_commercialization_kitchen);
-      }
-      if (supabaseProperty.affects_commercialization_exterior !== null && supabaseProperty.affects_commercialization_exterior !== undefined) {
-        setAffectsCommercializationExterior(supabaseProperty.affects_commercialization_exterior);
-      }
-      if (supabaseProperty.affects_commercialization_garage !== null && supabaseProperty.affects_commercialization_garage !== undefined) {
-        setAffectsCommercializationGarage(supabaseProperty.affects_commercialization_garage);
-      }
-      if (supabaseProperty.affects_commercialization_terrace !== null && supabaseProperty.affects_commercialization_terrace !== undefined) {
-        setAffectsCommercializationTerrace(supabaseProperty.affects_commercialization_terrace);
-      }
-      if (supabaseProperty.affects_commercialization_bedrooms && Array.isArray(supabaseProperty.affects_commercialization_bedrooms)) {
-        const bedroomsAffects: Record<number, boolean | null> = {};
-        supabaseProperty.affects_commercialization_bedrooms.forEach((affects, index) => {
-          if (typeof affects === "boolean") bedroomsAffects[index] = affects;
-        });
-        setAffectsCommercializationBedrooms(bedroomsAffects);
-      }
-      if (supabaseProperty.affects_commercialization_bathrooms && Array.isArray(supabaseProperty.affects_commercialization_bathrooms)) {
-        const bathroomsAffects: Record<number, boolean | null> = {};
-        supabaseProperty.affects_commercialization_bathrooms.forEach((affects, index) => {
-          if (typeof affects === "boolean") bathroomsAffects[index] = affects;
-        });
-        setAffectsCommercializationBathrooms(bathroomsAffects);
+      // Sección 3 - Cargar technical_inspection_report desde JSON
+      if (supabaseProperty.technical_inspection_report) {
+        try {
+          const report = typeof supabaseProperty.technical_inspection_report === 'string' 
+            ? JSON.parse(supabaseProperty.technical_inspection_report)
+            : supabaseProperty.technical_inspection_report;
+          setTechnicalInspectionReport(report as TechnicalInspectionReport);
+        } catch (error) {
+          console.error("Error parsing technical_inspection_report:", error);
+          setTechnicalInspectionReport({});
+        }
       }
 
       // Sección 4
@@ -514,106 +334,6 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     return "incomplete";
   };
 
-  // Helpers para obtener estado/comentarios/fotos por estancia
-  const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
-    if (room.type === "bedrooms" && room.index !== undefined) {
-      return statusBedrooms[room.index] || null;
-    }
-    if (room.type === "bathrooms" && room.index !== undefined) {
-      return statusBathrooms[room.index] || null;
-    }
-    const statusMap: Record<string, "good" | "incident" | null> = {
-      common_areas: statusCommonAreas,
-      entry_hallways: statusEntryHallways,
-      living_room: statusLivingRoom,
-      kitchen: statusKitchen,
-      exterior: statusExterior,
-      garage: statusGarage,
-      terrace: statusTerrace,
-      storage: statusStorage,
-    };
-    return statusMap[room.type] || null;
-  };
-  
-  const getRoomComment = (room: { type: string; index?: number }): string => {
-    if (room.type === "bedrooms" && room.index !== undefined) {
-      return commentBedrooms[room.index] || "";
-    }
-    if (room.type === "bathrooms" && room.index !== undefined) {
-      return commentBathrooms[room.index] || "";
-    }
-    const commentMap: Record<string, string> = {
-      common_areas: commentCommonAreas,
-      entry_hallways: commentEntryHallways,
-      living_room: commentLivingRoom,
-      kitchen: commentKitchen,
-      exterior: commentExterior,
-      garage: commentGarage,
-      terrace: commentTerrace,
-      storage: commentStorage,
-    };
-    return commentMap[room.type] || "";
-  };
-  
-  const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
-    if (room.type === "bedrooms" && room.index !== undefined) {
-      return affectsCommercializationBedrooms[room.index] ?? null;
-    }
-    if (room.type === "bathrooms" && room.index !== undefined) {
-      return affectsCommercializationBathrooms[room.index] ?? null;
-    }
-    const affectsMap: Record<string, boolean | null> = {
-      common_areas: affectsCommercializationCommonAreas,
-      entry_hallways: affectsCommercializationEntryHallways,
-      living_room: affectsCommercializationLivingRoom,
-      kitchen: affectsCommercializationKitchen,
-      exterior: affectsCommercializationExterior,
-      garage: affectsCommercializationGarage,
-      terrace: affectsCommercializationTerrace,
-      storage: affectsCommercializationStorage,
-    };
-    return affectsMap[room.type] ?? null;
-  };
-  
-  const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
-    if (room.type === "bedrooms" && room.index !== undefined) {
-      return photosBedrooms[room.index] || [];
-    }
-    if (room.type === "bathrooms" && room.index !== undefined) {
-      return photosBathrooms[room.index] || [];
-    }
-    const photosMap: Record<string, string[]> = {
-      common_areas: photosCommonAreas,
-      entry_hallways: photosEntryHallways,
-      living_room: photosLivingRoom,
-      kitchen: photosKitchen,
-      exterior: photosExterior,
-      garage: photosGarage,
-      terrace: photosTerrace,
-      storage: photosStorage,
-    };
-    return photosMap[room.type] || [];
-  };
-  
-  const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
-    if (room.type === "bedrooms" && room.index !== undefined) {
-      return incidentPhotosBedrooms[room.index] || [];
-    }
-    if (room.type === "bathrooms" && room.index !== undefined) {
-      return incidentPhotosBathrooms[room.index] || [];
-    }
-    const photosMap: Record<string, string[]> = {
-      common_areas: incidentPhotosCommonAreas,
-      entry_hallways: incidentPhotosEntryHallways,
-      living_room: incidentPhotosLivingRoom,
-      kitchen: incidentPhotosKitchen,
-      exterior: incidentPhotosExterior,
-      garage: incidentPhotosGarage,
-      terrace: incidentPhotosTerrace,
-      storage: incidentPhotosStorage,
-    };
-    return photosMap[room.type] || [];
-  };
 
   const isSection4Complete = () => {
     return publishOnline === false || 
@@ -710,51 +430,59 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     }
 
     try {
-      const supabase = createClient();
-
-      if ((fieldName === "check_bedrooms" || fieldName === "check_bathrooms") && roomIndex !== undefined) {
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", supabaseProperty.property_unique_id)
-          .single();
-
-        const currentArray = (Array.isArray(currentProperty?.[fieldName])
-          ? currentProperty[fieldName]
-          : []) as string[];
-
-        while (currentArray.length <= roomIndex) {
-          currentArray.push("good");
-        }
-
-        currentArray[roomIndex] = status;
-
-        await supabase
-          .from("properties")
-          .update({ [fieldName]: currentArray })
-          .eq("property_unique_id", supabaseProperty.property_unique_id);
-
-        if (fieldName === "check_bedrooms") {
-          setStatusBedrooms((prev) => ({ ...prev, [roomIndex]: status }));
-        } else {
-          setStatusBathrooms((prev) => ({ ...prev, [roomIndex]: status }));
-        }
-      } else {
-        await supabase
-          .from("properties")
-          .update({ [fieldName]: status })
-          .eq("property_unique_id", supabaseProperty.property_unique_id);
-
-        switch (fieldName) {
-          case "check_common_areas": setStatusCommonAreas(status); break;
-          case "check_entry_hallways": setStatusEntryHallways(status); break;
-          case "check_living_room": setStatusLivingRoom(status); break;
-          case "check_kitchen": setStatusKitchen(status); break;
-          case "check_exterior": setStatusExterior(status); break;
-          case "check_garage": setStatusGarage(status); break;
-          case "check_terrace": setStatusTerrace(status); break;
-        }
+      // Map fieldName to room type
+      const roomTypeMap: Record<string, string> = {
+        "check_common_areas": "common_areas",
+        "check_entry_hallways": "entry_hallways",
+        "check_living_room": "living_room",
+        "check_kitchen": "kitchen",
+        "check_exterior": "exterior",
+        "check_garage": "garage",
+        "check_terrace": "terrace",
+        "check_storage": "storage",
+        "check_bedrooms": "bedrooms",
+        "check_bathrooms": "bathrooms",
+      };
+      
+      const roomType = roomTypeMap[fieldName];
+      if (!roomType) {
+        toast.error("Error: Tipo de estancia no reconocido");
+        return;
       }
+
+      const room = { type: roomType, index: roomIndex };
+      
+      // Update state and get the updated report
+      let updatedReport: TechnicalInspectionReport;
+      setTechnicalInspectionReport((prev) => {
+        updatedReport = { ...prev };
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const bedrooms = [...(updatedReport.bedrooms || [])];
+          while (bedrooms.length <= room.index) {
+            bedrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+          }
+          bedrooms[room.index] = { ...bedrooms[room.index], status };
+          updatedReport.bedrooms = bedrooms;
+        } else if (room.type === "bathrooms" && room.index !== undefined) {
+          const bathrooms = [...(updatedReport.bathrooms || [])];
+          while (bathrooms.length <= room.index) {
+            bathrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+          }
+          bathrooms[room.index] = { ...bathrooms[room.index], status };
+          updatedReport.bathrooms = bathrooms;
+        } else {
+          const roomKey = room.type as keyof Omit<TechnicalInspectionReport, "bedrooms" | "bathrooms">;
+          updatedReport[roomKey] = { ...(updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] }), status };
+        }
+        return updatedReport;
+      });
+
+      // Save to Supabase
+      const supabase = createClient();
+      await supabase
+        .from("properties")
+        .update({ technical_inspection_report: updatedReport! })
+        .eq("property_unique_id", supabaseProperty.property_unique_id);
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error(`Error al actualizar el estado: ${error instanceof Error ? error.message : "Error desconocido"}`);
@@ -773,51 +501,55 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     }
 
     try {
-      const supabase = createClient();
-
-      if ((fieldName === "comment_bedrooms" || fieldName === "comment_bathrooms") && roomIndex !== undefined) {
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", supabaseProperty.property_unique_id)
-          .single();
-
-        const currentArray = (Array.isArray(currentProperty?.[fieldName])
-          ? currentProperty[fieldName]
-          : []) as string[];
-
-        while (currentArray.length <= roomIndex) {
-          currentArray.push("");
-        }
-
-        currentArray[roomIndex] = comment;
-
-        await supabase
-          .from("properties")
-          .update({ [fieldName]: currentArray })
-          .eq("property_unique_id", supabaseProperty.property_unique_id);
-
-        if (fieldName === "comment_bedrooms") {
-          setCommentBedrooms((prev) => ({ ...prev, [roomIndex]: comment }));
-        } else {
-          setCommentBathrooms((prev) => ({ ...prev, [roomIndex]: comment }));
-        }
-      } else {
-        await supabase
-          .from("properties")
-          .update({ [fieldName]: comment || null })
-          .eq("property_unique_id", supabaseProperty.property_unique_id);
-
-        switch (fieldName) {
-          case "comment_common_areas": setCommentCommonAreas(comment); break;
-          case "comment_entry_hallways": setCommentEntryHallways(comment); break;
-          case "comment_living_room": setCommentLivingRoom(comment); break;
-          case "comment_kitchen": setCommentKitchen(comment); break;
-          case "comment_exterior": setCommentExterior(comment); break;
-          case "comment_garage": setCommentGarage(comment); break;
-          case "comment_terrace": setCommentTerrace(comment); break;
-        }
+      const roomTypeMap: Record<string, string> = {
+        "comment_common_areas": "common_areas",
+        "comment_entry_hallways": "entry_hallways",
+        "comment_living_room": "living_room",
+        "comment_kitchen": "kitchen",
+        "comment_exterior": "exterior",
+        "comment_garage": "garage",
+        "comment_terrace": "terrace",
+        "comment_storage": "storage",
+        "comment_bedrooms": "bedrooms",
+        "comment_bathrooms": "bathrooms",
+      };
+      
+      const roomType = roomTypeMap[fieldName];
+      if (!roomType) {
+        toast.error("Error: Tipo de estancia no reconocido");
+        return;
       }
+
+      const room = { type: roomType, index: roomIndex };
+      let updatedReport: TechnicalInspectionReport;
+      setTechnicalInspectionReport((prev) => {
+        updatedReport = { ...prev };
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const bedrooms = [...(updatedReport.bedrooms || [])];
+          while (bedrooms.length <= room.index) {
+            bedrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+          }
+          bedrooms[room.index] = { ...bedrooms[room.index], comment };
+          updatedReport.bedrooms = bedrooms;
+        } else if (room.type === "bathrooms" && room.index !== undefined) {
+          const bathrooms = [...(updatedReport.bathrooms || [])];
+          while (bathrooms.length <= room.index) {
+            bathrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+          }
+          bathrooms[room.index] = { ...bathrooms[room.index], comment };
+          updatedReport.bathrooms = bathrooms;
+        } else {
+          const roomKey = room.type as keyof Omit<TechnicalInspectionReport, "bedrooms" | "bathrooms">;
+          updatedReport[roomKey] = { ...(updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] }), comment };
+        }
+        return updatedReport;
+      });
+
+      const supabase = createClient();
+      await supabase
+        .from("properties")
+        .update({ technical_inspection_report: updatedReport! })
+        .eq("property_unique_id", supabaseProperty.property_unique_id);
     } catch (error) {
       console.error("Error updating comment:", error);
       toast.error(`Error al guardar el comentario: ${error instanceof Error ? error.message : "Error desconocido"}`);
@@ -836,51 +568,55 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     }
 
     try {
-      const supabase = createClient();
-
-      if ((fieldName === "affects_commercialization_bedrooms" || fieldName === "affects_commercialization_bathrooms") && roomIndex !== undefined) {
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", supabaseProperty.property_unique_id)
-          .single();
-
-        const currentArray = (Array.isArray(currentProperty?.[fieldName])
-          ? currentProperty[fieldName]
-          : []) as (boolean | null)[];
-
-        while (currentArray.length <= roomIndex) {
-          currentArray.push(null);
-        }
-
-        currentArray[roomIndex] = affects;
-
-        await supabase
-          .from("properties")
-          .update({ [fieldName]: currentArray })
-          .eq("property_unique_id", supabaseProperty.property_unique_id);
-
-        if (fieldName === "affects_commercialization_bedrooms") {
-          setAffectsCommercializationBedrooms((prev) => ({ ...prev, [roomIndex]: affects }));
-        } else {
-          setAffectsCommercializationBathrooms((prev) => ({ ...prev, [roomIndex]: affects }));
-        }
-      } else {
-        await supabase
-          .from("properties")
-          .update({ [fieldName]: affects })
-          .eq("property_unique_id", supabaseProperty.property_unique_id);
-
-        switch (fieldName) {
-          case "affects_commercialization_common_areas": setAffectsCommercializationCommonAreas(affects); break;
-          case "affects_commercialization_entry_hallways": setAffectsCommercializationEntryHallways(affects); break;
-          case "affects_commercialization_living_room": setAffectsCommercializationLivingRoom(affects); break;
-          case "affects_commercialization_kitchen": setAffectsCommercializationKitchen(affects); break;
-          case "affects_commercialization_exterior": setAffectsCommercializationExterior(affects); break;
-          case "affects_commercialization_garage": setAffectsCommercializationGarage(affects); break;
-          case "affects_commercialization_terrace": setAffectsCommercializationTerrace(affects); break;
-        }
+      const roomTypeMap: Record<string, string> = {
+        "affects_commercialization_common_areas": "common_areas",
+        "affects_commercialization_entry_hallways": "entry_hallways",
+        "affects_commercialization_living_room": "living_room",
+        "affects_commercialization_kitchen": "kitchen",
+        "affects_commercialization_exterior": "exterior",
+        "affects_commercialization_garage": "garage",
+        "affects_commercialization_terrace": "terrace",
+        "affects_commercialization_storage": "storage",
+        "affects_commercialization_bedrooms": "bedrooms",
+        "affects_commercialization_bathrooms": "bathrooms",
+      };
+      
+      const roomType = roomTypeMap[fieldName];
+      if (!roomType) {
+        toast.error("Error: Tipo de estancia no reconocido");
+        return;
       }
+
+      const room = { type: roomType, index: roomIndex };
+      let updatedReport: TechnicalInspectionReport;
+      setTechnicalInspectionReport((prev) => {
+        updatedReport = { ...prev };
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const bedrooms = [...(updatedReport.bedrooms || [])];
+          while (bedrooms.length <= room.index) {
+            bedrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+          }
+          bedrooms[room.index] = { ...bedrooms[room.index], affects_commercialization: affects };
+          updatedReport.bedrooms = bedrooms;
+        } else if (room.type === "bathrooms" && room.index !== undefined) {
+          const bathrooms = [...(updatedReport.bathrooms || [])];
+          while (bathrooms.length <= room.index) {
+            bathrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+          }
+          bathrooms[room.index] = { ...bathrooms[room.index], affects_commercialization: affects };
+          updatedReport.bathrooms = bathrooms;
+        } else {
+          const roomKey = room.type as keyof Omit<TechnicalInspectionReport, "bedrooms" | "bathrooms">;
+          updatedReport[roomKey] = { ...(updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] }), affects_commercialization: affects };
+        }
+        return updatedReport;
+      });
+
+      const supabase = createClient();
+      await supabase
+        .from("properties")
+        .update({ technical_inspection_report: updatedReport! })
+        .eq("property_unique_id", supabaseProperty.property_unique_id);
     } catch (error) {
       console.error("Error updating affects commercialization:", error);
       toast.error(`Error al guardar: ${error instanceof Error ? error.message : "Error desconocido"}`);
@@ -901,6 +637,36 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     }
 
     try {
+      // Map fieldName to room type and photo type
+      const fieldToRoomMap: Record<string, { roomType: string; photoType: "marketing_photos" | "incident_photos" }> = {
+        "marketing_photos_common_areas": { roomType: "common_areas", photoType: "marketing_photos" },
+        "marketing_photos_entry_hallways": { roomType: "entry_hallways", photoType: "marketing_photos" },
+        "marketing_photos_living_room": { roomType: "living_room", photoType: "marketing_photos" },
+        "marketing_photos_kitchen": { roomType: "kitchen", photoType: "marketing_photos" },
+        "marketing_photos_exterior": { roomType: "exterior", photoType: "marketing_photos" },
+        "marketing_photos_garage": { roomType: "garage", photoType: "marketing_photos" },
+        "marketing_photos_terrace": { roomType: "terrace", photoType: "marketing_photos" },
+        "marketing_photos_storage": { roomType: "storage", photoType: "marketing_photos" },
+        "marketing_photos_bedrooms": { roomType: "bedrooms", photoType: "marketing_photos" },
+        "marketing_photos_bathrooms": { roomType: "bathrooms", photoType: "marketing_photos" },
+        "incident_photos_common_areas": { roomType: "common_areas", photoType: "incident_photos" },
+        "incident_photos_entry_hallways": { roomType: "entry_hallways", photoType: "incident_photos" },
+        "incident_photos_living_room": { roomType: "living_room", photoType: "incident_photos" },
+        "incident_photos_kitchen": { roomType: "kitchen", photoType: "incident_photos" },
+        "incident_photos_exterior": { roomType: "exterior", photoType: "incident_photos" },
+        "incident_photos_garage": { roomType: "garage", photoType: "incident_photos" },
+        "incident_photos_terrace": { roomType: "terrace", photoType: "incident_photos" },
+        "incident_photos_storage": { roomType: "storage", photoType: "incident_photos" },
+        "incident_photos_bedrooms": { roomType: "bedrooms", photoType: "incident_photos" },
+        "incident_photos_bathrooms": { roomType: "bathrooms", photoType: "incident_photos" },
+      };
+
+      const roomMapping = fieldToRoomMap[fieldName];
+      if (!roomMapping) {
+        toast.error("Error: Campo de fotos no reconocido");
+        return;
+      }
+
       const isArrayOfArrays = roomIndex !== undefined && (
         fieldName === "marketing_photos_bedrooms" || fieldName === "marketing_photos_bathrooms" ||
         fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms"
@@ -928,21 +694,40 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
           return data.url;
         });
         
-        await Promise.all(uploadPromises);
+        const newUrls = await Promise.all(uploadPromises);
+        const updatedPhotos = [...currentPhotos, ...newUrls];
+        setPhotos(updatedPhotos);
         
+        // Update JSON and save to Supabase
+        const room = { type: roomMapping.roomType, index: roomIndex };
+        let updatedReport: TechnicalInspectionReport;
+        setTechnicalInspectionReport((prev) => {
+          updatedReport = { ...prev };
+          if (room.type === "bedrooms" && room.index !== undefined) {
+            const bedrooms = [...(updatedReport.bedrooms || [])];
+            while (bedrooms.length <= room.index) {
+              bedrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+            }
+            bedrooms[room.index] = { ...bedrooms[room.index], [roomMapping.photoType]: updatedPhotos };
+            updatedReport.bedrooms = bedrooms;
+          } else if (room.type === "bathrooms" && room.index !== undefined) {
+            const bathrooms = [...(updatedReport.bathrooms || [])];
+            while (bathrooms.length <= room.index) {
+              bathrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+            }
+            bathrooms[room.index] = { ...bathrooms[room.index], [roomMapping.photoType]: updatedPhotos };
+            updatedReport.bathrooms = bathrooms;
+          }
+          return updatedReport;
+        });
+        
+        // Save to Supabase
         const supabase = createClient();
-        const { data: updatedProperty } = await supabase
+        await supabase
           .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", supabaseProperty.property_unique_id)
-          .single();
+          .update({ technical_inspection_report: updatedReport! })
+          .eq("property_unique_id", supabaseProperty.property_unique_id);
         
-        const updatedArrayOfArrays = (Array.isArray(updatedProperty?.[fieldName]) 
-          ? updatedProperty[fieldName] 
-          : []) as string[][];
-        
-        const updatedRoomPhotos = updatedArrayOfArrays[roomIndex] || [];
-        setPhotos(updatedRoomPhotos);
         toast.success(`${files.length} foto(s) subida(s) correctamente`);
       } else {
         const uploadPromises = Array.from(files).map(async (file) => {
@@ -952,6 +737,24 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         const newUrls = await Promise.all(uploadPromises);
         const updatedPhotos = [...currentPhotos, ...newUrls];
         setPhotos(updatedPhotos);
+        
+        // Update JSON and save to Supabase
+        const room = { type: roomMapping.roomType };
+        let updatedReport: TechnicalInspectionReport;
+        setTechnicalInspectionReport((prev) => {
+          updatedReport = { ...prev };
+          const roomKey = room.type as keyof Omit<TechnicalInspectionReport, "bedrooms" | "bathrooms">;
+          updatedReport[roomKey] = { ...(updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] }), [roomMapping.photoType]: updatedPhotos };
+          return updatedReport;
+        });
+        
+        // Save to Supabase
+        const supabase = createClient();
+        await supabase
+          .from("properties")
+          .update({ technical_inspection_report: updatedReport! })
+          .eq("property_unique_id", supabaseProperty.property_unique_id);
+        
         toast.success(`${newUrls.length} foto(s) subida(s) correctamente`);
       }
     } catch (error) {
@@ -974,6 +777,36 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
     }
 
     try {
+      // Map fieldName to room type and photo type
+      const fieldToRoomMap: Record<string, { roomType: string; photoType: "marketing_photos" | "incident_photos" }> = {
+        "marketing_photos_common_areas": { roomType: "common_areas", photoType: "marketing_photos" },
+        "marketing_photos_entry_hallways": { roomType: "entry_hallways", photoType: "marketing_photos" },
+        "marketing_photos_living_room": { roomType: "living_room", photoType: "marketing_photos" },
+        "marketing_photos_kitchen": { roomType: "kitchen", photoType: "marketing_photos" },
+        "marketing_photos_exterior": { roomType: "exterior", photoType: "marketing_photos" },
+        "marketing_photos_garage": { roomType: "garage", photoType: "marketing_photos" },
+        "marketing_photos_terrace": { roomType: "terrace", photoType: "marketing_photos" },
+        "marketing_photos_storage": { roomType: "storage", photoType: "marketing_photos" },
+        "marketing_photos_bedrooms": { roomType: "bedrooms", photoType: "marketing_photos" },
+        "marketing_photos_bathrooms": { roomType: "bathrooms", photoType: "marketing_photos" },
+        "incident_photos_common_areas": { roomType: "common_areas", photoType: "incident_photos" },
+        "incident_photos_entry_hallways": { roomType: "entry_hallways", photoType: "incident_photos" },
+        "incident_photos_living_room": { roomType: "living_room", photoType: "incident_photos" },
+        "incident_photos_kitchen": { roomType: "kitchen", photoType: "incident_photos" },
+        "incident_photos_exterior": { roomType: "exterior", photoType: "incident_photos" },
+        "incident_photos_garage": { roomType: "garage", photoType: "incident_photos" },
+        "incident_photos_terrace": { roomType: "terrace", photoType: "incident_photos" },
+        "incident_photos_storage": { roomType: "storage", photoType: "incident_photos" },
+        "incident_photos_bedrooms": { roomType: "bedrooms", photoType: "incident_photos" },
+        "incident_photos_bathrooms": { roomType: "bathrooms", photoType: "incident_photos" },
+      };
+
+      const roomMapping = fieldToRoomMap[fieldName];
+      if (!roomMapping) {
+        toast.error("Error: Campo de fotos no reconocido");
+        return;
+      }
+
       const isArrayOfArrays = roomIndex !== undefined && (
         fieldName === "marketing_photos_bedrooms" || fieldName === "marketing_photos_bathrooms" ||
         fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms"
@@ -995,14 +828,43 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
           const errorData = await deleteResponse.json().catch(() => ({ error: "Unknown error" }));
           throw new Error(errorData.error || `Delete failed with status ${deleteResponse.status}`);
         }
-        
-        const updatedPhotos = currentPhotos.filter((url) => url !== photoUrl);
-        setPhotos(updatedPhotos);
       } else {
         await deleteDocument(fieldName, supabaseProperty.property_unique_id, photoUrl);
-        const updatedPhotos = currentPhotos.filter((url) => url !== photoUrl);
-        setPhotos(updatedPhotos);
       }
+      
+      const updatedPhotos = currentPhotos.filter((url) => url !== photoUrl);
+      setPhotos(updatedPhotos);
+      
+      // Update JSON and save to Supabase
+      const room = { type: roomMapping.roomType, index: roomIndex };
+      let updatedReport: TechnicalInspectionReport;
+      setTechnicalInspectionReport((prev) => {
+        updatedReport = { ...prev };
+        if (room.type === "bedrooms" && room.index !== undefined) {
+          const bedrooms = [...(updatedReport.bedrooms || [])];
+          if (bedrooms[room.index]) {
+            bedrooms[room.index] = { ...bedrooms[room.index], [roomMapping.photoType]: updatedPhotos };
+            updatedReport.bedrooms = bedrooms;
+          }
+        } else if (room.type === "bathrooms" && room.index !== undefined) {
+          const bathrooms = [...(updatedReport.bathrooms || [])];
+          if (bathrooms[room.index]) {
+            bathrooms[room.index] = { ...bathrooms[room.index], [roomMapping.photoType]: updatedPhotos };
+            updatedReport.bathrooms = bathrooms;
+          }
+        } else {
+          const roomKey = room.type as keyof Omit<TechnicalInspectionReport, "bedrooms" | "bathrooms">;
+          updatedReport[roomKey] = { ...(updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] }), [roomMapping.photoType]: updatedPhotos };
+        }
+        return updatedReport;
+      });
+      
+      // Save to Supabase
+      const supabase = createClient();
+      await supabase
+        .from("properties")
+        .update({ technical_inspection_report: updatedReport! })
+        .eq("property_unique_id", supabaseProperty.property_unique_id);
       
       toast.success("Foto eliminada correctamente");
     } catch (error) {
@@ -1382,85 +1244,30 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
               
               const fieldNames = getFieldNames();
               
-              // Helpers para setters
+              // Helpers para setters - ahora usan updateRoomData para actualizar el JSON
               const getSetters = () => {
-                if (room.type === "bedrooms" && room.index !== undefined) {
-                  return {
-                    setStatus: (s: "good" | "incident") => setStatusBedrooms((prev) => ({ ...prev, [room.index!]: s })),
-                    setComment: (c: string) => setCommentBedrooms((prev) => ({ ...prev, [room.index!]: c })),
-                    setAffects: (a: boolean) => setAffectsCommercializationBedrooms((prev) => ({ ...prev, [room.index!]: a })),
-                    setCommercialPhotos: (p: string[]) => setPhotosBedrooms((prev) => ({ ...prev, [room.index!]: p })),
-                    setIncidentPhotos: (p: string[]) => setIncidentPhotosBedrooms((prev) => ({ ...prev, [room.index!]: p })),
-                  };
-                }
-                if (room.type === "bathrooms" && room.index !== undefined) {
-                  return {
-                    setStatus: (s: "good" | "incident") => setStatusBathrooms((prev) => ({ ...prev, [room.index!]: s })),
-                    setComment: (c: string) => setCommentBathrooms((prev) => ({ ...prev, [room.index!]: c })),
-                    setAffects: (a: boolean) => setAffectsCommercializationBathrooms((prev) => ({ ...prev, [room.index!]: a })),
-                    setCommercialPhotos: (p: string[]) => setPhotosBathrooms((prev) => ({ ...prev, [room.index!]: p })),
-                    setIncidentPhotos: (p: string[]) => setIncidentPhotosBathrooms((prev) => ({ ...prev, [room.index!]: p })),
-                  };
-                }
-                const setterMap: Record<string, any> = {
-                  common_areas: {
-                    setStatus: setStatusCommonAreas,
-                    setComment: setCommentCommonAreas,
-                    setAffects: setAffectsCommercializationCommonAreas,
-                    setCommercialPhotos: setPhotosCommonAreas,
-                    setIncidentPhotos: setIncidentPhotosCommonAreas,
+                return {
+                  setStatus: (s: "good" | "incident") => {
+                    updateRoomData(room, { status: s });
+                    // handleStatusChange se llama desde el onChange del StatusSelector
                   },
-                  entry_hallways: {
-                    setStatus: setStatusEntryHallways,
-                    setComment: setCommentEntryHallways,
-                    setAffects: setAffectsCommercializationEntryHallways,
-                    setCommercialPhotos: setPhotosEntryHallways,
-                    setIncidentPhotos: setIncidentPhotosEntryHallways,
+                  setComment: (c: string) => {
+                    updateRoomData(room, { comment: c });
+                    // handleCommentChange se llama desde el onChange del Textarea
                   },
-                  living_room: {
-                    setStatus: setStatusLivingRoom,
-                    setComment: setCommentLivingRoom,
-                    setAffects: setAffectsCommercializationLivingRoom,
-                    setCommercialPhotos: setPhotosLivingRoom,
-                    setIncidentPhotos: setIncidentPhotosLivingRoom,
+                  setAffects: (a: boolean | null) => {
+                    updateRoomData(room, { affects_commercialization: a });
+                    // handleAffectsCommercializationChange se llama desde el onValueChange del RadioGroup
                   },
-                  kitchen: {
-                    setStatus: setStatusKitchen,
-                    setComment: setCommentKitchen,
-                    setAffects: setAffectsCommercializationKitchen,
-                    setCommercialPhotos: setPhotosKitchen,
-                    setIncidentPhotos: setIncidentPhotosKitchen,
+                  setCommercialPhotos: (p: string[]) => {
+                    updateRoomData(room, { marketing_photos: p });
+                    // Los handlers de fotos se manejan en handlePhotoUpload/handlePhotoDelete
                   },
-                  exterior: {
-                    setStatus: setStatusExterior,
-                    setComment: setCommentExterior,
-                    setAffects: setAffectsCommercializationExterior,
-                    setCommercialPhotos: setPhotosExterior,
-                    setIncidentPhotos: setIncidentPhotosExterior,
-                  },
-                  garage: {
-                    setStatus: setStatusGarage,
-                    setComment: setCommentGarage,
-                    setAffects: setAffectsCommercializationGarage,
-                    setCommercialPhotos: setPhotosGarage,
-                    setIncidentPhotos: setIncidentPhotosGarage,
-                  },
-                  terrace: {
-                    setStatus: setStatusTerrace,
-                    setComment: setCommentTerrace,
-                    setAffects: setAffectsCommercializationTerrace,
-                    setCommercialPhotos: setPhotosTerrace,
-                    setIncidentPhotos: setIncidentPhotosTerrace,
-                  },
-                  storage: {
-                    setStatus: setStatusStorage,
-                    setComment: setCommentStorage,
-                    setAffects: setAffectsCommercializationStorage,
-                    setCommercialPhotos: setPhotosStorage,
-                    setIncidentPhotos: setIncidentPhotosStorage,
+                  setIncidentPhotos: (p: string[]) => {
+                    updateRoomData(room, { incident_photos: p });
+                    // Los handlers de fotos se manejan en handlePhotoUpload/handlePhotoDelete
                   },
                 };
-                return setterMap[room.type] || {};
               };
               
               const setters = getSetters();
@@ -1514,7 +1321,6 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                             value={status}
                             onChange={(value) => {
                               const newStatus = value as "good" | "incident";
-                              setters.setStatus(newStatus);
                               handleStatusChange(fieldNames.check, newStatus, room.index);
                             }}
                           />
@@ -1532,7 +1338,6 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                     placeholder="Describe el problema o el estado de esta estancia..."
                                     value={comment}
                                     onChange={(e) => {
-                                      setters.setComment(e.target.value);
                                       handleCommentChange(fieldNames.comment, e.target.value, room.index);
                                     }}
                                     rows={3}
@@ -1576,7 +1381,6 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                         return;
                                       }
                                       const newAffects = value === "yes";
-                                      setters.setAffects(newAffects);
                                       handleAffectsCommercializationChange(fieldNames.affects, newAffects, room.index);
                                     }}
                                     className="flex gap-6"
