@@ -62,12 +62,12 @@ export function NavbarL1({
           {/* Filters */}
           <button
             onClick={onFilterClick}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--prophero-gray-100)] dark:bg-[#1a1a1a] hover:bg-[var(--prophero-gray-200)] dark:hover:bg-[#262626] transition-colors flex-shrink-0"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--vistral-gray-100)] dark:bg-[#1a1a1a] hover:bg-[var(--vistral-gray-200)] dark:hover:bg-[#262626] transition-colors flex-shrink-0"
             aria-label="Filtrar propiedades"
           >
             <Filter className="h-4 w-4 text-foreground" />
             {filterCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--prophero-blue-600)] text-xs font-semibold text-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--vistral-blue-600)] text-xs font-semibold text-white">
                 {filterCount}
               </span>
             )}
@@ -75,13 +75,13 @@ export function NavbarL1({
 
           {/* View Toggle */}
           {showViewToggle && (
-            <div className="flex items-center gap-1 bg-accent dark:bg-[var(--prophero-gray-800)] rounded-lg p-1 flex-shrink-0">
+            <div className="flex items-center gap-1 bg-accent dark:bg-[var(--vistral-gray-800)] rounded-lg p-1 flex-shrink-0">
               <button
                 onClick={() => onViewModeChange?.("kanban")}
                 className={cn(
                   "px-2 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1",
                   viewMode === "kanban"
-                    ? "bg-[var(--prophero-blue-500)] text-white"
+                    ? "bg-[var(--vistral-blue-500)] text-white"
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 aria-label="Kanban view"
@@ -94,7 +94,7 @@ export function NavbarL1({
                 className={cn(
                   "px-2 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1",
                   viewMode === "list"
-                    ? "bg-[var(--prophero-blue-500)] text-white"
+                    ? "bg-[var(--vistral-blue-500)] text-white"
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 aria-label="List view"
@@ -129,12 +129,12 @@ export function NavbarL1({
           {/* Filters */}
           <button
             onClick={onFilterClick}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--prophero-gray-100)] dark:bg-[#1a1a1a] hover:bg-[var(--prophero-gray-200)] dark:hover:bg-[#262626] transition-colors flex-shrink-0"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--vistral-gray-100)] dark:bg-[#1a1a1a] hover:bg-[var(--vistral-gray-200)] dark:hover:bg-[#262626] transition-colors flex-shrink-0"
             aria-label="Filtrar propiedades"
           >
             <Filter className="h-4 w-4 text-foreground" />
             {filterCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--prophero-blue-600)] text-xs font-semibold text-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--vistral-blue-600)] text-xs font-semibold text-white">
                 {filterCount}
               </span>
             )}
@@ -142,13 +142,13 @@ export function NavbarL1({
 
           {/* View Toggle */}
           {showViewToggle && (
-            <div className="flex items-center gap-1 bg-accent dark:bg-[var(--prophero-gray-800)] rounded-lg p-1 flex-shrink-0">
+            <div className="flex items-center gap-1 bg-accent dark:bg-[var(--vistral-gray-800)] rounded-lg p-1 flex-shrink-0">
               <button
                 onClick={() => onViewModeChange?.("kanban")}
                 className={cn(
                   "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
                   viewMode === "kanban"
-                    ? "bg-[var(--prophero-blue-500)] text-white"
+                    ? "bg-[var(--vistral-blue-500)] text-white"
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 aria-label="Kanban view"
@@ -161,7 +161,7 @@ export function NavbarL1({
                 className={cn(
                   "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
                   viewMode === "list"
-                    ? "bg-[var(--prophero-blue-500)] text-white"
+                    ? "bg-[var(--vistral-blue-500)] text-white"
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 aria-label="List view"

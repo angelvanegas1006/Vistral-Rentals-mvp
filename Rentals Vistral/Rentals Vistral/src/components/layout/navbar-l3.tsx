@@ -27,7 +27,7 @@ export function NavbarL3({
   return (
     <div
       className={cn(
-        "sticky bottom-0 z-10 border-t bg-card dark:bg-[var(--prophero-gray-900)]",
+        "sticky bottom-0 z-10 border-t bg-card dark:bg-[var(--vistral-gray-900)]",
         "px-4 md:px-6 lg:px-8 py-3 md:py-4",
         "md:static md:border-t-0",
         className

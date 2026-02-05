@@ -25,7 +25,7 @@ export default function LeadsKanbanPage() {
           onFiltersChange={setFilters}
         />
         {/* Contenido principal */}
-        <div className="flex-1 overflow-y-auto bg-[var(--prophero-gray-50)] dark:bg-[#000000] px-margin-xs sm:px-margin-sm md:px-margin-md lg:px-margin-lg xl:px-margin-xl 2xl:px-margin-xxl py-4 md:py-6">
+        <div className="flex-1 overflow-y-auto bg-[var(--vistral-gray-50)] dark:bg-[#000000] px-margin-xs sm:px-margin-sm md:px-margin-md lg:px-margin-lg xl:px-margin-xl 2xl:px-margin-xxl py-4 md:py-6">
           <RentalsLeadsKanbanBoard
             searchQuery={searchQuery}
             filters={filters}

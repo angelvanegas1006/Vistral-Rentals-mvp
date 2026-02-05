@@ -537,12 +537,12 @@ export default function PropertyDetailPage() {
           {hasUnsavedChanges && (
             <div
               className={cn(
-                "fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[var(--prophero-gray-900)] px-margin-xs sm:px-margin-sm py-4 md:hidden border-t border-[var(--prophero-gray-200)] dark:border-[var(--prophero-gray-700)] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out",
+                "fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[var(--vistral-gray-900)] px-margin-xs sm:px-margin-sm py-4 md:hidden border-t border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out",
                 showFooter ? "translate-y-0" : "translate-y-full"
               )}
             >
               <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
-                <Button className="w-full flex items-center justify-center rounded-lg bg-[var(--prophero-blue-600)] hover:bg-[var(--prophero-blue-700)] text-white h-12 text-base font-medium">
+                <Button className="w-full flex items-center justify-center rounded-lg bg-[var(--vistral-blue-600)] hover:bg-[var(--vistral-blue-700)] text-white h-12 text-base font-medium">
                   Guardar Cambios
                 </Button>
                 <Button
@@ -566,9 +566,9 @@ export default function PropertyDetailPage() {
               onClick={() => setIsSidebarOpen(false)}
             />
             {/* Drawer */}
-            <div className="fixed right-0 top-0 h-full w-[85vw] max-w-sm bg-card dark:bg-[var(--prophero-gray-900)] border-l z-50 lg:hidden shadow-xl overflow-y-auto">
+            <div className="fixed right-0 top-0 h-full w-[85vw] max-w-sm bg-card dark:bg-[var(--vistral-gray-900)] border-l z-50 lg:hidden shadow-xl overflow-y-auto">
               {/* Header del drawer */}
-              <div className="sticky top-0 bg-card dark:bg-[var(--prophero-gray-900)] border-b p-4 flex items-center justify-between z-10">
+              <div className="sticky top-0 bg-card dark:bg-[var(--vistral-gray-900)] border-b p-4 flex items-center justify-between z-10">
                 <h2 className="text-lg font-semibold">Informaciรณn</h2>
                 <Button
                   variant="ghost"

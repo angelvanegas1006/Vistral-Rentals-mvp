@@ -131,7 +131,7 @@ export default function LeadDetailPage() {
           {/* Main Content */}
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 bg-[var(--prophero-gray-50)] dark:bg-[#000000] pb-24"
+            className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 bg-[var(--vistral-gray-50)] dark:bg-[#000000] pb-24"
             onScroll={handleScroll}
           >
             <div className="max-w-4xl mx-auto">
@@ -148,13 +148,13 @@ export default function LeadDetailPage() {
         {hasUnsavedChanges && (
           <div
             className={cn(
-              "fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[var(--prophero-gray-900)] px-4 py-4 md:hidden border-t border-[var(--prophero-gray-200)] dark:border-[var(--prophero-gray-700)] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out",
+              "fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[var(--vistral-gray-900)] px-4 py-4 md:hidden border-t border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out",
               showFooter ? "translate-y-0" : "translate-y-full"
             )}
           >
             <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
               <Button
-                className="w-full flex items-center justify-center rounded-lg bg-[var(--prophero-blue-600)] hover:bg-[var(--prophero-blue-700)] text-white h-12 text-base font-medium"
+                className="w-full flex items-center justify-center rounded-lg bg-[var(--vistral-blue-600)] hover:bg-[var(--vistral-blue-700)] text-white h-12 text-base font-medium"
                 onClick={() => setHasUnsavedChanges(false)}
               >
                 Guardar Cambios

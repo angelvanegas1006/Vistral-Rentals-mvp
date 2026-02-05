@@ -33,7 +33,7 @@ export function PropertyTabs({
         className
       )}
     >
-      <nav className="bg-[#FAFAFA] dark:bg-[var(--prophero-gray-800)] rounded-[18px] px-1 py-0 h-auto w-max lg:w-auto">
+      <nav className="bg-[#FAFAFA] dark:bg-[var(--vistral-gray-800)] rounded-[18px] px-1 py-0 h-auto w-max lg:w-auto">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -44,7 +44,7 @@ export function PropertyTabs({
                 "rounded-[18px] px-4 py-2 text-sm font-medium transition-all whitespace-nowrap flex-shrink-0",
                 "text-[#212121] dark:text-foreground",
                 isActive
-                  ? "bg-white dark:bg-[var(--prophero-gray-700)] shadow-sm text-[#212121] dark:text-foreground"
+                  ? "bg-white dark:bg-[var(--vistral-gray-700)] shadow-sm text-[#212121] dark:text-foreground"
                   : "bg-transparent hover:opacity-80"
               )}
             >

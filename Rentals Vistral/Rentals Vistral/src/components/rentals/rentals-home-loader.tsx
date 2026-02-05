@@ -24,8 +24,8 @@ export function RentalsHomeLoader({ size = "md", className }: RentalsHomeLoaderP
           "animate-spin"
         )}
         style={{
-          borderTopColor: "var(--prophero-blue-500)",
-          borderRightColor: "var(--prophero-blue-400)",
+          borderTopColor: "var(--vistral-blue-500)",
+          borderRightColor: "var(--vistral-blue-400)",
           borderBottomColor: "transparent",
           borderLeftColor: "transparent",
         }}
@@ -41,8 +41,8 @@ export function RentalsHomeLoader({ size = "md", className }: RentalsHomeLoaderP
         style={{
           borderTopColor: "transparent",
           borderRightColor: "transparent",
-          borderBottomColor: "var(--prophero-blue-600)",
-          borderLeftColor: "var(--prophero-blue-300)",
+          borderBottomColor: "var(--vistral-blue-600)",
+          borderLeftColor: "var(--vistral-blue-300)",
         }}
       />
 
@@ -54,7 +54,7 @@ export function RentalsHomeLoader({ size = "md", className }: RentalsHomeLoaderP
           "animate-pulse"
         )}
         style={{
-          backgroundColor: "var(--prophero-blue-500)",
+          backgroundColor: "var(--vistral-blue-500)",
           animationDuration: "1.5s",
         }}
       />

@@ -3,6 +3,29 @@
 This document summarizes all the changes applied to align the project with the updated `.cursorrules` specifications.
 
 ## Date: January 30, 2026
+## Updated: February 5, 2026 (Post-merge with main)
+
+---
+
+## 0. Recent Changes (February 5, 2026)
+
+### ✅ Project Structure Reorganization
+- **Reorganized folder structure**: Files moved from `Rentals Vistral/Rentals Vistral/` to project root
+- **Removed duplicate structure**: Eliminated nested folder duplication
+- **Cleaned up**: Removed `__MACOSX` metadata folders
+- **Updated `.gitignore`**: Added entries to ignore `__MACOSX` folders
+
+### ✅ Design System Migration
+- **Migrated to Vistral Design System**: Complete migration from PropHero Design System to Vistral Design System
+- **Updated components**: All UI components now use Vistral tokens
+- **Updated colors, typography, and spacing**: Migrated according to Vistral DS specifications
+- **Updated `tailwind.config.ts`**: Configured with Vistral design tokens
+- **Font size correction**: Base font size now 16px (as per DS)
+- **Card spacing updates**: Updated according to Vistral DS
+- **Badge tooltips**: Improved with Vistral tokens
+- **Removed PropHero references**: Eliminated references to `prophero.css` (though some legacy references may still exist in code)
+
+**Note**: Some legacy references to PropHero may still exist in the codebase (e.g., `prophero_section_reviews` database fields, PropHero-specific business logic). These are domain-specific and don't affect the design system migration.
 
 ---
 
@@ -17,7 +40,7 @@ This document summarizes all the changes applied to align the project with the u
 - Configured `remotePatterns` for:
   - Supabase (**.supabase.co)
   - Google (**.googleusercontent.com)
-  - Prophero (**.prophero.com)
+  - Prophero (**.prophero.com) - *Legacy reference, may be updated*
 - Set `typescript.ignoreBuildErrors: false`
 - Added webpack configuration with:
   - Canvas fallback for client-side
@@ -202,9 +225,26 @@ All critical changes from the updated `.cursorrules` have been successfully appl
 
 ✅ Proper authentication architecture with role-based permissions
 ✅ Centralized i18n system with comprehensive translations
-✅ Design system constants following Prophero specifications
+✅ Design system constants following Vistral Design System specifications
 ✅ Updated configuration files aligned with the rules
 ✅ Provider architecture matching the recommended structure
 ✅ Environment configuration best practices
+✅ Clean project structure (reorganized from nested folders to root)
+✅ Complete migration to Vistral Design System
 
 The codebase is now structured according to the Innovations Lab standards and ready for development following these conventions.
+
+---
+
+## Post-Merge Notes (February 5, 2026)
+
+After merging with `main` branch, the following changes were integrated:
+
+1. **Structure Reorganization**: Project files are now at the root level instead of nested in `Rentals Vistral/Rentals Vistral/`
+2. **Design System Migration**: Complete migration from PropHero to Vistral Design System
+3. **File Cleanup**: Removed macOS metadata folders (`__MACOSX`)
+
+**Action Items**:
+- Verify all imports and paths work correctly after structure reorganization
+- Test UI components to ensure Vistral Design System is properly applied
+- Review and update any remaining PropHero references if needed (some may be intentional for business logic)

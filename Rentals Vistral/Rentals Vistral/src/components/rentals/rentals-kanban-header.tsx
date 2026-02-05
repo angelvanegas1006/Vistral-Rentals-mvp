@@ -40,7 +40,7 @@ export function RentalsKanbanHeader({
           >
             <FilterIcon className="h-6 w-6 text-[#2050F6]" />
             {filterCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--prophero-blue-600)] text-xs font-semibold text-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--vistral-blue-600)] text-xs font-semibold text-white">
                 {filterCount}
               </span>
             )}
@@ -98,7 +98,7 @@ export function RentalsKanbanHeader({
           >
             <FilterIcon className="h-6 w-6 text-[#2050F6]" />
             {filterCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--prophero-blue-600)] text-xs font-semibold text-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--vistral-blue-600)] text-xs font-semibold text-white">
                 {filterCount}
               </span>
             )}

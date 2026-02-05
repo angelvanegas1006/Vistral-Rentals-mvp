@@ -19,7 +19,7 @@ export default function RentalsHomePage() {
         <RentalsHomeHeader />
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-[var(--prophero-gray-50)] dark:bg-[#000000]">
+        <div className="flex-1 overflow-y-auto bg-[var(--vistral-gray-50)] dark:bg-[#000000]">
           <div className="max-w-[1600px] mx-auto px-margin-xs sm:px-margin-sm md:px-margin-md lg:px-margin-lg xl:px-margin-xl 2xl:px-margin-xxl py-4 md:py-6 space-y-4 md:space-y-6">
             {/* Mensaje de Bienvenida */}
             <div className="space-y-2 pb-2">

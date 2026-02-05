@@ -56,15 +56,16 @@ scripts/       # Scripts de utilidad (tsx)
 
 ---
 
-## 4. Design system (Prophero + Tailwind)
+## 4. Design system (Vistral + Tailwind)
 
-- **Storybook (referencia de componentes):** [Prophero React Design System](https://react.design.prophero.com/) — ej. [Alert](https://react.design.prophero.com/?path=/docs/components-alert--docs). Consultar ahí variantes, props y ejemplos de todos los componentes.
-- **Tokens:** Definidos en `app/prophero.css` (colores, tipografía, espaciado, radius, sombras, z-index, breakpoints).
-- **Variables CSS:** Prefijo `--prophero-*` (ej. `--prophero-blue-500`, `--prophero-radius-lg`, `--prophero-margin-md`).
-- **Grid responsivo:** Breakpoints XS–XXL con márgenes y gutters en `lib/constants.ts` (`BREAKPOINTS`, `SPACING`) y en `prophero.css` (`--prophero-margin-*`, `--prophero-gutter-*`).
+- **Design System:** Vistral Design System - El proyecto utiliza el Design System de Vistral para todos los componentes UI.
+- **Tokens:** Tokens de diseño definidos en `tailwind.config.ts` y variables CSS según el Design System de Vistral.
+- **Variables CSS:** Variables CSS con prefijo según el Design System de Vistral (colores, tipografía, espaciado, radius, sombras, z-index, breakpoints).
+- **Grid responsivo:** Breakpoints XS–XXL con márgenes y gutters en `lib/constants.ts` (`BREAKPOINTS`, `SPACING`).
 - **Uso:** Clases `container-margin` y `gutter`; constantes desde `@/lib/constants`; variables CSS para valores concretos.
-- **Tema:** `globals.css` importa Tailwind y `prophero.css`; `@theme inline` mapea variables a Tailwind (--color-background, --font-sans, etc.).
+- **Tema:** `globals.css` importa Tailwind y configura el tema según Vistral Design System; mapea variables a Tailwind (--color-background, --font-sans, etc.).
 - **Componentes UI:** Usar siempre `cn()` de `@/lib/utils` y, para variantes, **CVA** (class-variance-authority) como en `Button` y `Badge`.
+- **Nota histórica:** El proyecto migró desde PropHero Design System a Vistral Design System (febrero 2026). Algunas referencias a PropHero pueden existir en lógica de negocio específica (ej. `prophero_section_reviews` en base de datos), pero el sistema de diseño visual es ahora Vistral.
 
 ---
 
@@ -140,7 +141,7 @@ Ejemplo de patrón Button (a replicar en otros componentes):
 - `exclude`: `node_modules`, docs, scripts de test si aplica.
 
 **Next.js (`next.config.ts`):**
-- `images`: formats avif/webp; `remotePatterns` para Supabase, Google, Prophero, etc.
+- `images`: formats avif/webp; `remotePatterns` para Supabase, Google, Prophero (legacy), etc.
 - `typescript.ignoreBuildErrors: false`.
 - Alias `@` con `path.resolve(__dirname)`; extensiones `['.tsx', '.ts', '.jsx', '.js', '.json']`.
 - En webpack, `resolve.fallback.canvas: false` en cliente si no se usa.
@@ -174,7 +175,7 @@ Ejemplo de patrón Button (a replicar en otros componentes):
 - [ ] `lib/config/environment.ts` y `lib/utils.ts` (cn, isDemoMode si aplica)
 - [ ] Supabase: `lib/supabase/client.ts`, `server.ts`, `types.ts`
 - [ ] Auth: SupabaseAuthProvider + AppAuthProvider + permissions
-- [ ] Design system: prophero.css + globals.css + BREAKPOINTS/SPACING en constants
+- [ ] Design system: Vistral Design System + globals.css + BREAKPOINTS/SPACING en constants
 - [ ] UI: componentes con CVA + cn; Form con react-hook-form + Zod
 - [ ] tsconfig paths `@/*`, next.config con alias e images
 - [ ] .env.local.example y .gitignore actualizados

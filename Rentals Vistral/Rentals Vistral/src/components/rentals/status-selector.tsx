@@ -89,11 +89,11 @@ export function StatusSelector({
             disabled={disabled}
             className={cn(
               "flex flex-col items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all",
-              "hover:bg-[var(--prophero-gray-50)] dark:hover:bg-[var(--prophero-gray-800)]",
+              "hover:bg-[var(--vistral-gray-50)] dark:hover:bg-[var(--vistral-gray-800)]",
               "disabled:opacity-50 disabled:cursor-not-allowed",
               isSelected
-                ? "border-[var(--prophero-blue-500)] bg-[var(--prophero-blue-50)] dark:bg-[var(--prophero-blue-900)]/20"
-                : "border-[var(--prophero-gray-300)] dark:border-[var(--prophero-gray-700)] bg-background",
+                ? "border-[var(--vistral-blue-500)] bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-900)]/20"
+                : "border-[var(--vistral-gray-300)] dark:border-[var(--vistral-gray-700)] bg-background",
               "flex-1 min-w-0"
             )}
           >
@@ -101,8 +101,8 @@ export function StatusSelector({
               className={cn(
                 "flex items-center justify-center",
                 isSelected
-                  ? "text-[var(--prophero-blue-600)] dark:text-[var(--prophero-blue-400)]"
-                  : "text-[var(--prophero-gray-600)] dark:text-[var(--prophero-gray-400)]"
+                  ? "text-[var(--vistral-blue-600)] dark:text-[var(--vistral-blue-400)]"
+                  : "text-[var(--vistral-gray-600)] dark:text-[var(--vistral-gray-400)]"
               )}
             >
               {option.icon}
@@ -111,8 +111,8 @@ export function StatusSelector({
               className={cn(
                 "text-xs font-medium text-center",
                 isSelected
-                  ? "text-[var(--prophero-blue-700)] dark:text-[var(--prophero-blue-300)]"
-                  : "text-[var(--prophero-gray-700)] dark:text-[var(--prophero-gray-300)]"
+                  ? "text-[var(--vistral-blue-700)] dark:text-[var(--vistral-blue-300)]"
+                  : "text-[var(--vistral-gray-700)] dark:text-[var(--vistral-gray-300)]"
               )}
             >
               {option.label}

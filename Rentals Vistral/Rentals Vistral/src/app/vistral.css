@@ -1,0 +1,107 @@
+/* Vistral Design System Tokens */
+
+:root {
+  /* Brand Primary Colors - Vistral Blue Palette */
+  --vistral-blue-50: #eef2ff;
+  --vistral-blue-100: #e0e7ff;
+  --vistral-blue-200: #c7d2fe;
+  --vistral-blue-300: #a5b4fc;
+  --vistral-blue-400: #818cf8;
+  --vistral-blue-500: #316eff; /* Primary brand color */
+  --vistral-blue-600: #2246cc;
+  --vistral-blue-700: #1b36a3;
+  --vistral-blue-800: #152a80;
+  --vistral-blue-900: #112266;
+  --vistral-blue-950: #0d1b4d;
+
+  /* Semantic Colors */
+  --vistral-success: #10b981;
+  --vistral-success-hover: #059669;
+  --vistral-warning: #f59e0b;
+  --vistral-warning-hover: #d97706;
+  --vistral-danger: #ef4444;
+  --vistral-danger-hover: #dc2626;
+  --vistral-info: #3b82f6;
+  --vistral-info-hover: #2563eb;
+
+  /* Neutral Grays */
+  --vistral-gray-50: #f9fafb;
+  --vistral-gray-100: #f3f4f6;
+  --vistral-gray-200: #e5e7eb;
+  --vistral-gray-300: #d1d5db;
+  --vistral-gray-400: #9ca3af;
+  --vistral-gray-500: #6b7280;
+  --vistral-gray-600: #4b5563;
+  --vistral-gray-700: #374151;
+  --vistral-gray-800: #1f2937;
+  --vistral-gray-900: #111827;
+  --vistral-gray-950: #030712;
+
+  /* Typography Scale */
+  --vistral-font-family-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --vistral-font-family-mono: 'Fira Code', 'Consolas', monospace;
+  
+  --vistral-font-size-xs: 0.75rem;    /* 12px */
+  --vistral-font-size-sm: 0.875rem;   /* 14px */
+  --vistral-font-size-base: 1rem;      /* 16px */
+  --vistral-font-size-lg: 1.125rem;    /* 18px */
+  --vistral-font-size-xl: 1.25rem;     /* 20px */
+  --vistral-font-size-2xl: 1.5rem;     /* 24px */
+  --vistral-font-size-3xl: 1.875rem;   /* 30px */
+  --vistral-font-size-4xl: 2.25rem;    /* 36px */
+
+  --vistral-font-weight-normal: 400;
+  --vistral-font-weight-medium: 500;
+  --vistral-font-weight-semibold: 600;
+  --vistral-font-weight-bold: 700;
+
+  --vistral-line-height-tight: 1.25;
+  --vistral-line-height-normal: 1.5;
+  --vistral-line-height-relaxed: 1.75;
+
+  /* Spacing Scale */
+  --vistral-spacing-0: 0;
+  --vistral-spacing-1: 0.25rem;   /* 4px */
+  --vistral-spacing-2: 0.5rem;    /* 8px */
+  --vistral-spacing-3: 0.75rem;   /* 12px */
+  --vistral-spacing-4: 1rem;      /* 16px */
+  --vistral-spacing-5: 1.25rem;   /* 20px */
+  --vistral-spacing-6: 1.5rem;    /* 24px */
+  --vistral-spacing-8: 2rem;      /* 32px */
+  --vistral-spacing-10: 2.5rem;   /* 40px */
+  --vistral-spacing-12: 3rem;     /* 48px */
+  --vistral-spacing-16: 4rem;     /* 64px */
+  --vistral-spacing-20: 5rem;     /* 80px */
+
+  /* Border Radius */
+  --vistral-radius-none: 0;
+  --vistral-radius-sm: 0.25rem;   /* 4px */
+  --vistral-radius-md: 0.5rem;     /* 8px */
+  --vistral-radius-lg: 0.75rem;     /* 12px */
+  --vistral-radius-xl: 1rem;       /* 16px */
+  --vistral-radius-full: 9999px;
+
+  /* Shadows */
+  --vistral-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --vistral-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --vistral-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --vistral-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --vistral-transition-fast: 150ms ease;
+  --vistral-transition-base: 200ms ease;
+  --vistral-transition-slow: 300ms ease;
+}
+
+/* Dark Mode Overrides */
+.dark {
+  /* Dark mode adjustments for semantic colors */
+  --vistral-success: #22c55e;
+  --vistral-success-hover: #16a34a;
+  --vistral-warning: #fbbf24;
+  --vistral-warning-hover: #f59e0b;
+  --vistral-danger: #f87171;
+  --vistral-danger-hover: #ef4444;
+  --vistral-info: #60a5fa;
+  --vistral-info-hover: #3b82f6;
+}

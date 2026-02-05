@@ -72,7 +72,7 @@ export default function PortfolioKanbanPage() {
         />
 
         {/* Kanban Board */}
-        <div className="flex-1 overflow-hidden bg-[var(--prophero-gray-50)] dark:bg-[var(--prophero-gray-950)]">
+        <div className="flex-1 overflow-hidden bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-950)]">
           {viewMode === "kanban" ? (
             <RentalsKanbanBoard 
               searchQuery={searchQuery} 

@@ -289,7 +289,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b bg-muted/50 dark:bg-[var(--prophero-gray-900)]">
+            <tr className="border-b bg-muted/50 dark:bg-[var(--vistral-gray-900)]">
               {columns.map((col) => (
                 <th
                   key={col}
@@ -317,7 +317,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
               leads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className="border-b hover:bg-accent dark:hover:bg-[var(--prophero-gray-800)] transition-colors"
+                  className="border-b hover:bg-accent dark:hover:bg-[var(--vistral-gray-800)] transition-colors"
                 >
                   <td className="px-3 py-2 text-sm text-foreground">{lead.name}</td>
                   <td className="px-3 py-2 text-sm text-foreground">{lead.phone}</td>
@@ -658,7 +658,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
         </div>
 
         {/* Toggle de Vista */}
-        <div className="flex items-center gap-2 bg-accent dark:bg-[var(--prophero-gray-800)] rounded-lg p-1">
+        <div className="flex items-center gap-2 bg-accent dark:bg-[var(--vistral-gray-800)] rounded-lg p-1">
           <Button
             variant={viewMode === "lists" ? "default" : "ghost"}
             size="sm"
@@ -666,7 +666,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             className={cn(
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
               viewMode === "lists"
-                ? "bg-[var(--prophero-blue-500)] text-white"
+                ? "bg-[var(--vistral-blue-500)] text-white"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -680,7 +680,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             className={cn(
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
               viewMode === "kanban"
-                ? "bg-[var(--prophero-blue-500)] text-white"
+                ? "bg-[var(--vistral-blue-500)] text-white"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -692,7 +692,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
 
       {/* Vista Kanban */}
       {viewMode === "kanban" && (
-        <div className="bg-[var(--prophero-gray-50)] dark:bg-[#000000] rounded-lg p-2 md:p-3 min-h-[600px] -mx-1 md:-mx-2">
+        <div className="bg-[var(--vistral-gray-50)] dark:bg-[#000000] rounded-lg p-2 md:p-3 min-h-[600px] -mx-1 md:-mx-2">
           <PublishedTasksKanban
             unguidedLeads={localUnguidedLeads}
             scheduledLeads={localScheduledLeads}

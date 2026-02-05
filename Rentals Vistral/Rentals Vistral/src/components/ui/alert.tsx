@@ -11,13 +11,13 @@ const alertVariants = cva(
       variant: {
         default: "bg-background text-foreground border-border",
         success:
-          "bg-[var(--prophero-success)]/10 border-[var(--prophero-success)]/20 text-[var(--prophero-success)] dark:bg-[var(--prophero-success)]/5 dark:border-[var(--prophero-success)]/30 dark:text-[var(--prophero-success)]",
+          "bg-[var(--vistral-success)]/10 border-[var(--vistral-success)]/20 text-[var(--vistral-success)] dark:bg-[var(--vistral-success)]/5 dark:border-[var(--vistral-success)]/30 dark:text-[var(--vistral-success)]",
         warning:
-          "bg-[var(--prophero-warning)]/10 border-[var(--prophero-warning)]/20 text-[var(--prophero-warning)] dark:bg-[var(--prophero-warning)]/5 dark:border-[var(--prophero-warning)]/30 dark:text-[var(--prophero-warning)]",
+          "bg-[var(--vistral-warning)]/10 border-[var(--vistral-warning)]/20 text-[var(--vistral-warning)] dark:bg-[var(--vistral-warning)]/5 dark:border-[var(--vistral-warning)]/30 dark:text-[var(--vistral-warning)]",
         danger:
-          "bg-[var(--prophero-danger)]/10 border-[var(--prophero-danger)]/20 text-[var(--prophero-danger)] dark:bg-[var(--prophero-danger)]/5 dark:border-[var(--prophero-danger)]/30 dark:text-[var(--prophero-danger)]",
+          "bg-[var(--vistral-danger)]/10 border-[var(--vistral-danger)]/20 text-[var(--vistral-danger)] dark:bg-[var(--vistral-danger)]/5 dark:border-[var(--vistral-danger)]/30 dark:text-[var(--vistral-danger)]",
         info:
-          "bg-[var(--prophero-info)]/10 border-[var(--prophero-info)]/20 text-[var(--prophero-info)] dark:bg-[var(--prophero-info)]/5 dark:border-[var(--prophero-info)]/30 dark:text-[var(--prophero-info)]",
+          "bg-[var(--vistral-info)]/10 border-[var(--vistral-info)]/20 text-[var(--vistral-info)] dark:bg-[var(--vistral-info)]/5 dark:border-[var(--vistral-info)]/30 dark:text-[var(--vistral-info)]",
       },
     },
     defaultVariants: {

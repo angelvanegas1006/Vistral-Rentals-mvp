@@ -64,20 +64,20 @@ export function RentalsLeadCard({
           "hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.15)]",
           // Solo cambiar bordes superior, derecho e inferior en hover, mantener izquierdo si está retrasada
           lead.needsUpdate
-            ? "hover:border-t-[var(--prophero-gray-300)] hover:border-r-[var(--prophero-gray-300)] hover:border-b-[var(--prophero-gray-300)]"
-            : "hover:border-[var(--prophero-gray-300)]",
+            ? "hover:border-t-[var(--vistral-gray-300)] hover:border-r-[var(--vistral-gray-300)] hover:border-b-[var(--vistral-gray-300)]"
+            : "hover:border-[var(--vistral-gray-300)]",
         ],
         // Hover Dark mode
         !disabled && [
           "dark:hover:bg-[#1a1a1a]",
           "dark:hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.6)]",
           lead.needsUpdate
-            ? "dark:hover:border-t-[var(--prophero-gray-700)] dark:hover:border-r-[var(--prophero-gray-700)] dark:hover:border-b-[var(--prophero-gray-700)]"
-            : "dark:hover:border-[var(--prophero-gray-700)]",
+            ? "dark:hover:border-t-[var(--vistral-gray-700)] dark:hover:border-r-[var(--vistral-gray-700)] dark:hover:border-b-[var(--vistral-gray-700)]"
+            : "dark:hover:border-[var(--vistral-gray-700)]",
         ],
         // Estado highlighted
         isHighlighted &&
-          "ring-2 ring-[var(--prophero-blue-500)] shadow-lg border-[var(--prophero-blue-500)] bg-[var(--prophero-blue-50)] dark:bg-[var(--prophero-blue-950)]/30",
+          "ring-2 ring-[var(--vistral-blue-500)] shadow-lg border-[var(--vistral-blue-500)] bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-950)]/30",
         // Estado retrasado (borde izquierdo rojo intenso)
         lead.needsUpdate && "border-l-4 border-l-red-500",
         className

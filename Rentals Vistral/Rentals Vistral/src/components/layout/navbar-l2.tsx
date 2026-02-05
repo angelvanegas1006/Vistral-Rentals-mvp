@@ -45,7 +45,7 @@ export function NavbarL2({
   return (
     <header
       className={cn(
-        "bg-white dark:bg-[var(--prophero-gray-900)] border-b border-[#D4D4D8] dark:border-[var(--prophero-gray-700)]",
+        "bg-white dark:bg-[var(--vistral-gray-900)] border-b border-[#D4D4D8] dark:border-[var(--vistral-gray-700)]",
         "py-4 px-6 md:px-12",
         "sticky top-0 z-10",
         className

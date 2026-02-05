@@ -262,7 +262,7 @@ function DroppableColumn({
       data-column-id={column.id}
       className={cn(
         "w-[280px] md:w-[320px] flex-shrink-0 max-w-[280px] md:max-w-[320px] flex flex-col",
-        isOver && "ring-2 ring-[var(--prophero-blue-500)] ring-offset-2 rounded-lg"
+        isOver && "ring-2 ring-[var(--vistral-blue-500)] ring-offset-2 rounded-lg"
       )}
     >
       {children}

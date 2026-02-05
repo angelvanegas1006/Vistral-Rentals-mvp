@@ -197,13 +197,13 @@ export function RentalsPropertyCard({
       data-property-id={property.id || property.property_unique_id}
       onClick={handleClick}
       className={cn(
-        "rounded-lg border border-border bg-card dark:bg-[var(--prophero-gray-900)] p-4 md:p-5 shadow-sm w-full overflow-hidden",
+        "rounded-lg border border-border bg-card dark:bg-[var(--vistral-gray-900)] p-4 md:p-5 shadow-sm w-full overflow-hidden",
         "transition-all duration-500 ease-out",
         disabled 
           ? "cursor-not-allowed opacity-60" 
           : "cursor-pointer hover:border-2 hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.15)]",
         isHighlighted 
-          ? "ring-2 ring-[var(--prophero-blue-500)] shadow-lg border-[var(--prophero-blue-500)] bg-[var(--prophero-blue-50)] dark:bg-[var(--prophero-blue-950)]/30" 
+          ? "ring-2 ring-[var(--vistral-blue-500)] shadow-lg border-[var(--vistral-blue-500)] bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-950)]/30" 
           : "",
         // Estado retrasado (borde izquierdo rojo intenso) - puede coexistir con highlighted
         property.needsUpdate && "border-l-4 border-l-red-500",
@@ -286,7 +286,7 @@ export function RentalsPropertyCard({
                       "w-8 h-8 rounded-full flex items-center justify-center",
                       getPropertyManagerColor(property.propertyManager),
                       "text-xs font-semibold cursor-default",
-                      "border-2 border-white dark:border-[var(--prophero-gray-800)]",
+                      "border-2 border-white dark:border-[var(--vistral-gray-800)]",
                       "shadow-sm hover:shadow-md transition-shadow"
                     )}
                   >
@@ -297,8 +297,8 @@ export function RentalsPropertyCard({
                     className={cn(
                       "absolute bottom-full left-1/2 -translate-x-1/2 mb-2",
                       "px-2 py-1 rounded-md text-xs font-medium",
-                      "bg-[var(--prophero-gray-900)] dark:bg-[var(--prophero-gray-100)]",
-                      "text-white dark:text-[var(--prophero-gray-900)]",
+                      "bg-[var(--vistral-gray-900)] dark:bg-[var(--vistral-gray-100)]",
+                      "text-white dark:text-[var(--vistral-gray-900)]",
                       "opacity-0 group-hover:opacity-100 pointer-events-none",
                       "transition-opacity duration-200 z-10",
                       "whitespace-nowrap shadow-lg"
@@ -308,8 +308,8 @@ export function RentalsPropertyCard({
                     <div
                       className={cn(
                         "absolute top-full left-1/2 -translate-x-1/2",
-                        "border-4 border-transparent border-t-[var(--prophero-gray-900)]",
-                        "dark:border-t-[var(--prophero-gray-100)]"
+                        "border-4 border-transparent border-t-[var(--vistral-gray-900)]",
+                        "dark:border-t-[var(--vistral-gray-100)]"
                       )}
                     />
                   </div>
@@ -328,7 +328,7 @@ export function RentalsPropertyCard({
                       "w-8 h-8 rounded-full flex items-center justify-center",
                       getRentalsAnalystColor(property.rentalsAnalyst),
                       "text-xs font-semibold cursor-default",
-                      "border-2 border-white dark:border-[var(--prophero-gray-800)]",
+                      "border-2 border-white dark:border-[var(--vistral-gray-800)]",
                       "shadow-sm hover:shadow-md transition-shadow"
                     )}
                   >
@@ -339,8 +339,8 @@ export function RentalsPropertyCard({
                     className={cn(
                       "absolute bottom-full left-1/2 -translate-x-1/2 mb-2",
                       "px-2 py-1 rounded-md text-xs font-medium",
-                      "bg-[var(--prophero-gray-900)] dark:bg-[var(--prophero-gray-100)]",
-                      "text-white dark:text-[var(--prophero-gray-900)]",
+                      "bg-[var(--vistral-gray-900)] dark:bg-[var(--vistral-gray-100)]",
+                      "text-white dark:text-[var(--vistral-gray-900)]",
                       "opacity-0 group-hover:opacity-100 pointer-events-none",
                       "transition-opacity duration-200 z-10",
                       "whitespace-nowrap shadow-lg"
@@ -350,8 +350,8 @@ export function RentalsPropertyCard({
                     <div
                       className={cn(
                         "absolute top-full left-1/2 -translate-x-1/2",
-                        "border-4 border-transparent border-t-[var(--prophero-gray-900)]",
-                        "dark:border-t-[var(--prophero-gray-100)]"
+                        "border-4 border-transparent border-t-[var(--vistral-gray-900)]",
+                        "dark:border-t-[var(--vistral-gray-100)]"
                       )}
                     />
                   </div>

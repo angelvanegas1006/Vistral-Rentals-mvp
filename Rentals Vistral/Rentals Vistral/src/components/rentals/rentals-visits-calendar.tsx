@@ -680,7 +680,7 @@ export function RentalsVisitsCalendar({
         </div>
       </CardHeader>
 
-      <CardContent className="bg-[var(--prophero-gray-50)] dark:bg-[#000000] p-4 md:p-6">
+      <CardContent className="bg-[var(--vistral-gray-50)] dark:bg-[#000000] p-4 md:p-6">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
