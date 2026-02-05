@@ -11,13 +11,13 @@ const alertVariants = cva(
       variant: {
         default: "bg-background text-foreground border-border",
         success:
-          "bg-[var(--prophero-success)]/10 border-[var(--prophero-success)]/20 text-[var(--prophero-success)] dark:bg-[var(--prophero-success)]/5 dark:border-[var(--prophero-success)]/30 dark:text-[var(--prophero-success)]",
+          "bg-[var(--vistral-semantic-bg-success)]/10 border-[var(--vistral-semantic-border-success)]/20 text-[var(--vistral-semantic-text-success)] dark:bg-[var(--vistral-semantic-bg-success)]/5 dark:border-[var(--vistral-semantic-border-success)]/30 dark:text-[var(--vistral-semantic-text-success)]",
         warning:
-          "bg-[var(--prophero-warning)]/10 border-[var(--prophero-warning)]/20 text-[var(--prophero-warning)] dark:bg-[var(--prophero-warning)]/5 dark:border-[var(--prophero-warning)]/30 dark:text-[var(--prophero-warning)]",
+          "bg-[var(--vistral-semantic-bg-warning)]/10 border-[var(--vistral-semantic-border-warning)]/20 text-[var(--vistral-semantic-text-warning)] dark:bg-[var(--vistral-semantic-bg-warning)]/5 dark:border-[var(--vistral-semantic-border-warning)]/30 dark:text-[var(--vistral-semantic-text-warning)]",
         danger:
-          "bg-[var(--prophero-danger)]/10 border-[var(--prophero-danger)]/20 text-[var(--prophero-danger)] dark:bg-[var(--prophero-danger)]/5 dark:border-[var(--prophero-danger)]/30 dark:text-[var(--prophero-danger)]",
+          "bg-[var(--vistral-semantic-bg-error)]/10 border-[var(--vistral-semantic-border-error)]/20 text-[var(--vistral-semantic-text-error)] dark:bg-[var(--vistral-semantic-bg-error)]/5 dark:border-[var(--vistral-semantic-border-error)]/30 dark:text-[var(--vistral-semantic-text-error)]",
         info:
-          "bg-[var(--prophero-info)]/10 border-[var(--prophero-info)]/20 text-[var(--prophero-info)] dark:bg-[var(--prophero-info)]/5 dark:border-[var(--prophero-info)]/30 dark:text-[var(--prophero-info)]",
+          "bg-[var(--vistral-semantic-bg-info)]/10 border-[var(--vistral-semantic-border-info)]/20 text-[var(--vistral-semantic-text-info)] dark:bg-[var(--vistral-semantic-bg-info)]/5 dark:border-[var(--vistral-semantic-border-info)]/30 dark:text-[var(--vistral-semantic-text-info)]",
       },
     },
     defaultVariants: {

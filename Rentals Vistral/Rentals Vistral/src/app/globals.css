@@ -74,58 +74,67 @@
 
 @layer base {
   :root {
+    /* Vistral Design System - Mapped to Tailwind HSL variables */
+    /* Note: Vistral uses hex colors, so we convert them to HSL format for Tailwind */
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 0 0% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    /* PropHero Blue 500 mapped to primary */
-    --primary: 220 100% 66%;
+    --popover-foreground: 0 0% 9%;
+    /* Vistral Primary (#2050F6) mapped to Tailwind primary */
+    --primary: 220 95% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    /* PropHero Danger mapped to destructive */
-    --destructive: 0 84.2% 60.2%;
+    /* Vistral Secondary (#EDF0FD) mapped to Tailwind secondary */
+    --secondary: 230 100% 96%;
+    --secondary-foreground: 220 95% 55%;
+    /* Vistral Muted (#F4F4F5) */
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    /* Vistral Selected (#EEF4FF) */
+    --accent: 220 100% 97%;
+    --accent-foreground: 0 0% 9%;
+    /* Vistral Error (#E0312F) mapped to destructive */
+    --destructive: 0 75% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    /* PropHero Blue 500 mapped to ring */
-    --ring: 220 100% 66%;
+    /* Vistral Border (#E5E7EB) */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    /* Vistral Primary for ring */
+    --ring: 220 95% 55%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --radius: 8px;
   }
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    /* PropHero Blue 500 for dark mode primary */
-    --primary: 220 100% 66%;
-    --primary-foreground: 240 10% 3.9%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    /* PropHero Danger for dark mode */
-    --destructive: 0 72% 51%;
+    /* Vistral Dark Mode Tokens */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 100%;
+    /* Vistral Primary for dark mode */
+    --primary: 220 95% 55%;
+    --primary-foreground: 0 0% 100%;
+    /* Vistral Elevated (#1A1A1A) */
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    /* Vistral Error for dark mode */
+    --destructive: 0 75% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    /* PropHero Blue 500 for dark mode ring */
-    --ring: 220 100% 66%;
+    /* Vistral Border Dark (#333333) */
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    /* Vistral Primary for dark mode ring */
+    --ring: 220 95% 55%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -140,22 +149,22 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--prophero-font-family-sans);
-    font-size: var(--prophero-font-size-base);
-    font-weight: var(--prophero-font-weight-normal);
-    line-height: var(--prophero-line-height-normal);
+    font-family: var(--vistral-font-family-sans);
+    font-size: var(--vistral-font-size-3);
+    font-weight: var(--vistral-font-weight-regular);
+    line-height: var(--vistral-line-height-3);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   
-  /* Aplicar tipografía PropHero a elementos comunes */
+  /* Aplicar tipografía Vistral a elementos comunes */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--prophero-font-family-sans);
-    font-weight: var(--prophero-font-weight-semibold);
-    line-height: var(--prophero-line-height-tight);
+    font-family: var(--vistral-font-family-sans);
+    font-weight: var(--vistral-font-weight-semibold);
+    line-height: var(--vistral-line-height-2);
   }
   
   code, pre {
-    font-family: var(--prophero-font-family-mono);
+    font-family: var(--vistral-font-family-mono);
   }
 }

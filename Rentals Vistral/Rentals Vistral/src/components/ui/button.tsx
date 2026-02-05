@@ -9,18 +9,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[var(--prophero-blue-500)] text-white hover:bg-[var(--prophero-blue-600)] shadow-sm hover:shadow-md",
+        default: "bg-[var(--vistral-primary-default-bg)] text-[var(--vistral-primary-default-text)] hover:bg-[var(--vistral-primary-hover-bg)] shadow-sm hover:shadow-md",
         destructive:
-          "bg-[var(--prophero-danger)] text-white hover:bg-[var(--prophero-danger-hover)] shadow-sm hover:shadow-md",
+          "bg-[var(--vistral-semantic-status-error)] text-white hover:bg-[var(--vistral-semantic-interactive-danger-hover)] shadow-sm hover:shadow-md",
         outline:
-          "border border-[var(--prophero-gray-300)] bg-background hover:bg-[var(--prophero-gray-50)] hover:text-foreground dark:border-[var(--prophero-gray-700)] dark:hover:bg-[var(--prophero-gray-800)]",
+          "border border-[var(--vistral-semantic-border-default)] bg-background hover:bg-[var(--vistral-semantic-bg-muted)] hover:text-foreground dark:border-[var(--vistral-border-default)] dark:hover:bg-[var(--vistral-bg-elevated)]",
         secondary:
-          "bg-[var(--prophero-gray-200)] text-[var(--prophero-gray-900)] hover:bg-[var(--prophero-gray-300)] dark:bg-[var(--prophero-gray-800)] dark:text-[var(--prophero-gray-100)] dark:hover:bg-[var(--prophero-gray-700)]",
-        ghost: "hover:bg-[var(--prophero-gray-100)] hover:text-foreground dark:hover:bg-[var(--prophero-gray-800)]",
-        link: "text-[var(--prophero-blue-500)] underline-offset-4 hover:underline hover:text-[var(--prophero-blue-600)]",
-        success: "bg-[var(--prophero-success)] text-white hover:bg-[var(--prophero-success-hover)] shadow-sm hover:shadow-md",
-        warning: "bg-[var(--prophero-warning)] text-white hover:bg-[var(--prophero-warning-hover)] shadow-sm hover:shadow-md",
-        info: "bg-[var(--prophero-info)] text-white hover:bg-[var(--prophero-info-hover)] shadow-sm hover:shadow-md",
+          "bg-[var(--vistral-secondary-default-bg)] text-[var(--vistral-secondary-default-text)] hover:bg-[var(--vistral-secondary-hover-bg)]",
+        ghost: "hover:bg-[var(--vistral-semantic-bg-muted)] hover:text-foreground dark:hover:bg-[var(--vistral-bg-elevated)]",
+        link: "text-[var(--vistral-primary-default-bg)] underline-offset-4 hover:underline hover:text-[var(--vistral-primary-hover-bg)]",
+        success: "bg-[var(--vistral-semantic-status-success)] text-white hover:bg-[var(--vistral-semantic-interactive-success-hover)] shadow-sm hover:shadow-md",
+        warning: "bg-[var(--vistral-semantic-status-warning)] text-white hover:bg-[var(--vistral-semantic-interactive-warning-hover)] shadow-sm hover:shadow-md",
+        info: "bg-[var(--vistral-semantic-status-info)] text-white hover:bg-[var(--vistral-semantic-interactive-brand-hover)] shadow-sm hover:shadow-md",
       },
       size: {
         default: "h-10 px-4 py-2",

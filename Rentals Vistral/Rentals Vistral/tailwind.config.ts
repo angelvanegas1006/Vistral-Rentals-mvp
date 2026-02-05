@@ -55,78 +55,87 @@ const config: Config = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-  			// PropHero Design System Colors
-  			prophero: {
-  				blue: {
-  					50: 'var(--prophero-blue-50)',
-  					100: 'var(--prophero-blue-100)',
-  					200: 'var(--prophero-blue-200)',
-  					300: 'var(--prophero-blue-300)',
-  					400: 'var(--prophero-blue-400)',
-  					500: 'var(--prophero-blue-500)',
-  					600: 'var(--prophero-blue-600)',
-  					700: 'var(--prophero-blue-700)',
-  					800: 'var(--prophero-blue-800)',
-  					900: 'var(--prophero-blue-900)',
-  					950: 'var(--prophero-blue-950)',
+  			// Vistral Design System Colors
+  			vistral: {
+  				primary: {
+  					default: 'var(--vistral-primary-default-bg)',
+  					hover: 'var(--vistral-primary-hover-bg)',
+  					active: 'var(--vistral-primary-active-bg)',
+  					disabled: 'var(--vistral-primary-disabled-bg)',
   				},
-  				gray: {
-  					50: 'var(--prophero-gray-50)',
-  					100: 'var(--prophero-gray-100)',
-  					200: 'var(--prophero-gray-200)',
-  					300: 'var(--prophero-gray-300)',
-  					400: 'var(--prophero-gray-400)',
-  					500: 'var(--prophero-gray-500)',
-  					600: 'var(--prophero-gray-600)',
-  					700: 'var(--prophero-gray-700)',
-  					800: 'var(--prophero-gray-800)',
-  					900: 'var(--prophero-gray-900)',
-  					950: 'var(--prophero-gray-950)',
+  				secondary: {
+  					default: 'var(--vistral-secondary-default-bg)',
+  					hover: 'var(--vistral-secondary-hover-bg)',
+  					active: 'var(--vistral-secondary-active-bg)',
   				},
-  				success: 'var(--prophero-success)',
-  				warning: 'var(--prophero-warning)',
-  				danger: 'var(--prophero-danger)',
-  				info: 'var(--prophero-info)',
+  				semantic: {
+  					success: 'var(--vistral-semantic-status-success)',
+  					warning: 'var(--vistral-semantic-status-warning)',
+  					error: 'var(--vistral-semantic-status-error)',
+  					info: 'var(--vistral-semantic-status-info)',
+  				},
   			}
   		},
   		fontFamily: {
-  			sans: ['var(--prophero-font-family-sans)', 'system-ui', '-apple-system', 'sans-serif'],
-  			mono: ['var(--prophero-font-family-mono)', 'Fira Code', 'Consolas', 'monospace'],
+  			sans: ['var(--vistral-font-family-sans)', 'system-ui', '-apple-system', 'sans-serif'],
+  			mono: ['var(--vistral-font-family-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
   		},
   		fontSize: {
-  			xs: 'var(--prophero-font-size-xs)',
-  			sm: 'var(--prophero-font-size-sm)',
-  			base: 'var(--prophero-font-size-base)',
-  			lg: 'var(--prophero-font-size-lg)',
-  			xl: 'var(--prophero-font-size-xl)',
-  			'2xl': 'var(--prophero-font-size-2xl)',
-  			'3xl': 'var(--prophero-font-size-3xl)',
-  			'4xl': 'var(--prophero-font-size-4xl)',
+  			xs: 'var(--vistral-font-size-1)',      // 12px
+  			sm: 'var(--vistral-font-size-2)',      // 14px
+  			base: 'var(--vistral-font-size-3)',     // 16px
+  			lg: 'var(--vistral-font-size-4)',      // 18px
+  			xl: 'var(--vistral-font-size-5)',      // 20px
+  			'2xl': 'var(--vistral-font-size-6)',   // 24px
+  			'3xl': 'var(--vistral-font-size-7)',   // 30px
+  			'4xl': 'var(--vistral-font-size-8)',   // 36px
+  			'5xl': 'var(--vistral-font-size-9)',   // 48px
   		},
   		fontWeight: {
-  			normal: 'var(--prophero-font-weight-normal)',
-  			medium: 'var(--prophero-font-weight-medium)',
-  			semibold: 'var(--prophero-font-weight-semibold)',
-  			bold: 'var(--prophero-font-weight-bold)',
+  			normal: 'var(--vistral-font-weight-regular)',
+  			medium: 'var(--vistral-font-weight-medium)',
+  			semibold: 'var(--vistral-font-weight-semibold)',
+  			bold: 'var(--vistral-font-weight-semibold)',
   		},
   		lineHeight: {
-  			tight: 'var(--prophero-line-height-tight)',
-  			normal: 'var(--prophero-line-height-normal)',
-  			relaxed: 'var(--prophero-line-height-relaxed)',
+  			tight: 'var(--vistral-line-height-2)',
+  			normal: 'var(--vistral-line-height-3)',
+  			relaxed: 'var(--vistral-line-height-4)',
   		},
   		spacing: {
-  			'prophero-0': 'var(--prophero-spacing-0)',
-  			'prophero-1': 'var(--prophero-spacing-1)',
-  			'prophero-2': 'var(--prophero-spacing-2)',
-  			'prophero-3': 'var(--prophero-spacing-3)',
-  			'prophero-4': 'var(--prophero-spacing-4)',
-  			'prophero-5': 'var(--prophero-spacing-5)',
-  			'prophero-6': 'var(--prophero-spacing-6)',
-  			'prophero-8': 'var(--prophero-spacing-8)',
-  			'prophero-10': 'var(--prophero-spacing-10)',
-  			'prophero-12': 'var(--prophero-spacing-12)',
-  			'prophero-16': 'var(--prophero-spacing-16)',
-  			'prophero-20': 'var(--prophero-spacing-20)',
+  			// Vistral Design System Spacing Tokens
+  			'vistral-0': 'var(--vistral-spacing-0)',
+  			'vistral-0-5': 'var(--vistral-spacing-0-5)',
+  			'vistral-1': 'var(--vistral-spacing-1)',
+  			'vistral-1-5': 'var(--vistral-spacing-1-5)',
+  			'vistral-2': 'var(--vistral-spacing-2)',
+  			'vistral-2-5': 'var(--vistral-spacing-2-5)',
+  			'vistral-3': 'var(--vistral-spacing-3)',
+  			'vistral-3-5': 'var(--vistral-spacing-3-5)',
+  			'vistral-4': 'var(--vistral-spacing-4)',
+  			'vistral-5': 'var(--vistral-spacing-5)',
+  			'vistral-6': 'var(--vistral-spacing-6)',
+  			'vistral-7': 'var(--vistral-spacing-7)',
+  			'vistral-8': 'var(--vistral-spacing-8)',
+  			'vistral-9': 'var(--vistral-spacing-9)',
+  			'vistral-10': 'var(--vistral-spacing-10)',
+  			'vistral-11': 'var(--vistral-spacing-11)',
+  			'vistral-12': 'var(--vistral-spacing-12)',
+  			'vistral-14': 'var(--vistral-spacing-14)',
+  			'vistral-16': 'var(--vistral-spacing-16)',
+  			'vistral-20': 'var(--vistral-spacing-20)',
+  			'vistral-24': 'var(--vistral-spacing-24)',
+  			'vistral-25': 'var(--vistral-spacing-25)',
+  			'vistral-28': 'var(--vistral-spacing-28)',
+  			'vistral-32': 'var(--vistral-spacing-32)',
+  			'vistral-40': 'var(--vistral-spacing-40)',
+  			// Container Padding Tokens
+  			'container-xs': 'var(--vistral-container-padding-xs)',
+  			'container-sm': 'var(--vistral-container-padding-sm)',
+  			'container-md': 'var(--vistral-container-padding-md)',
+  			'container-lg': 'var(--vistral-container-padding-lg)',
+  			'container-xl': 'var(--vistral-container-padding-xl)',
+  			'container-xxl': 'var(--vistral-container-padding-xxl)',
   			// Responsive Padding System - Margin values
   			'margin-xs': '20px',   // X-Small: < 576px
   			'margin-sm': '32px',   // Small: 577px - 768px
@@ -146,24 +155,20 @@ const config: Config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)',
-  			'prophero-none': 'var(--prophero-radius-none)',
-  			'prophero-sm': 'var(--prophero-radius-sm)',
-  			'prophero-md': 'var(--prophero-radius-md)',
-  			'prophero-lg': 'var(--prophero-radius-lg)',
-  			'prophero-xl': 'var(--prophero-radius-xl)',
-  			'prophero-full': 'var(--prophero-radius-full)',
+  			'vistral-none': 'var(--vistral-radius-0)',
+  			'vistral-sm': 'var(--vistral-radius-1)',
+  			'vistral-md': 'var(--vistral-radius-2)',
+  			'vistral-lg': 'var(--vistral-radius-3)',
+  			'vistral-xl': 'var(--vistral-radius-4)',
+  			'vistral-full': 'var(--vistral-radius-full)',
   		},
   		boxShadow: {
-  			'prophero-sm': 'var(--prophero-shadow-sm)',
-  			'prophero-md': 'var(--prophero-shadow-md)',
-  			'prophero-lg': 'var(--prophero-shadow-lg)',
-  			'prophero-xl': 'var(--prophero-shadow-xl)',
+  			'vistral-1': 'var(--vistral-shadow-level-1)',
+  			'vistral-2': 'var(--vistral-shadow-level-2)',
+  			'vistral-3': 'var(--vistral-shadow-level-3)',
+  			'vistral-4': 'var(--vistral-shadow-level-4)',
+  			'vistral-focus': 'var(--vistral-shadow-focus)',
   		},
-  		transitionDuration: {
-  			'prophero-fast': 'var(--prophero-transition-fast)',
-  			'prophero-base': 'var(--prophero-transition-base)',
-  			'prophero-slow': 'var(--prophero-transition-slow)',
-  		}
   	}
   },
   plugins: [require("tailwindcss-animate")],

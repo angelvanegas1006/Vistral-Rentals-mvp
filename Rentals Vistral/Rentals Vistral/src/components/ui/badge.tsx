@@ -9,18 +9,18 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-[var(--prophero-blue-500)] text-white hover:bg-[var(--prophero-blue-600)]",
+          "border-transparent bg-[var(--vistral-primary-default-bg)] text-white hover:bg-[var(--vistral-primary-hover-bg)]",
         secondary:
-          "border-transparent bg-[var(--prophero-gray-200)] text-[var(--prophero-gray-900)] hover:bg-[var(--prophero-gray-300)] dark:bg-[var(--prophero-gray-800)] dark:text-[var(--prophero-gray-100)] dark:hover:bg-[var(--prophero-gray-700)]",
+          "border-transparent bg-[var(--vistral-secondary-default-bg)] text-[var(--vistral-secondary-default-text)] hover:bg-[var(--vistral-secondary-hover-bg)] dark:bg-[var(--vistral-bg-elevated)] dark:text-[var(--vistral-text-primary)] dark:hover:bg-[var(--vistral-bg-card)]",
         destructive:
-          "border-transparent bg-[var(--prophero-danger)] text-white hover:bg-[var(--prophero-danger-hover)]",
-        outline: "text-foreground border-[var(--prophero-gray-300)] dark:border-[var(--prophero-gray-700)]",
+          "border-transparent bg-[var(--vistral-semantic-status-error)] text-white hover:bg-[var(--vistral-semantic-interactive-danger-hover)]",
+        outline: "text-foreground border-[var(--vistral-semantic-border-default)] dark:border-[var(--vistral-border-default)]",
         success:
-          "border-transparent bg-[var(--prophero-success)] text-white hover:bg-[var(--prophero-success-hover)]",
+          "border-transparent bg-[var(--vistral-semantic-status-success)] text-white hover:bg-[var(--vistral-semantic-interactive-success-hover)]",
         warning:
-          "border-transparent bg-[var(--prophero-warning)] text-white hover:bg-[var(--prophero-warning-hover)]",
+          "border-transparent bg-[var(--vistral-semantic-status-warning)] text-white hover:bg-[var(--vistral-semantic-interactive-warning-hover)]",
         info:
-          "border-transparent bg-[var(--prophero-info)] text-white hover:bg-[var(--prophero-info-hover)]",
+          "border-transparent bg-[var(--vistral-semantic-status-info)] text-white hover:bg-[var(--vistral-semantic-interactive-brand-hover)]",
       },
     },
     defaultVariants: {
