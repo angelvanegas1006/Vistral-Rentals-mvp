@@ -1,0 +1,104 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-02
+glob: "**/*"
+alwaysApply: true
+description: "Core rules - Stack, structure, security basics, and planning workflow"
+---
+
+# Vistral Lab - Core Rules
+
+## Stack y Dependencias Base
+
+- **Framework:** Next.js 16+ (App Router)
+- **Lenguaje:** TypeScript (strict)
+- **UI:** React 19, Radix UI, Tailwind CSS 4
+- **Backend / DB:** Supabase (auth, DB, storage, RLS)
+- **Formularios:** react-hook-form + @hookform/resolvers + Zod
+- **Estilos:** class-variance-authority (cva), clsx, tailwind-merge
+- **Deploy:** Vercel (recomendado)
+
+**Dependencias clave en `package.json`:**
+- `@supabase/ssr`, `@supabase/supabase-js`
+- `next`, `react`, `react-dom`
+- `@radix-ui/*` (dialog, dropdown-menu, label, select, etc.)
+- `tailwindcss`, `@tailwindcss/postcss`
+- `class-variance-authority`, `clsx`, `tailwind-merge`
+- `react-hook-form`, `@hookform/resolvers`, `zod`
+- `lucide-react`, `date-fns`, `sonner` (toasts)
+
+## Estructura de Carpetas
+
+```
+app/           # App Router: pages, layouts, api
+  api/         # Route handlers (admin, google-maps, etc.)
+  login/, admin/, supply/, reno/  # Rutas por dominio
+components/    # UI reutilizable
+  ui/          # Primitivos (Button, Input, Form, Dialog, etc.)
+  auth/, supply/, checklist/, icons/  # Por feature
+hooks/         # Custom hooks (usePropertyData, useSupabaseAuth, etc.)
+lib/           # Lógica y config
+  auth/        # Contextos de auth (Supabase + App)
+  config/      # environment.ts
+  supabase/    # client.ts, server.ts, types.ts
+  i18n/        # Traducciones y contexto
+  supply-*-supabase.ts  # Servicios por dominio
+supabase/
+  migrations/  # SQL en orden 001_, 002_, ...
+public/        # Assets, logos, iconos
+scripts/       # Scripts de utilidad (tsx)
+```
+
+- **Rutas:** bajo `app/` por dominio (supply, admin, login, etc.).
+- **Componentes:** `components/ui/` para primitivos; subcarpetas por feature.
+- **Servicios y tipos:** `lib/`; Supabase tipado en `lib/supabase/types.ts`.
+- **Migraciones:** solo en `supabase/migrations/`, numeradas y ordenadas.
+
+## SECURITY RULES (CRITICAL)
+
+**NEVER:**
+- Paste real secrets. Always use placeholders (e.g., `sk_live_...` → `sk_live_PLACEHOLDER`)
+- Read `.env*`, `*.pem`, `*.key`, or credentials files
+- Commit service role keys, even in `.env.example`
+- Expose `SUPABASE_SERVICE_ROLE_KEY` in client-side code
+
+**ALWAYS:**
+- Use service role key ONLY in `app/api/**` or `lib/supabase/server.ts`
+- Verify secrets are not exposed in client bundles
+- Use environment variables from `lib/config/environment.ts`
+- Check `.cursorignore` excludes sensitive files
+
+## PROTECTED ZONES
+
+**Do not modify unless explicitly asked:**
+- `supabase/migrations/**` - Database migrations (only add new, never modify existing)
+- `lib/auth/**` - Auth providers (SupabaseAuthProvider, AppAuthProvider)
+- `app/prophero.css` - Design tokens (colors, spacing, typography)
+- `.cursorignore` - Cursor indexing exclusions
+
+## PLANNING WORKFLOW (MANDATORY)
+
+**Before coding:**
+1. Summarize intent - What are we trying to achieve?
+2. List steps - Break down into concrete steps
+3. Identify risks - What could go wrong?
+
+**After coding:**
+1. Summarize changes - What was modified/created?
+2. List risks introduced - Any new security/performance concerns?
+3. Suggest test cases or manual verification steps
+
+## Versioning
+
+Each rule file includes version, owner, and lastUpdated in frontmatter. When modifying rules:
+- Increment version for breaking changes
+- Update lastUpdated date
+- Document changes in commit message
+
+## Domain Boundaries
+
+When working on a specific domain (`/app/supply`, `/app/admin`, `/app/reno`):
+- Do not touch other domains unless explicitly requested
+- Keep domain-specific logic within domain folders
+- Use shared utilities from `lib/` when appropriate

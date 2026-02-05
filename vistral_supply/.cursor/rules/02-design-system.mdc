@@ -1,0 +1,196 @@
+---
+version: 2.0
+owner: Vistral Lab
+lastUpdated: 2026-02-04
+glob: ["**/components/**", "**/*.css", "**/app/**/*.tsx"]
+description: "Design system rules - Vistral Design System (primary) with Prophero compatibility"
+---
+
+# Vistral Lab - Design System Rules
+
+## Vistral Design System (Primary)
+
+### Storybook Reference
+
+**Primary Design System:** [Vistral Design System Storybook](https://vistral-design-system.vercel.app/)
+
+**Legacy Reference (for compatibility):** [Prophero React Design System](https://react.design.prophero.com/)
+
+### Component Usage
+
+**ALWAYS prefer components from `@vistral/design-system`:**
+
+```typescript
+// ✅ CORRECT - Use Vistral Design System
+import { Button, Input, Select, Dialog, Card, Tabs } from "@vistral/design-system"
+
+// ⚠️ LEGACY - Only for components not yet in Vistral DS
+import { SomeComponent } from "@/components/ui/some-component"
+```
+
+**Available Components from `@vistral/design-system`:**
+- Core: Button, Input, Textarea, Badge
+- Forms: Checkbox, Switch, Radio, SearchInput, NumberInput, PhoneInput, PinCode, TagInput, FileUpload
+- Selection: Select (Radix UI), Autocomplete, Combobox
+- Overlays: Dialog (Radix UI), Popover, Sheet, Tooltip, DropdownMenu, ContextMenu
+- Navigation: Tabs, Accordion, Breadcrumb, Navbar, BottomNav, SideNav
+- Layout: Card, Divider, Header, Footer, DataBlock
+- Data Display: Table, Pagination, List, Skeleton, EmptyState, Progress
+- Feedback: Alert, Toast, Banner
+- Media: Avatar, Lightbox, MediaHero, Carousel
+- Date/Time: Calendar, DatePicker
+- Specialized: Slider, Rating, ColorPicker, ToggleGroup, Stepper, Timeline, Chip, Link, PropertyCard
+
+### Design Tokens
+
+**Primary Location:** `@vistral/design-system/tokens.css` (imported in `app/globals.css`)
+
+**CSS Variables:** Prefijo `--vistral-*` (preferred) con fallback `--prophero-*`
+
+**Colors:**
+- Primary: `--vistral-color-primary-500` (`#2050f6`), `--vistral-spaceblue-*`
+- Semantic: `--vistral-color-success`, `--vistral-color-warning`, `--vistral-color-error`, `--vistral-color-info`
+- Grays: `--vistral-gray-50` through `--vistral-gray-950`
+- Zinc: `--vistral-zinc-50` through `--vistral-zinc-900`
+
+**Typography:**
+- Font Family: `--vistral-font-family-sans` (Inter)
+- Font Sizes: `--vistral-font-size-sm` through `--vistral-font-size-header-3xl`
+- Font Weights: `--vistral-font-weight-regular`, `--vistral-font-weight-medium`, `--vistral-font-weight-semibold`
+- Line Heights: `--vistral-line-height-1` through `--vistral-line-height-9`
+
+**Spacing:**
+- Scale: `--vistral-spacing-0` through `--vistral-spacing-24`
+- Grid Margins: `--vistral-grid-margin-xs` through `--vistral-grid-margin-xxl`
+- Grid Gutters: `--vistral-grid-gutter-xs` through `--vistral-grid-gutter-xxl`
+
+**Radius:**
+- `--vistral-radius-1` (4px) through `--vistral-radius-6` (24px)
+- `--vistral-radius-full` (9999px)
+
+**Shadows:**
+- `--vistral-shadow-focus`, `--vistral-shadow-level-1` through `--vistral-shadow-level-4`
+
+**Usage:**
+- Prefer Vistral tokens: `var(--vistral-color-primary-500)`
+- Fallback to Prophero for compatibility: `var(--vistral-grid-margin-md, var(--prophero-margin-md))`
+- Use Tailwind classes when possible
+- Constants from `lib/constants.ts` use Vistral tokens with Prophero fallback
+
+### Grid Responsivo
+
+**Breakpoints:** Defined in `lib/constants.ts` using Vistral tokens
+- XS (<576px): Margin 20px (`--vistral-grid-margin-xs`), Gutter 12px (`--vistral-grid-gutter-xs`)
+- SM (577px-768px): Margin 32px (`--vistral-grid-margin-sm`), Gutter 12px (`--vistral-grid-gutter-sm`)
+- MD (769px-992px): Margin 40px (`--vistral-grid-margin-md`), Gutter 16px (`--vistral-grid-gutter-md`)
+- LG (993px-1199px): Margin 80px (`--vistral-grid-margin-lg`), Gutter 28px (`--vistral-grid-gutter-lg`)
+- XL (1201px-1400px): Margin 100px (`--vistral-grid-margin-xl`), Gutter 32px (`--vistral-grid-gutter-xl`)
+- XXL (>1401px): Margin 112px (`--vistral-grid-margin-xxl`), Gutter 32px (`--vistral-grid-gutter-xxl`)
+
+**CSS Classes:**
+- `container-margin` - Responsive container margins (uses Vistral tokens)
+- `gutter` - Responsive spacing between grid items (uses Vistral tokens)
+
+**CSS Variables (Vistral preferred):**
+- `var(--vistral-grid-margin-xs)` through `var(--vistral-grid-margin-xxl)`
+- `var(--vistral-grid-gutter-xs)` through `var(--vistral-grid-gutter-xxl)`
+- Fallback: `var(--prophero-margin-*)` and `var(--prophero-gutter-*)` for compatibility
+
+**TypeScript Constants:**
+- Import from `@/lib/constants`: `BREAKPOINTS`, `SPACING`
+- Constants use Vistral tokens with Prophero fallback
+
+### Theme Configuration
+
+**File:** `app/globals.css`
+
+- Imports Tailwind, `prophero.css`, and `@vistral/design-system/tokens.css`
+- `@theme inline` maps both Vistral and Prophero variables to Tailwind
+- Vistral tokens are preferred, Prophero tokens used as fallback
+- Dark mode support via `.dark` class
+
+## Component Patterns
+
+### Class Utilities
+
+**Always use `cn()` from `@/lib/utils`:**
+```typescript
+import { cn } from "@/lib/utils"
+
+// ✅ CORRECT
+<div className={cn("base-class", condition && "conditional-class")}>
+
+// ❌ WRONG
+<div className={"base-class " + (condition ? "conditional-class" : "")}>
+```
+
+### Component Variants (CVA)
+
+**Pattern for variant-based components:**
+```typescript
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+
+const componentVariants = cva(
+  "base-classes",
+  {
+    variants: {
+      variant: {
+        default: "default-classes",
+        secondary: "secondary-classes",
+      },
+      size: {
+        sm: "small-classes",
+        md: "medium-classes",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "md",
+    },
+  }
+)
+
+interface ComponentProps extends VariantProps<typeof componentVariants> {
+  className?: string
+  // ... other props
+}
+
+export function Component({ variant, size, className, ...props }: ComponentProps) {
+  return (
+    <div className={cn(componentVariants({ variant, size, className }))} {...props} />
+  )
+}
+```
+
+### Refs
+
+**Components wrapping native elements MUST use `forwardRef`:**
+```typescript
+import { forwardRef } from "react"
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <button ref={ref} className={cn(buttonVariants({ className }))} {...props} />
+    )
+  }
+)
+Button.displayName = "Button"
+```
+
+### Accessibility
+
+- Use Radix UI primitives for keyboard navigation, focus management, ARIA
+- Don't reinvent modals, selects, dropdowns - use Radix components
+- Ensure proper focus order and keyboard shortcuts
+- Test with screen readers
+
+### Testing Expectations
+
+When modifying components:
+- Verify responsive behavior at different breakpoints
+- Check dark mode appearance
+- Test keyboard navigation
+- Verify ARIA attributes are correct
+- Suggest manual visual testing for UI changes

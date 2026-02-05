@@ -1,0 +1,244 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-02
+glob: ["**/*form*.tsx", "**/components/ui/**"]
+description: "Form patterns with react-hook-form, Zod validation, and UI component standards"
+---
+
+# Vistral Lab - Forms & UI Rules
+
+## Form Setup
+
+### react-hook-form + Zod
+
+**Required packages:**
+- `react-hook-form`
+- `@hookform/resolvers`
+- `zod`
+
+**Pattern:**
+```typescript
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
+
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+})
+
+type FormValues = z.infer<typeof formSchema>
+
+export function MyForm() {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+  })
+  
+  const onSubmit = async (data: FormValues) => {
+    // Handle submission
+  }
+  
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* More fields */}
+      </form>
+    </Form>
+  )
+}
+```
+
+## Form Components
+
+### Required Components
+
+Always use from `@/components/ui/form`:
+- `Form` - FormProvider wrapper
+- `FormField` - Field wrapper with Controller
+- `FormItem` - Container for label + control + message
+- `FormLabel` - Accessible label
+- `FormControl` - Wraps input component
+- `FormMessage` - Error message display
+
+### Form State
+
+**Access form state:**
+```typescript
+const { formState } = useForm()
+const { errors, isSubmitting, isValid } = formState
+
+// Watch specific fields
+const name = form.watch("name")
+
+// Get field error
+const nameError = form.formState.errors.name
+```
+
+### Async Data & Complex Forms
+
+**Use dedicated hooks:**
+```typescript
+import { usePropertyData } from '@/hooks/usePropertyData'
+import { useFormState } from '@/hooks/useFormState'
+
+function ComplexForm({ propertyId }) {
+  const { property, updateProperty, isLoading } = usePropertyData(propertyId)
+  const form = useForm({
+    defaultValues: property,
+  })
+  
+  // Form handles UI, hook handles data
+}
+```
+
+## UI Component Patterns
+
+### Class Utilities
+
+**Always use `cn()`:**
+```typescript
+import { cn } from "@/lib/utils"
+
+<div className={cn(
+  "base-classes",
+  condition && "conditional-classes",
+  variant === "primary" && "primary-classes"
+)} />
+```
+
+### Component Variants (CVA)
+
+**Pattern:** See `02-design-system.mdc` for full CVA pattern
+
+**Key points:**
+- Use `cva()` for variant-based components
+- Export `componentVariants` for reuse
+- Use `VariantProps<typeof componentVariants>` for TypeScript
+- Merge with `cn(componentVariants({ variant, size, className }))`
+
+### Refs
+
+**Components wrapping native elements MUST use `forwardRef`:**
+```typescript
+import { forwardRef } from "react"
+
+const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <input
+        ref={ref}
+        className={cn(inputVariants({ className }))}
+        {...props}
+      />
+    )
+  }
+)
+Input.displayName = "Input"
+```
+
+### Accessibility
+
+- Use Radix UI primitives
+- Proper labels and ARIA attributes
+- Keyboard navigation support
+- Focus management
+- Screen reader compatibility
+
+## Validation
+
+### Zod Schemas
+
+**Structure:**
+```typescript
+import { z } from "zod"
+
+const schema = z.object({
+  // Required string
+  name: z.string().min(1, "Name is required"),
+  
+  // Optional with validation
+  email: z.string().email("Invalid email").optional(),
+  
+  // Number with range
+  age: z.number().min(18).max(100),
+  
+  // Enum
+  role: z.enum(["admin", "user"]),
+  
+  // Nested object
+  address: z.object({
+    street: z.string(),
+    city: z.string(),
+  }),
+  
+  // Array
+  tags: z.array(z.string()),
+})
+
+type SchemaType = z.infer<typeof schema>
+```
+
+### Custom Validation
+
+**Async validation:**
+```typescript
+const schema = z.object({
+  email: z.string().email().refine(
+    async (email) => {
+      // Check if email exists
+      const exists = await checkEmailExists(email)
+      return !exists
+    },
+    { message: "Email already exists" }
+  ),
+})
+```
+
+### Error Messages
+
+**Display errors:**
+```typescript
+<FormField
+  control={form.control}
+  name="email"
+  render={({ field, fieldState }) => (
+    <FormItem>
+      <FormLabel>Email</FormLabel>
+      <FormControl>
+        <Input {...field} />
+      </FormControl>
+      <FormMessage /> {/* Automatically shows fieldState.error */}
+    </FormItem>
+  )}
+/>
+```
+
+## Testing Expectations
+
+When creating/modifying forms:
+- Test validation rules
+- Verify error messages display correctly
+- Test form submission flow
+- Check loading states during submission
+- Verify success/error handling
+- Test with invalid data
+- Suggest manual testing of form flows

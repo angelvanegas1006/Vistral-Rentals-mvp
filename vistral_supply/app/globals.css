@@ -1,0 +1,648 @@
+@import "tailwindcss";
+@import "./prophero.css";
+/* Vistral Design System Tokens */
+/* Using package export path */
+@import "vistral-design-system/tokens.css";
+
+/* Slider styles for range inputs - Matching Vistral Design System */
+input[type="range"].slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px; /* Height to accommodate thumb */
+  background: transparent;
+  outline: none;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+/* Track styles - The line/bar of the slider (Webkit) */
+input[type="range"].slider-thumb::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: #e4e4e7; /* zinc-200 - matching DS SLIDER_TOKENS.track.bg */
+  border-radius: 9999px; /* Full rounded - matching DS SLIDER_TOKENS.track.radius */
+}
+
+/* Track styles - The line/bar of the slider (Firefox) */
+input[type="range"].slider-thumb::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: #e4e4e7; /* zinc-200 - matching DS */
+  border-radius: 9999px; /* Full rounded */
+  border: none;
+}
+
+/* Thumb styles - The draggable circle (Webkit) */
+input[type="range"].slider-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px; /* matching DS SLIDER_TOKENS.thumb.size */
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff; /* matching DS SLIDER_TOKENS.thumb.bg */
+  cursor: pointer;
+  border: 2px solid #2050f6; /* spaceblue-600 - matching DS SLIDER_TOKENS.thumb.border */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* matching DS SLIDER_TOKENS.thumb.shadow */
+  margin-top: -7px; /* Center the thumb on the track: (20px thumb - 6px track) / 2 */
+  position: relative;
+}
+
+/* Thumb styles - The draggable circle (Firefox) */
+input[type="range"].slider-thumb::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: 2px solid #2050f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+/* Dark mode support */
+.dark input[type="range"].slider-thumb::-webkit-slider-runnable-track {
+  background: #333333; /* Darker track in dark mode */
+}
+
+.dark input[type="range"].slider-thumb::-moz-range-track {
+  background: #333333;
+}
+
+/* Slider with blue background */
+input[type="range"].slider-blue {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+input[type="range"].slider-blue::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: transparent;
+}
+
+input[type="range"].slider-blue::-moz-range-track {
+  width: 100%;
+  height: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: transparent;
+}
+
+input[type="range"].slider-blue::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  border: none;
+  box-shadow: none;
+  margin-top: -4px;
+  position: relative;
+  z-index: 30;
+}
+
+input[type="range"].slider-blue::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  border: none;
+  box-shadow: none;
+  position: relative;
+  z-index: 30;
+}
+
+
+@custom-variant dark (&:is(.dark *));
+
+/* Custom animations for loader */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+}
+
+@theme inline {
+  /* Base Colors (Prophero compatibility) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Vistral Design System Tokens - Colors */
+  --color-vistral-primary-50: var(--vistral-spaceblue-50);
+  --color-vistral-primary-100: var(--vistral-spaceblue-100);
+  --color-vistral-primary-200: var(--vistral-spaceblue-200);
+  --color-vistral-primary-500: var(--vistral-spaceblue-600);
+  --color-vistral-primary-600: var(--vistral-spaceblue-600);
+  --color-vistral-primary-700: var(--vistral-spaceblue-700);
+  --color-vistral-primary-800: var(--vistral-spaceblue-800);
+  --color-vistral-primary-900: var(--vistral-spaceblue-900);
+  
+  --color-vistral-success: var(--vistral-color-success);
+  --color-vistral-warning: var(--vistral-color-warning);
+  --color-vistral-error: var(--vistral-color-error);
+  --color-vistral-info: var(--vistral-color-info);
+  
+  --color-vistral-gray-50: var(--vistral-gray-50);
+  --color-vistral-gray-100: var(--vistral-gray-100);
+  --color-vistral-gray-200: var(--vistral-gray-200);
+  --color-vistral-gray-300: var(--vistral-gray-300);
+  --color-vistral-gray-400: var(--vistral-gray-400);
+  --color-vistral-gray-500: var(--vistral-gray-500);
+  --color-vistral-gray-600: var(--vistral-gray-600);
+  --color-vistral-gray-700: var(--vistral-gray-700);
+  --color-vistral-gray-800: var(--vistral-gray-800);
+  --color-vistral-gray-900: var(--vistral-gray-900);
+  --color-vistral-gray-950: var(--vistral-gray-950);
+  
+  --color-vistral-zinc-50: var(--vistral-zinc-50);
+  --color-vistral-zinc-100: var(--vistral-zinc-100);
+  --color-vistral-zinc-200: var(--vistral-zinc-200);
+  --color-vistral-zinc-300: var(--vistral-zinc-300);
+  --color-vistral-zinc-400: var(--vistral-zinc-400);
+  --color-vistral-zinc-500: var(--vistral-zinc-500);
+  --color-vistral-zinc-600: var(--vistral-zinc-600);
+  --color-vistral-zinc-700: var(--vistral-zinc-700);
+  --color-vistral-zinc-800: var(--vistral-zinc-800);
+  --color-vistral-zinc-900: var(--vistral-zinc-900);
+
+  /* Vistral Design System Tokens - Typography */
+  --font-vistral-sans: var(--vistral-font-family-sans);
+  --font-vistral-mono: var(--vistral-font-family-mono);
+  
+  --font-size-vistral-xs: var(--vistral-font-size-sm);
+  --font-size-vistral-sm: var(--vistral-font-size-sm);
+  --font-size-vistral-md: var(--vistral-font-size-md);
+  --font-size-vistral-lg: var(--vistral-font-size-lg);
+  --font-size-vistral-xl: var(--vistral-font-size-header-md);
+  --font-size-vistral-2xl: var(--vistral-font-size-header-lg);
+  --font-size-vistral-3xl: var(--vistral-font-size-header-xl);
+  
+  --font-weight-vistral-regular: var(--vistral-font-weight-regular);
+  --font-weight-vistral-medium: var(--vistral-font-weight-medium);
+  --font-weight-vistral-semibold: var(--vistral-font-weight-semibold);
+
+  /* Vistral Design System Tokens - Spacing */
+  --spacing-vistral-0: var(--vistral-spacing-0);
+  --spacing-vistral-1: var(--vistral-spacing-1);
+  --spacing-vistral-2: var(--vistral-spacing-2);
+  --spacing-vistral-3: var(--vistral-spacing-3);
+  --spacing-vistral-4: var(--vistral-spacing-4);
+  --spacing-vistral-5: var(--vistral-spacing-5);
+  --spacing-vistral-6: var(--vistral-spacing-6);
+  --spacing-vistral-8: var(--vistral-spacing-8);
+  --spacing-vistral-10: var(--vistral-spacing-10);
+  --spacing-vistral-12: var(--vistral-spacing-12);
+  --spacing-vistral-16: var(--vistral-spacing-16);
+  --spacing-vistral-20: var(--vistral-spacing-20);
+  --spacing-vistral-24: var(--vistral-spacing-24);
+
+  /* Vistral Design System Tokens - Radius */
+  --radius-vistral-sm: var(--vistral-radius-1);
+  --radius-vistral-md: var(--vistral-radius-2);
+  --radius-vistral-lg: var(--vistral-radius-3);
+  --radius-vistral-xl: var(--vistral-radius-4);
+  --radius-vistral-full: var(--vistral-radius-full);
+
+  /* Vistral Design System Tokens - Shadows */
+  --shadow-vistral-focus: var(--vistral-shadow-focus);
+  --shadow-vistral-1: var(--vistral-shadow-level-1);
+  --shadow-vistral-2: var(--vistral-shadow-level-2);
+  --shadow-vistral-3: var(--vistral-shadow-level-3);
+  --shadow-vistral-4: var(--vistral-shadow-level-4);
+
+  /* Responsive Grid System - Using Vistral tokens (preferred) with Prophero fallback */
+  --spacing-margin-xs: var(--vistral-grid-margin-xs, var(--prophero-margin-xs));
+  --spacing-margin-sm: var(--vistral-grid-margin-sm, var(--prophero-margin-sm));
+  --spacing-margin-md: var(--vistral-grid-margin-md, var(--prophero-margin-md));
+  --spacing-margin-lg: var(--vistral-grid-margin-lg, var(--prophero-margin-lg));
+  --spacing-margin-xl: var(--vistral-grid-margin-xl, var(--prophero-margin-xl));
+  --spacing-margin-xxl: var(--vistral-grid-margin-xxl, var(--prophero-margin-xxl));
+  
+  --spacing-gutter-xs: var(--vistral-grid-gutter-xs, var(--prophero-gutter-xs));
+  --spacing-gutter-sm: var(--vistral-grid-gutter-sm, var(--prophero-gutter-sm));
+  --spacing-gutter-md: var(--vistral-grid-gutter-md, var(--prophero-gutter-md));
+  --spacing-gutter-lg: var(--vistral-grid-gutter-lg, var(--prophero-gutter-lg));
+  --spacing-gutter-xl: var(--vistral-grid-gutter-xl, var(--prophero-gutter-xl));
+  --spacing-gutter-xxl: var(--vistral-grid-gutter-xxl, var(--prophero-gutter-xxl));
+
+  /* Breakpoints - Using Vistral tokens */
+  --breakpoint-xs-max: 575px;
+  --breakpoint-sm-min: var(--vistral-breakpoint-sm);
+  --breakpoint-sm-max: 768px;
+  --breakpoint-md-min: var(--vistral-breakpoint-md);
+  --breakpoint-md-max: 992px;
+  --breakpoint-lg-min: var(--vistral-breakpoint-lg);
+  --breakpoint-lg-max: 1199px;
+  --breakpoint-xl-min: var(--vistral-breakpoint-xl);
+  --breakpoint-xl-max: 1400px;
+  --breakpoint-xxl-min: var(--vistral-breakpoint-xxl);
+}
+
+:root {
+  /* Using Prophero tokens */
+  --radius: var(--prophero-radius-lg);
+  --background: var(--prophero-gray-50);
+  --foreground: var(--prophero-gray-900);
+  --card: #ffffff;
+  --card-foreground: var(--prophero-gray-900);
+  --popover: #ffffff;
+  --popover-foreground: var(--prophero-gray-900);
+  --primary: var(--prophero-blue-500);
+  --primary-foreground: #ffffff;
+  --secondary: var(--prophero-gray-100);
+  --secondary-foreground: var(--prophero-gray-900);
+  --muted: var(--prophero-gray-100);
+  --muted-foreground: var(--prophero-gray-600);
+  --accent: var(--prophero-blue-50);
+  --accent-foreground: var(--prophero-blue-700);
+  --destructive: var(--prophero-danger);
+  --destructive-foreground: #ffffff;
+  --border: var(--prophero-gray-200);
+  --input: var(--prophero-gray-200);
+  --ring: var(--prophero-blue-500);
+  --chart-1: var(--prophero-blue-500);
+  --chart-2: var(--prophero-blue-400);
+  --chart-3: var(--prophero-blue-300);
+  --chart-4: var(--prophero-blue-200);
+  --chart-5: var(--prophero-blue-100);
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--prophero-gray-900);
+  --sidebar-primary: var(--prophero-blue-500);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--prophero-gray-100);
+  --sidebar-accent-foreground: var(--prophero-gray-900);
+  --sidebar-border: var(--prophero-gray-200);
+  --sidebar-ring: var(--prophero-blue-500);
+}
+
+.dark {
+  /* Dark Mode Color Scheme */
+  /* Background bg - Negro puro */
+  --background: #000000; /* Fondo negro puro */
+  --secondary: #1a1a1a; /* Gris muy oscuro para elementos elevados */
+  --card: #1f1f1f; /* Gris oscuro para cards */
+  --popover: #1a1a1a; /* Gris muy oscuro para popovers */
+  
+  /* Foreground fg */
+  --foreground: #ffffff; /* fg.primary - base.white */
+  --card-foreground: #ffffff; /* fg.primary */
+  --popover-foreground: #ffffff; /* fg.primary */
+  --secondary-foreground: #ffffff; /* fg.primary */
+  --muted-foreground: #a3a3a3; /* fg.secondary - gris medio */
+  
+  /* Brand */
+  --primary: #316eff; /* fg.brand - primary.500 */
+  --primary-foreground: #ffffff;
+  --ring: #316eff; /* border.brand - primary.500 */
+  
+  /* States - reduced saturation */
+  --destructive: #dc2626; /* Rojo más oscuro para mejor contraste en dark mode */
+  --destructive-foreground: #ffffff;
+  --accent: var(--prophero-blue-900);
+  --accent-foreground: #ffffff;
+  --muted: #262626; /* bg.elevated - gris oscuro */
+  
+  /* Borders - Grises para contraste con fondo negro */
+  --border: #333333; /* border.default - gris medio oscuro */
+  --input: #333333; /* border.default - gris medio oscuro */
+  --sidebar-border: #333333; /* border.default - gris medio oscuro */
+  
+  /* Charts */
+  --chart-1: var(--prophero-blue-400);
+  --chart-2: var(--prophero-blue-300);
+  --chart-3: var(--prophero-blue-200);
+  --chart-4: var(--prophero-blue-100);
+  --chart-5: var(--prophero-blue-50);
+  
+  /* Sidebar - Grises oscuros */
+  --sidebar: #1a1a1a; /* bg.elevated - gris muy oscuro */
+  --sidebar-foreground: #ffffff; /* fg.primary */
+  --sidebar-primary: #316eff; /* fg.brand - primary.500 */
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #262626; /* bg.card - gris oscuro */
+  --sidebar-accent-foreground: #ffffff; /* fg.primary */
+  --sidebar-ring: #316eff; /* border.brand - primary.500 */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 14px; /* Base font size for mobile */
+  }
+  
+  /* Cursor pointer for all clickable elements */
+  button:not(:disabled),
+  a,
+  [role="button"]:not(:disabled),
+  [onclick],
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  label[for] {
+    cursor: pointer;
+  }
+  
+  button:disabled,
+  [role="button"]:disabled {
+    cursor: not-allowed;
+  }
+  
+  /* Typography Hierarchy - Responsive */
+  h1 {
+    @apply text-xl md:text-2xl lg:text-3xl font-bold;
+  }
+  
+  h2 {
+    @apply text-lg md:text-xl lg:text-2xl font-semibold;
+  }
+  
+  /* Checklist section titles should use text-sm to match documentation section */
+  .checklist-section h2,
+  [class*="checklist"] h2 {
+    @apply text-sm font-semibold;
+  }
+  
+  h3 {
+    @apply text-base md:text-lg lg:text-xl font-semibold;
+  }
+  
+  h4 {
+    @apply text-sm md:text-base lg:text-lg font-semibold;
+  }
+  
+  /* Base text sizes - consistent across app */
+  .text-body {
+    @apply text-sm md:text-base;
+  }
+  
+  .text-small {
+    @apply text-xs md:text-sm;
+  }
+  
+  .text-caption {
+    @apply text-xs;
+  }
+  
+  /* Labels - consistent sizing */
+  label {
+    @apply text-sm font-medium;
+  }
+  
+  /* Inputs - consistent sizing for mobile */
+  input, textarea, select {
+    @apply text-sm md:text-base;
+  }
+  
+  /* Mobile-first responsive adjustments */
+  @media (max-width: 768px) {
+    /* Ensure inputs are readable on mobile */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    input[type="tel"],
+    textarea,
+    select {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+  }
+}
+
+/* Custom scrollbar styles */
+.scrollbar-visible {
+  scrollbar-width: thin;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: rgb(161 161 170);
+  border-radius: 3px;
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: rgb(63 63 70);
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(113 113 122);
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(82 82 91);
+}
+
+.scrollbar-overlay {
+  scrollbar-width: thin;
+}
+
+.scrollbar-overlay::-webkit-scrollbar {
+  width: 6px;
+  display: block;
+}
+
+.scrollbar-overlay::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-overlay::-webkit-scrollbar-thumb {
+  background-color: rgb(161 161 170);
+  border-radius: 3px;
+}
+
+.dark .scrollbar-overlay::-webkit-scrollbar-thumb {
+  background-color: rgb(63 63 70);
+}
+
+.scrollbar-overlay::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(113 113 122);
+}
+
+.dark .scrollbar-overlay::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(82 82 91);
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Brand tweaks */
+:root {
+  --brand-primary: #316eff;
+  --brand-primary-hover: #2246cc;
+}
+
+.dark {
+  --brand-primary: #316eff;
+  --brand-primary-hover: #2246cc;
+}
+
+/* Fix for Next.js portals positioning */
+nextjs-portal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+nextjs-portal > * {
+  pointer-events: auto;
+}
+
+/* Responsive Grid System Utilities */
+/* Container margins - responsive based on breakpoints */
+/* Uses Vistral tokens (preferred) with Prophero fallback */
+@layer utilities {
+  .container-margin {
+    padding-left: var(--vistral-grid-margin-xs, var(--prophero-margin-xs));
+    padding-right: var(--vistral-grid-margin-xs, var(--prophero-margin-xs));
+  }
+
+  @media (min-width: 577px) {
+    .container-margin {
+      padding-left: var(--vistral-grid-margin-sm, var(--prophero-margin-sm));
+      padding-right: var(--vistral-grid-margin-sm, var(--prophero-margin-sm));
+    }
+  }
+
+  @media (min-width: 769px) {
+    .container-margin {
+      padding-left: var(--vistral-grid-margin-md, var(--prophero-margin-md));
+      padding-right: var(--vistral-grid-margin-md, var(--prophero-margin-md));
+    }
+  }
+
+  @media (min-width: 993px) {
+    .container-margin {
+      padding-left: var(--vistral-grid-margin-lg, var(--prophero-margin-lg));
+      padding-right: var(--vistral-grid-margin-lg, var(--prophero-margin-lg));
+    }
+  }
+
+  @media (min-width: 1201px) {
+    .container-margin {
+      padding-left: var(--vistral-grid-margin-xl, var(--prophero-margin-xl));
+      padding-right: var(--vistral-grid-margin-xl, var(--prophero-margin-xl));
+    }
+  }
+
+  @media (min-width: 1401px) {
+    .container-margin {
+      padding-left: var(--vistral-grid-margin-xxl, var(--prophero-margin-xxl));
+      padding-right: var(--vistral-grid-margin-xxl, var(--prophero-margin-xxl));
+    }
+    
+    /* Center content with max width */
+    .container-margin {
+      max-width: var(--vistral-layout-container-max-width, 1920px);
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  /* Gutter utilities - responsive spacing between grid items */
+  /* Uses Vistral tokens (preferred) with Prophero fallback */
+  .gutter {
+    gap: var(--vistral-grid-gutter-xs, var(--prophero-gutter-xs));
+  }
+
+  @media (min-width: 577px) {
+    .gutter {
+      gap: var(--vistral-grid-gutter-sm, var(--prophero-gutter-sm));
+    }
+  }
+
+  @media (min-width: 769px) {
+    .gutter {
+      gap: var(--vistral-grid-gutter-md, var(--prophero-gutter-md));
+    }
+  }
+
+  @media (min-width: 993px) {
+    .gutter {
+      gap: var(--vistral-grid-gutter-lg, var(--prophero-gutter-lg));
+    }
+  }
+
+  @media (min-width: 1201px) {
+    .gutter {
+      gap: var(--vistral-grid-gutter-xl, var(--prophero-gutter-xl));
+    }
+  }
+
+  @media (min-width: 1401px) {
+    .gutter {
+      gap: var(--vistral-grid-gutter-xxl, var(--prophero-gutter-xxl));
+    }
+  }
+}

@@ -1,0 +1,217 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-02
+glob: ["**/app/api/**"]
+description: "API route structure, security, responses, and service role usage"
+---
+
+# Vistral Lab - API Routes Rules
+
+## Route Structure
+
+### Location
+
+**Directory:** `app/api/`
+
+**Organization by domain:**
+- `app/api/admin/users/route.ts` - Admin endpoints
+- `app/api/google-maps/autocomplete/route.ts` - Google Maps endpoints
+- `app/api/supply/properties/route.ts` - Supply domain endpoints
+
+### Route Handler Pattern
+
+**File naming:** `route.ts` (Next.js App Router convention)
+
+**Export HTTP methods:**
+```typescript
+// app/api/example/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  // Handle GET request
+  return NextResponse.json({ data: "..." })
+}
+
+export async function POST(request: NextRequest) {
+  // Handle POST request
+  const body = await request.json()
+  return NextResponse.json({ success: true })
+}
+```
+
+## Security
+
+### Session Verification
+
+**Always verify session for protected endpoints:**
+```typescript
+import { createServerClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  const supabase = createServerClient()
+  
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error || !user) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    )
+  }
+  
+  // Protected logic
+}
+```
+
+### Role Verification
+
+**Check user role for admin endpoints:**
+```typescript
+import { createServerClient } from '@/lib/supabase/server'
+import { getAppRole } from '@/lib/auth/app-auth-context'
+
+export async function DELETE(request: NextRequest) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  
+  const role = await getAppRole(user.id)
+  
+  if (role !== 'supply_admin') {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+  
+  // Admin-only logic
+}
+```
+
+### Service Role Usage
+
+**ONLY in API routes (`app/api/**`):**
+
+```typescript
+import { createServerClient } from '@/lib/supabase/server'
+import { config } from '@/lib/config/environment'
+
+export async function POST(request: NextRequest) {
+  // For admin operations that bypass RLS
+  const supabase = createServerClient()
+  
+  // If you need service role (rare):
+  // Use only for admin operations, never expose to client
+  const adminSupabase = createServerClient({
+    serviceRoleKey: config.supabase.serviceRoleKey // Server-only
+  })
+  
+  // Admin operation
+}
+```
+
+**NEVER:**
+- Use service role in client components
+- Expose service role key to client
+- Use service role for regular user operations (use RLS instead)
+
+## Responses
+
+### Consistent Response Format
+
+**Success:**
+```typescript
+return NextResponse.json({
+  success: true,
+  data: { /* response data */ }
+}, { status: 200 })
+```
+
+**Error:**
+```typescript
+return NextResponse.json({
+  success: false,
+  error: "Error message",
+  code: "ERROR_CODE" // Optional
+}, { status: 400 }) // 400, 401, 403, 404, 500
+```
+
+### HTTP Status Codes
+
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request (validation errors)
+- `401` - Unauthorized (no session)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found
+- `500` - Internal Server Error
+
+### Error Handling
+
+```typescript
+export async function POST(request: NextRequest) {
+  try {
+    // API logic
+    return NextResponse.json({ success: true, data: result })
+  } catch (error) {
+    console.error("API Error:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
+    )
+  }
+}
+```
+
+## Environment Variables
+
+**Read from config helper:**
+```typescript
+import { config } from '@/lib/config/environment'
+
+// ✅ CORRECT
+const apiKey = config.googleMaps?.apiKey
+
+// ❌ WRONG
+const apiKey = process.env.GOOGLE_MAPS_API_KEY
+```
+
+**Server-only variables:**
+- Never expose to client
+- Read from `config` helper
+- Use service role key only when absolutely necessary
+
+## Request Parsing
+
+**JSON body:**
+```typescript
+const body = await request.json()
+```
+
+**Query parameters:**
+```typescript
+const { searchParams } = new URL(request.url)
+const id = searchParams.get('id')
+```
+
+**Headers:**
+```typescript
+const authHeader = request.headers.get('authorization')
+```
+
+## Testing Expectations
+
+When creating/modifying API routes:
+- Test authentication requirements
+- Verify role-based access control
+- Test error handling
+- Check response format consistency
+- Verify HTTP status codes
+- Test with invalid inputs
+- Suggest manual testing with Postman/curl
+- Document endpoint in API docs if applicable

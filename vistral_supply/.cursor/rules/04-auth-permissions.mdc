@@ -1,0 +1,202 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-02
+glob: ["**/lib/auth/**", "**/app/**/page.tsx", "**/components/**"]
+description: "Authentication layers, roles, permissions, and layout structure"
+---
+
+# Vistral Lab - Authentication & Permissions Rules
+
+## Authentication Layers
+
+### Layer Architecture
+
+1. **Supabase Auth** - Base authentication layer
+2. **SupabaseAuthProvider** - Session context (`lib/auth/supabase-auth-context.tsx`)
+3. **AppAuthProvider** - Application role layer (`lib/auth/app-auth-context.tsx`)
+
+### Provider Setup
+
+**File:** `app/layout.tsx`
+
+**Order (critical):**
+```tsx
+<ThemeProvider>
+  <I18nProvider>
+    <SupabaseAuthProvider>
+      <AppAuthProvider>
+        {children}
+        <Toaster />
+      </AppAuthProvider>
+    </SupabaseAuthProvider>
+  </I18nProvider>
+</ThemeProvider>
+```
+
+**Why this order:**
+- ThemeProvider: Base theming
+- I18nProvider: Translations (may need theme)
+- SupabaseAuthProvider: User session
+- AppAuthProvider: Requires SupabaseAuthProvider for user data
+
+## Roles
+
+### Role Definition
+
+**Database:** Defined in `user_roles` table and enum `app_role`
+
+**TypeScript Type:**
+```typescript
+import type { Database } from '@/lib/supabase/types'
+type AppRole = Database['public']['Enums']['app_role']
+```
+
+**Available Roles:**
+- `supply_partner` - Supply partner (default)
+- `supply_analyst` - Supply analyst
+- `supply_admin` - Supply admin
+- `supply_lead` - Supply lead
+- `renovator_analyst` - Renovator analyst
+- `reno_lead` - Reno lead
+
+### Role Usage
+
+**NEVER hardcode role strings:**
+```typescript
+// ❌ WRONG
+if (role === "supply_admin") { ... }
+
+// ✅ CORRECT
+import type { AppRole } from '@/lib/supabase/types'
+const allowedRoles: AppRole[] = ['supply_admin', 'supply_lead']
+if (allowedRoles.includes(role)) { ... }
+```
+
+## Permissions
+
+### Permission Functions
+
+**File:** `lib/auth/permissions.ts`
+
+**Pattern:**
+```typescript
+export function canViewProperty(user: User, property: Property): boolean {
+  // Permission logic using AppRole and resource data
+}
+
+export function canEditProperty(user: User, property: Property): boolean {
+  // Permission logic
+}
+```
+
+**Usage:**
+```typescript
+import { canEditProperty } from '@/lib/auth/permissions'
+import { useAppAuth } from '@/lib/auth/app-auth-context'
+
+function PropertyPage({ property }) {
+  const { user, role } = useAppAuth()
+  
+  if (!canEditProperty(user, property)) {
+    return <Unauthorized />
+  }
+  
+  // Show edit UI
+}
+```
+
+**Rules:**
+- Centralize permission logic in `permissions.ts`
+- Don't duplicate permission checks in components
+- Use permission functions, not inline role checks
+- Consider resource-level permissions (e.g., property ownership)
+
+## Hooks
+
+### useSupabaseAuthContext
+
+**File:** `lib/auth/supabase-auth-context.tsx`
+
+**Returns:**
+- `user` - Supabase user object (or null)
+- `loading` - Auth loading state
+- `signOut` - Sign out function
+
+**Usage:**
+```typescript
+import { useSupabaseAuthContext } from '@/lib/auth/supabase-auth-context'
+
+function Component() {
+  const { user, loading } = useSupabaseAuthContext()
+  
+  if (loading) return <Loading />
+  if (!user) return <Login />
+  
+  // User is authenticated
+}
+```
+
+### useAppAuth
+
+**File:** `lib/auth/app-auth-context.tsx`
+
+**Returns:**
+- `user` - Supabase user object
+- `role` - AppRole (from user_roles table)
+- `isLoading` - Loading state
+- `hasRole(role: AppRole)` - Check specific role
+- `hasAnyRole(roles: AppRole[])` - Check multiple roles
+- `isAdmin` - Check if admin role
+
+**Usage:**
+```typescript
+import { useAppAuth } from '@/lib/auth/app-auth-context'
+
+function Component() {
+  const { role, hasRole, isAdmin } = useAppAuth()
+  
+  if (isAdmin) {
+    // Admin-only UI
+  }
+  
+  if (hasRole('supply_analyst')) {
+    // Analyst UI
+  }
+}
+```
+
+## Protected Routes
+
+**Pattern for protected pages:**
+```typescript
+import { useAppAuth } from '@/lib/auth/app-auth-context'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+export default function ProtectedPage() {
+  const { user, role, isLoading } = useAppAuth()
+  const router = useRouter()
+  
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, isLoading, router])
+  
+  if (isLoading) return <Loading />
+  if (!user) return null
+  
+  // Protected content
+}
+```
+
+## Testing Expectations
+
+When modifying auth:
+- Test login/logout flows
+- Verify role-based access control
+- Test permission functions with different roles
+- Check loading states
+- Verify redirects work correctly
+- Suggest manual testing of auth flows

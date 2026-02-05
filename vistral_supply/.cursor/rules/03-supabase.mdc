@@ -1,0 +1,167 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-02
+glob: ["**/lib/supabase/**", "**/app/api/**", "**/supabase/**"]
+description: "Supabase client patterns, types, migrations, and environment configuration"
+---
+
+# Vistral Lab - Supabase Rules
+
+## Client Setup
+
+### Browser Client
+
+**File:** `lib/supabase/client.ts`
+
+**Usage:** Only in `"use client"` components
+
+```typescript
+import { createBrowserClient } from '@/lib/supabase/client'
+
+// ✅ CORRECT
+"use client"
+export function ClientComponent() {
+  const supabase = createBrowserClient()
+  // Use client here
+}
+```
+
+**Configuration:**
+- `persistSession: true`
+- `autoRefreshToken: true`
+- `detectSessionInUrl: true`
+- Headers: `x-client-info` and `x-supabase-project` with project name
+
+**NEVER:**
+- Use browser client in Server Components
+- Access service role key from browser client
+
+### Server Client
+
+**File:** `lib/supabase/server.ts`
+
+**Usage:** Server Components, API routes, Server Actions
+
+```typescript
+import { createServerClient } from '@/lib/supabase/server'
+
+// ✅ CORRECT - Server Component
+export async function ServerComponent() {
+  const supabase = createServerClient()
+  // Use server client here
+}
+
+// ✅ CORRECT - API Route
+export async function GET() {
+  const supabase = createServerClient()
+  // Can use service role if needed
+}
+```
+
+**Configuration:**
+- Uses `cookies()` from `next/headers`
+- Handles `getAll`/`setAll` for cookie management
+- Can access service role key (server-only)
+
+## Types
+
+**File:** `lib/supabase/types.ts`
+
+**Generated from:** Supabase CLI (`supabase gen types typescript`)
+
+**Usage:**
+```typescript
+import type { Database } from '@/lib/supabase/types'
+
+// Type clients
+const supabase: SupabaseClient<Database> = createBrowserClient()
+
+// Type tables
+type Property = Database['public']['Tables']['properties']['Row']
+type PropertyInsert = Database['public']['Tables']['properties']['Insert']
+
+// Type enums
+type AppRole = Database['public']['Enums']['app_role']
+```
+
+**Best practices:**
+- Always type Supabase clients with `Database`
+- Use table types instead of `any`
+- Regenerate types after schema changes
+
+## Environment Variables
+
+**Public (client-safe):**
+- `NEXT_PUBLIC_SUPABASE_URL` - Project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Anonymous key
+
+**Private (server-only):**
+- `SUPABASE_SERVICE_ROLE_KEY` - Service role (NEVER expose to client)
+
+**Configuration Helper:**
+**File:** `lib/config/environment.ts`
+
+```typescript
+import { config } from '@/lib/config/environment'
+
+// ✅ CORRECT
+const url = config.supabase.url
+const anonKey = config.supabase.anonKey
+
+// ❌ WRONG
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL // Use config helper
+```
+
+**Helper functions:**
+- `getSupabaseProjectName()` - Extract project name from URL
+- `isDemoMode()` - Check if running without real credentials
+
+## Migrations
+
+**Location:** `supabase/migrations/`
+
+**Naming:** `001_description.sql`, `002_description.sql`, etc.
+
+**Rules:**
+- Never modify existing migrations
+- Always add new migrations for schema changes
+- Run migrations in order
+- Test migrations in development before production
+
+**Execution:**
+- Development: Supabase Dashboard → SQL Editor
+- Production: Supabase CLI or Dashboard
+- Vercel: Not automatic - must run manually
+
+## Demo Mode
+
+**Detection:** `isDemoMode()` in `lib/utils.ts`
+
+**Behavior:**
+- Returns `true` if `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY` missing/invalid
+- Use mock data instead of real API calls
+- Mock user authentication
+- Clear UI indication of demo mode
+
+**Implementation pattern:**
+```typescript
+import { isDemoMode } from '@/lib/utils'
+
+if (isDemoMode()) {
+  // Return mock data
+  return mockData
+}
+
+// Use real Supabase client
+const supabase = createBrowserClient()
+```
+
+## Testing Expectations
+
+When working with Supabase:
+- Verify RLS policies are tested
+- Check error handling for network failures
+- Test with demo mode enabled
+- Verify types match database schema
+- Suggest manual testing of auth flows

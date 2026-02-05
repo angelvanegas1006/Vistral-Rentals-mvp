@@ -1,0 +1,82 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-02
+glob: "**/*"
+alwaysApply: true
+description: "Security guardrails and credential protection rules"
+---
+
+# Vistral Lab - Security Rules
+
+## Credential Protection
+
+### Service Role Key Usage
+
+**ALLOWED locations ONLY:**
+- `app/api/**/*.ts` - API route handlers
+- `lib/supabase/server.ts` - Server-side Supabase client
+
+**FORBIDDEN locations:**
+- Any `"use client"` component
+- Any file in `components/`
+- Any file in `app/**/page.tsx` (unless Server Component)
+- Any file in `hooks/`
+
+**Validation pattern:**
+```typescript
+// ✅ CORRECT - Server-side only
+import { createServerClient } from '@/lib/supabase/server'
+const supabase = createServerClient()
+// Can use service role here
+
+// ❌ WRONG - Client-side
+"use client"
+import { createBrowserClient } from '@/lib/supabase/client'
+// NEVER use service role here
+```
+
+### Environment Variables
+
+**Public variables (safe for client):**
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_ENV`
+
+**Private variables (server-only):**
+- `SUPABASE_SERVICE_ROLE_KEY` - NEVER expose
+- Any `*_SECRET`, `*_KEY`, `*_PASSWORD` variables
+
+**Best practices:**
+- Always read from `lib/config/environment.ts`
+- Never hardcode credentials
+- Use `isDemoMode()` for development without real credentials
+
+### File Access Restrictions
+
+**Never read or suggest reading:**
+- `.env*` files (any variant)
+- `*.pem`, `*.key` files
+- Files matching `**/credentials*`, `**/*secret*`, `**/*password*`
+
+**If user asks to see credentials:**
+- Suggest checking Vercel dashboard for production
+- Suggest `.env.local.example` for structure reference
+- Warn about security risks
+
+### Demo Mode Security
+
+When implementing demo mode:
+- Use mock data, not real API calls
+- Never log or expose real credentials
+- Clear indication in UI that demo mode is active
+- Disable features that require real credentials
+
+### Code Review Checklist
+
+Before suggesting code changes, verify:
+- [ ] No hardcoded secrets
+- [ ] Service role only in allowed locations
+- [ ] Environment variables read from config helper
+- [ ] Client components don't access server-only vars
+- [ ] No credentials in console.log or error messages

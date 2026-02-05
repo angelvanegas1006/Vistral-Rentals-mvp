@@ -1,0 +1,161 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-02
+glob: ["**/app/supply/**", "**/app/admin/**", "**/app/reno/**"]
+description: "Domain boundaries and isolation rules"
+---
+
+# Vistral Lab - Domain Boundaries Rules
+
+## Domain Structure
+
+### Domains
+
+**Current domains:**
+- `app/supply/` - Supply management domain
+- `app/admin/` - Admin domain
+- `app/reno/` - Renovation domain
+- `app/login/` - Authentication (shared)
+
+### Domain Isolation Rule
+
+**CRITICAL:** When working on a specific domain, do NOT touch other domains unless explicitly requested.
+
+**Example:**
+- Working on `app/supply/property/[id]/page.tsx`?
+  - ✅ Modify `app/supply/**` files
+  - ✅ Use shared utilities from `lib/`
+  - ✅ Use shared components from `components/ui/`
+  - ❌ Do NOT modify `app/admin/**` files
+  - ❌ Do NOT modify `app/reno/**` files
+
+**Exception:** Only when user explicitly asks to:
+- Integrate features across domains
+- Share components between domains
+- Modify shared infrastructure
+
+## Shared Resources
+
+### What CAN be shared
+
+**From `lib/`:**
+- `lib/utils.ts` - Utility functions
+- `lib/constants.ts` - Constants and config
+- `lib/supabase/**` - Supabase clients
+- `lib/auth/**` - Auth providers and permissions
+- `lib/config/**` - Configuration helpers
+
+**From `components/ui/`:**
+- All UI primitives (Button, Input, Form, etc.)
+- Shared layout components
+
+**From `hooks/`:**
+- Generic hooks (useSupabaseAuth, etc.)
+- Domain-specific hooks can be shared if appropriate
+
+### What SHOULD be domain-specific
+
+**Domain-specific components:**
+- `components/supply/**` - Supply domain components
+- `components/admin/**` - Admin domain components (if exists)
+- `components/reno/**` - Reno domain components (if exists)
+
+**Domain-specific services:**
+- `lib/supply-*-supabase.ts` - Supply domain services
+- `lib/admin-*-supabase.ts` - Admin domain services (if exists)
+- `lib/reno-*-supabase.ts` - Reno domain services (if exists)
+
+**Domain-specific hooks:**
+- `hooks/usePropertyData.ts` - Supply-specific
+- Domain-specific hooks should live in domain folders or `hooks/` with clear naming
+
+## Cross-Domain Communication
+
+**When domains need to interact:**
+
+**Pattern 1: Shared Service**
+```typescript
+// lib/shared-property-service.ts
+export async function getProperty(id: string) {
+  // Shared logic
+}
+
+// Used by both supply and reno domains
+```
+
+**Pattern 2: API Route**
+```typescript
+// app/api/shared/properties/route.ts
+// Both domains call this API
+```
+
+**Pattern 3: Event/State Management**
+- Use shared state management if needed
+- Consider context providers for cross-domain state
+
+## Domain-Specific Patterns
+
+### Supply Domain
+
+**Structure:**
+- `app/supply/` - Routes
+- `components/supply/` - Components
+- `lib/supply-*-supabase.ts` - Services
+
+**Key features:**
+- Property management
+- Kanban board
+- Financial estimates
+- Checklists
+
+### Admin Domain
+
+**Structure:**
+- `app/admin/` - Routes
+- `components/admin/` - Components (if exists)
+- `lib/admin-*-supabase.ts` - Services (if exists)
+
+**Key features:**
+- User management
+- System configuration
+
+### Reno Domain
+
+**Structure:**
+- `app/reno/` - Routes
+- `components/reno/` - Components (if exists)
+- `lib/reno-*-supabase.ts` - Services (if exists)
+
+**Key features:**
+- Budget management
+- Renovation workflows
+
+## Migration Strategy
+
+**When moving code between domains:**
+
+1. **Identify shared vs domain-specific:**
+   - Is this truly domain-specific?
+   - Could other domains benefit?
+
+2. **Move to appropriate location:**
+   - Domain-specific → domain folder
+   - Shared → `lib/` or `components/ui/`
+
+3. **Update imports:**
+   - Update all references
+   - Verify no broken imports
+
+4. **Test:**
+   - Verify domain still works
+   - Check other domains aren't broken
+
+## Testing Expectations
+
+When working within a domain:
+- Test domain-specific functionality
+- Verify shared resources still work
+- Check no unintended side effects on other domains
+- Suggest manual testing of domain features
+- Document domain-specific patterns if creating new ones

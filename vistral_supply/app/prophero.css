@@ -1,0 +1,163 @@
+/* Prophero Design System Tokens (source: https://web-components.design.prophero.com/) */
+
+:root {
+  /* Brand Blues - Primary Palette */
+  --prophero-blue-50: #eef2ff;
+  --prophero-blue-100: #e0e7ff;
+  --prophero-blue-200: #c7d2fe;
+  --prophero-blue-300: #a5b4fc;
+  --prophero-blue-400: #818cf8;
+  --prophero-blue-500: #316eff; /* Primary brand color - updated for dark mode */
+  --prophero-blue-600: #2246cc;
+  --prophero-blue-700: #1b36a3;
+  --prophero-blue-800: #152a80;
+  --prophero-blue-900: #112266;
+  --prophero-blue-950: #0d1b4d;
+
+  /* Semantic Colors */
+  --prophero-success: #10b981;
+  --prophero-success-hover: #059669;
+  --prophero-warning: #f59e0b;
+  --prophero-warning-hover: #d97706;
+  --prophero-danger: #ef4444;
+  --prophero-danger-hover: #dc2626;
+  --prophero-info: #3b82f6;
+  --prophero-info-hover: #2563eb;
+
+  /* Dark Mode Secondary Colors */
+  --prophero-secondary-200: #d1d1d1;
+  --prophero-secondary-500: #6d6d6d;
+  --prophero-secondary-600: #5d5d5d;
+  --prophero-secondary-700: #4f4f4f;
+  --prophero-secondary-800: #454545;
+  --prophero-secondary-900: #3d3d3d;
+  --prophero-secondary-950: #212121;
+
+  /* Neutral Grays */
+  --prophero-gray-50: #f9fafb;
+  --prophero-gray-100: #f3f4f6;
+  --prophero-gray-200: #e5e7eb;
+  --prophero-gray-300: #d1d5db;
+  --prophero-gray-400: #9ca3af;
+  --prophero-gray-500: #6b7280;
+  --prophero-gray-600: #4b5563;
+  --prophero-gray-700: #374151;
+  --prophero-gray-800: #1f2937;
+  --prophero-gray-900: #111827;
+  --prophero-gray-950: #030712;
+
+  /* Typography Scale */
+  --prophero-font-family-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --prophero-font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+
+  /* Font Sizes */
+  --prophero-text-xs: 0.75rem;    /* 12px */
+  --prophero-text-sm: 0.875rem;   /* 14px */
+  --prophero-text-base: 1rem;     /* 16px */
+  --prophero-text-lg: 1.125rem;   /* 18px */
+  --prophero-text-xl: 1.25rem;    /* 20px */
+  --prophero-text-2xl: 1.5rem;    /* 24px */
+  --prophero-text-3xl: 1.875rem;  /* 30px */
+  --prophero-text-4xl: 2.25rem;   /* 36px */
+
+  /* Font Weights */
+  --prophero-font-light: 300;
+  --prophero-font-normal: 400;
+  --prophero-font-medium: 500;
+  --prophero-font-semibold: 600;
+  --prophero-font-bold: 700;
+
+  /* Line Heights */
+  --prophero-leading-none: 1;
+  --prophero-leading-tight: 1.25;
+  --prophero-leading-snug: 1.375;
+  --prophero-leading-normal: 1.5;
+  --prophero-leading-relaxed: 1.625;
+  --prophero-leading-loose: 2;
+
+  /* Spacing Scale */
+  --prophero-spacing-0: 0;
+  --prophero-spacing-1: 0.25rem;   /* 4px */
+  --prophero-spacing-2: 0.5rem;    /* 8px */
+  --prophero-spacing-3: 0.75rem;   /* 12px */
+  --prophero-spacing-4: 1rem;      /* 16px */
+  --prophero-spacing-5: 1.25rem;   /* 20px */
+  --prophero-spacing-6: 1.5rem;    /* 24px */
+  --prophero-spacing-8: 2rem;      /* 32px */
+  --prophero-spacing-10: 2.5rem;   /* 40px */
+  --prophero-spacing-12: 3rem;     /* 48px */
+  --prophero-spacing-16: 4rem;     /* 64px */
+  --prophero-spacing-20: 5rem;     /* 80px */
+  --prophero-spacing-24: 6rem;     /* 96px */
+
+  /* Border Radius */
+  --prophero-radius-sm: 0.25rem;   /* 4px */
+  --prophero-radius-md: 0.375rem;  /* 6px */
+  --prophero-radius-lg: 0.5rem;    /* 8px */
+  --prophero-radius-xl: 0.75rem;   /* 12px */
+  --prophero-radius-2xl: 1rem;     /* 16px */
+  --prophero-radius-full: 9999px;
+
+  /* Shadows */
+  --prophero-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --prophero-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --prophero-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --prophero-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Transitions */
+  --prophero-transition-fast: 150ms;
+  --prophero-transition-base: 200ms;
+  --prophero-transition-slow: 300ms;
+  --prophero-transition-slower: 500ms;
+
+  /* Z-Index Scale */
+  --prophero-z-dropdown: 1000;
+  --prophero-z-sticky: 1020;
+  --prophero-z-fixed: 1030;
+  --prophero-z-modal-backdrop: 1040;
+  --prophero-z-modal: 1050;
+  --prophero-z-popover: 1060;
+  --prophero-z-tooltip: 1070;
+
+  /* Responsive Grid System - Breakpoints, Margins, and Gutters */
+  /* X-Small (XS): <576px */
+  --prophero-breakpoint-xs-max: 575px;
+  --prophero-margin-xs: 20px;
+  --prophero-gutter-xs: 12px;
+  --prophero-columns-xs: 6;
+
+  /* Small (SM): 577px - 768px */
+  --prophero-breakpoint-sm-min: 577px;
+  --prophero-breakpoint-sm-max: 768px;
+  --prophero-margin-sm: 32px;
+  --prophero-gutter-sm: 12px;
+  --prophero-columns-sm: 6;
+
+  /* Medium (MD): 769px - 992px */
+  --prophero-breakpoint-md-min: 769px;
+  --prophero-breakpoint-md-max: 992px;
+  --prophero-margin-md: 40px;
+  --prophero-gutter-md: 16px;
+  --prophero-columns-md: 12;
+
+  /* Large (LG): 993px - 1199px */
+  --prophero-breakpoint-lg-min: 993px;
+  --prophero-breakpoint-lg-max: 1199px;
+  --prophero-margin-lg: 80px;
+  --prophero-gutter-lg: 28px;
+  --prophero-columns-lg: 12;
+
+  /* Extra Large (XL): 1200px - 1400px */
+  --prophero-breakpoint-xl-min: 1200px;
+  --prophero-breakpoint-xl-max: 1400px;
+  --prophero-margin-xl: 100px;
+  --prophero-gutter-xl: 32px;
+  --prophero-columns-xl: 12;
+
+  /* Extra Extra Large (XXL): >1400px */
+  --prophero-breakpoint-xxl-min: 1401px;
+  --prophero-margin-xxl: 112px;
+  --prophero-gutter-xxl: 32px;
+  --prophero-columns-xxl: 12;
+  --prophero-max-width-xxl: 1920px; /* Maximum content width, then centered */
+}

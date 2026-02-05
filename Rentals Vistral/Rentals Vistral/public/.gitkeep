@@ -1,9 +1,0 @@
-# This file ensures the public directory is tracked by git
-# Static assets placed in this folder will be served from the root URL
-# Example: public/image.png -> accessible at /image.png
-
-
-
-
-
-
