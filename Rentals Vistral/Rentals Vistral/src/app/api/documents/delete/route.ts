@@ -97,6 +97,16 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "tenant/other",
   },
+  // Rental Data (Phase 4: Inquilino aceptado)
+  signed_lease_contract_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/lease_contract",
+  },
+  // Guarantee file (Phase 5: Pendiente de trámites)
+  guarantee_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/non-payment_insurance",
+  },
   // Property Marketing Photos (Listo para Alquilar phase)
   marketing_photos_common_areas: {
     bucket: "properties-public-docs",

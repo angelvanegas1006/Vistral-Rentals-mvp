@@ -45,6 +45,7 @@ interface PropertyTasksTabProps {
   onHasAnySectionWithNoChange?: (hasNo: boolean) => void;
   onCanSubmitCommentsChange?: (canSubmit: boolean) => void;
   onPhase2ProgressChange?: (progress: number) => void; // Progress percentage (0-100)
+  onPhase4ProgressChange?: (progress: number) => void; // Progress percentage (0-100) for phase 4
 }
 
 export function PropertyTasksTab({ 
@@ -58,6 +59,7 @@ export function PropertyTasksTab({
   onHasAnySectionWithNoChange,
   onCanSubmitCommentsChange,
   onPhase2ProgressChange,
+  onPhase4ProgressChange,
 }: PropertyTasksTabProps) {
   const { formData } = usePropertyForm();
   const { property: supabaseProperty, loading: propertyLoading } = useProperty(propertyId);
@@ -241,7 +243,9 @@ export function PropertyTasksTab({
             id: "bank-data",
             title: "Datos Bancarios",
             required: true,
-            fields: [{ id: "bankDataConfirmed", required: true }],
+            fields: [
+              { id: "bankDataConfirmed", required: true },
+            ],
           },
           {
             id: "contract",
@@ -258,10 +262,9 @@ export function PropertyTasksTab({
           {
             id: "guarantee",
             title: "Garantía Finaer",
-            required: false,
+            required: true,
             fields: [
-              { id: "guaranteeId", required: false },
-              { id: "guaranteeSigned", required: false },
+              { id: "guaranteeSigned", required: true },
             ],
           },
         ];
@@ -270,36 +273,12 @@ export function PropertyTasksTab({
         return [
           {
             id: "guarantee",
-            title: "Garantía Finaer",
-            required: true,
-            fields: [{ id: "guaranteeSigned", required: true }],
-          },
-          {
-            id: "utilities",
-            title: "Suministros",
+            title: "Firma de la Garantía de renta ilimitada de Finaer",
             required: true,
             fields: [
-              { id: "utilitiesValidated", required: true },
-              { id: "ownershipChanged", required: true },
+              { id: "guaranteeSigned", required: true },
+              { id: "guaranteeFile", required: true },
             ],
-          },
-          {
-            id: "deposit",
-            title: "Fianza",
-            required: true,
-            fields: [{ id: "depositVerified", required: true }],
-          },
-          {
-            id: "liquidation",
-            title: "Liquidación",
-            required: true,
-            fields: [{ id: "liquidationCompleted", required: true }],
-          },
-          {
-            id: "documentation",
-            title: "Documentación",
-            required: true,
-            fields: [{ id: "documentsClosed", required: true }],
           },
         ];
 
@@ -660,6 +639,132 @@ export function PropertyTasksTab({
       onPhase2ProgressChange(100);
     }
   }, [currentPhase, enhancedFormData, supabaseProperty, onPhase2ProgressChange, progressSections, getAllRooms, isRoomComplete]);
+
+  // Calcular progreso de fase 4 (Inquilino aceptado) y exponerlo al componente padre
+  useEffect(() => {
+    if (currentPhase === "Inquilino aceptado" && onPhase4ProgressChange && supabaseProperty) {
+      if (progressSections.length === 0) {
+        onPhase4ProgressChange(0);
+        return;
+      }
+
+      // Helper para calcular progreso de una sección específica de fase 4
+      const calculateSectionProgress = (section: Section) => {
+        // Special handling for "Inquilino aceptado" phase sections
+        // These sections read from supabaseProperty directly, not formData
+        const tenantAcceptedSectionIds = ["bank-data", "contract", "guarantee"];
+        const isTenantAcceptedSection = tenantAcceptedSectionIds.includes(section.id);
+        
+        if (isTenantAcceptedSection && supabaseProperty) {
+          if (section.id === "bank-data") {
+            // Bank data section: Complete if:
+            // - client_wants_to_change_bank_account === false (uses existing account), OR
+            // - client_wants_to_change_bank_account === true AND both IBAN and certificate are filled
+            const wantsToChange = supabaseProperty.client_wants_to_change_bank_account;
+            const iban = supabaseProperty.client_rent_receiving_iban;
+            const certificate = supabaseProperty.client_rent_receiving_bank_certificate_url;
+            
+            let completed = 0;
+            const total = 1; // 1 task: Confirm bank data
+            
+            // Only count as completed if there's a definitive answer
+            if (wantsToChange === false) {
+              // Uses existing account - section is complete
+              completed = 1;
+            } else if (wantsToChange === true) {
+              // Wants to change - both fields must be filled and valid
+              const hasValidIban = iban && typeof iban === 'string' && iban.trim() !== '';
+              const hasValidCertificate = certificate && typeof certificate === 'string' && certificate.trim() !== '';
+              if (hasValidIban && hasValidCertificate) {
+                completed = 1;
+              }
+            }
+            // If wantsToChange is null/undefined, completed remains 0
+            
+            return { completed, total };
+          }
+          
+          if (section.id === "contract") {
+            // Contract section: Check 5 required fields
+            // 1. Contract file (signed_lease_contract_url)
+            // 2. Signature date (contract_signature_date)
+            // 3. Start date (lease_start_date)
+            // 4. Duration (lease_duration + lease_duration_unit counted together)
+            // 5. Rent amount (final_rent_amount)
+            const contractUrl = supabaseProperty.signed_lease_contract_url;
+            const signatureDate = supabaseProperty.contract_signature_date;
+            const startDate = supabaseProperty.lease_start_date;
+            const duration = supabaseProperty.lease_duration;
+            const durationUnit = supabaseProperty.lease_duration_unit;
+            const rentAmount = supabaseProperty.final_rent_amount;
+            
+            let completed = 0;
+            const total = 5; // 5 fields as shown in widget
+            
+            // Check contract file
+            if (contractUrl && typeof contractUrl === 'string' && contractUrl.trim() !== '') completed++;
+            
+            // Check signature date
+            if (signatureDate && typeof signatureDate === 'string' && signatureDate.trim() !== '') completed++;
+            
+            // Check start date
+            if (startDate && typeof startDate === 'string' && startDate.trim() !== '') completed++;
+            
+            // Duration and durationUnit counted together as 1 field
+            // Both must be present and valid
+            if (duration && durationUnit && 
+                duration.toString().trim() !== '' && 
+                (durationUnit === 'months' || durationUnit === 'years')) {
+              completed++;
+            }
+            
+            // Check rent amount
+            if (rentAmount !== null && rentAmount !== undefined && 
+                (typeof rentAmount === 'number' ? rentAmount > 0 : parseFloat(String(rentAmount)) > 0)) {
+              completed++;
+            }
+            
+            return { completed, total };
+          }
+          
+          if (section.id === "guarantee") {
+            // Guarantee section: Only the answer to the question matters
+            // Only check guarantee_sent_to_signature (1 field)
+            const guaranteeSent = supabaseProperty.guarantee_sent_to_signature;
+            
+            let completed = 0;
+            const total = 1; // Only 1 field: the answer to the question
+            
+            // Count as completed only if guarantee_sent_to_signature === true
+            if (guaranteeSent === true) {
+              completed = 1;
+            }
+            
+            return { completed, total };
+          }
+        }
+        
+        // Fallback for other sections
+        return { completed: 0, total: 1 };
+      };
+
+      // Calcular progreso global (solo secciones requeridas)
+      const requiredSections = progressSections.filter((s) => s.required);
+      const completedSections = requiredSections.filter((section) => {
+        const { completed, total } = calculateSectionProgress(section);
+        return completed === total;
+      }).length;
+      
+      const percentage = requiredSections.length > 0
+        ? Math.round((completedSections / requiredSections.length) * 100)
+        : 100;
+      
+      onPhase4ProgressChange(percentage);
+    } else if (currentPhase !== "Inquilino aceptado" && onPhase4ProgressChange) {
+      // Reset progress when not in phase 4
+      onPhase4ProgressChange(100);
+    }
+  }, [currentPhase, supabaseProperty, onPhase4ProgressChange, progressSections]);
 
   // Determinar qué tareas mostrar según la fase
   const isProphero = currentPhase === "Viviendas Prophero";

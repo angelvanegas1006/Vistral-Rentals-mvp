@@ -75,6 +75,9 @@ export default function PropertyDetailPage() {
   // Estado para progreso de fase 2
   const [phase2Progress, setPhase2Progress] = useState<number>(0);
   
+  // Estado para progreso de fase 4 (Inquilino aceptado)
+  const [phase4Progress, setPhase4Progress] = useState<number>(0);
+  
   // Función estabilizada para actualizar propheroSectionReviews
   // Solo actualiza si los valores realmente cambiaron para evitar re-renderizados innecesarios
   const handlePropheroReviewsChange = useCallback((reviews: PropheroSectionReviews | undefined) => {
@@ -335,9 +338,16 @@ export default function PropertyDetailPage() {
       return blocked;
     }
     
+    // Block phase 4 (Inquilino aceptado) if progress is not 100%
+    if (property.currentPhase === "Inquilino aceptado") {
+      const blocked = phase4Progress < 100;
+      console.log(`🔒 Phase 4 blocked check - currentPhase: ${property.currentPhase}, progress: ${phase4Progress}%, blocked: ${blocked}`);
+      return blocked;
+    }
+    
     return false;
-  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews, phase2Progress]);
-  const blockedMessage = property.currentPhase === "Listo para Alquilar" 
+  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews, phase2Progress, phase4Progress]);
+  const blockedMessage = property.currentPhase === "Listo para Alquilar" || property.currentPhase === "Inquilino aceptado"
     ? "Avance bloqueado - Completa el Progreso General de la fase"
     : "Avance bloqueado - Completa todas las secciones requeridas";
 
@@ -403,6 +413,7 @@ export default function PropertyDetailPage() {
             onHasAnySectionWithNoChange={setHasAnySectionWithNo}
             onCanSubmitCommentsChange={setCanSubmitComments}
             onPhase2ProgressChange={setPhase2Progress}
+            onPhase4ProgressChange={setPhase4Progress}
           />
         );
       case "property-summary":
@@ -434,6 +445,7 @@ export default function PropertyDetailPage() {
             onHasAnySectionWithNoChange={setHasAnySectionWithNo}
             onCanSubmitCommentsChange={setCanSubmitComments}
             onPhase2ProgressChange={setPhase2Progress}
+            onPhase4ProgressChange={setPhase4Progress}
           />
         );
     }
@@ -497,7 +509,7 @@ export default function PropertyDetailPage() {
           />
 
           {/* Main Content - Matching HTML design */}
-          <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#111827]">
+          <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#111827] scrollbar-stable">
             <div className="max-w-7xl mx-auto px-6 md:px-12 py-8">
               {/* Address and Property Info Section */}
               <div className="mb-6">

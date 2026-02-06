@@ -330,6 +330,130 @@ export function ProgressOverviewWidget({
       return { completed: 0, total: 1 };
     }
 
+    // Special handling for "Inquilino aceptado" phase sections
+    // These sections read from supabaseProperty directly, not formData
+    const tenantAcceptedSectionIds = ["bank-data", "contract", "guarantee"];
+    const isTenantAcceptedSection = tenantAcceptedSectionIds.includes(section.id);
+    
+    if (isTenantAcceptedSection && supabaseProperty) {
+      if (section.id === "bank-data") {
+        // Bank data section: Complete if:
+        // - client_wants_to_change_bank_account === false (uses existing account), OR
+        // - client_wants_to_change_bank_account === true AND both IBAN and certificate are filled
+        const wantsToChange = supabaseProperty.client_wants_to_change_bank_account;
+        const iban = supabaseProperty.client_rent_receiving_iban;
+        const certificate = supabaseProperty.client_rent_receiving_bank_certificate_url;
+        
+        let completed = 0;
+        const total = 1; // 1 task: Confirm bank data
+        
+        // Only count as completed if there's a definitive answer
+        if (wantsToChange === false) {
+          // Uses existing account - section is complete
+          completed = 1;
+        } else if (wantsToChange === true) {
+          // Wants to change - both fields must be filled and valid
+          const hasValidIban = iban && typeof iban === 'string' && iban.trim() !== '';
+          const hasValidCertificate = certificate && typeof certificate === 'string' && certificate.trim() !== '';
+          if (hasValidIban && hasValidCertificate) {
+            completed = 1;
+          }
+        }
+        // If wantsToChange is null/undefined, completed remains 0
+        
+        return { completed, total };
+      }
+      
+      if (section.id === "contract") {
+        // Contract section: Check 5 required fields
+        // 1. Contract file (signed_lease_contract_url)
+        // 2. Signature date (contract_signature_date)
+        // 3. Start date (lease_start_date)
+        // 4. Duration (lease_duration + lease_duration_unit counted together)
+        // 5. Rent amount (final_rent_amount)
+        const contractUrl = supabaseProperty.signed_lease_contract_url;
+        const signatureDate = supabaseProperty.contract_signature_date;
+        const startDate = supabaseProperty.lease_start_date;
+        const duration = supabaseProperty.lease_duration;
+        const durationUnit = supabaseProperty.lease_duration_unit;
+        const rentAmount = supabaseProperty.final_rent_amount;
+        
+        let completed = 0;
+        const total = 5; // 5 fields as shown in widget
+        
+        // Check contract file
+        if (contractUrl && typeof contractUrl === 'string' && contractUrl.trim() !== '') completed++;
+        
+        // Check signature date
+        if (signatureDate && typeof signatureDate === 'string' && signatureDate.trim() !== '') completed++;
+        
+        // Check start date
+        if (startDate && typeof startDate === 'string' && startDate.trim() !== '') completed++;
+        
+        // Duration and durationUnit counted together as 1 field
+        // Both must be present and valid
+        if (duration && durationUnit && 
+            duration.toString().trim() !== '' && 
+            (durationUnit === 'months' || durationUnit === 'years')) {
+          completed++;
+        }
+        
+        // Check rent amount
+        if (rentAmount !== null && rentAmount !== undefined && 
+            (typeof rentAmount === 'number' ? rentAmount > 0 : parseFloat(String(rentAmount)) > 0)) {
+          completed++;
+        }
+        
+        return { completed, total };
+      }
+      
+      if (section.id === "guarantee") {
+        // Guarantee section for Phase 4: Only the answer to the question matters
+        // Only check guarantee_sent_to_signature (1 field)
+        const guaranteeSent = supabaseProperty.guarantee_sent_to_signature;
+        
+        let completed = 0;
+        const total = 1; // Only 1 field: the answer to the question
+        
+        // Count as completed only if guarantee_sent_to_signature === true
+        if (guaranteeSent === true) {
+          completed = 1;
+        }
+        
+        return { completed, total };
+      }
+    }
+    
+    // Special handling for "Pendiente de trámites" phase sections
+    // These sections read from supabaseProperty directly, not formData
+    const pendingProceduresSectionIds = ["guarantee"];
+    const isPendingProceduresSection = pendingProceduresSectionIds.includes(section.id);
+    
+    if (isPendingProceduresSection && supabaseProperty) {
+      if (section.id === "guarantee") {
+        // Guarantee section for Phase 5: Check both guarantee_signed and guarantee_file_url
+        // 1. guarantee_signed === true (confirmation that guarantee was signed)
+        // 2. guarantee_file_url exists (signed document uploaded)
+        const guaranteeSigned = supabaseProperty.guarantee_signed;
+        const guaranteeFileUrl = supabaseProperty.guarantee_file_url;
+        
+        let completed = 0;
+        const total = 2; // 2 fields: signed confirmation + file upload
+        
+        // Check if guarantee is signed
+        if (guaranteeSigned === true) {
+          completed++;
+        }
+        
+        // Check if guarantee file is uploaded
+        if (guaranteeFileUrl && typeof guaranteeFileUrl === 'string' && guaranteeFileUrl.trim() !== '') {
+          completed++;
+        }
+        
+        return { completed, total };
+      }
+    }
+    
     // For Prophero sections, check review state first
     // Prophero sections ONLY count as complete if isCorrect === true in review state
     const isPropheroSection = PROPHERO_SECTION_IDS.includes(section.id);

@@ -122,7 +122,7 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
         <div className="space-y-4">
           {/* ID Number */}
           <div className="flex justify-between items-center">
-            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">ID Number</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de Identificación</p>
             <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
               {localProperty?.client_identity_doc_number || "No disponible"}
             </p>
@@ -163,7 +163,7 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
 
           {/* Phone */}
           <div className="flex justify-between items-center">
-            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Phone number</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de teléfono</p>
             {localProperty?.client_phone ? (
               <div className="flex items-center gap-2">
                 <a
@@ -252,7 +252,7 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
           <div className="space-y-4">
             {/* ID Number */}
             <div className="flex justify-between items-center">
-              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">ID Number</p>
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de Identificación</p>
               <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
                 {localProperty?.tenant_nif || "No disponible"}
               </p>
@@ -293,7 +293,7 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
 
             {/* Phone */}
             <div className="flex justify-between items-center">
-              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Phone number</p>
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de teléfono</p>
               {localProperty?.tenant_phone ? (
                 <div className="flex items-center gap-2">
                   <a

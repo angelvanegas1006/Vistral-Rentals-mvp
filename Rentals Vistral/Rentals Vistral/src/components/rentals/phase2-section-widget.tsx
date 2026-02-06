@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Check, Lock, ChevronDown } from "lucide-react";
@@ -25,7 +25,37 @@ export function Phase2SectionWidget({
   isBlocked = false,
   children,
 }: Phase2SectionWidgetProps) {
-  const [isOpen, setIsOpen] = useState(!isComplete); // Abierto por defecto si no está completa
+  // Track if we've initialized to prevent auto-collapse when completion changes later
+  const hasInitializedCollapse = useRef(false);
+  const prevIsCompleteRef = useRef<boolean | undefined>(undefined);
+  
+  // Initialize collapse state: closed if completed, open if not
+  // Use lazy initialization to capture the initial isComplete value
+  const [isOpen, setIsOpen] = useState(() => {
+    // Store the initial value
+    prevIsCompleteRef.current = isComplete;
+    // Return the inverse: collapsed if complete, expanded if not
+    return !isComplete;
+  });
+  
+  // Only update collapse state on mount if isComplete changes from undefined/initial state
+  // This prevents auto-collapse when a section becomes completed later
+  useEffect(() => {
+    // Mark as initialized after first render
+    if (!hasInitializedCollapse.current) {
+      hasInitializedCollapse.current = true;
+      // If isComplete changed from initial value, update state (only on first change)
+      if (prevIsCompleteRef.current !== undefined && prevIsCompleteRef.current !== isComplete) {
+        setIsOpen(!isComplete);
+        prevIsCompleteRef.current = isComplete;
+      }
+      return;
+    }
+    
+    // After initialization, don't auto-collapse/expand when completion status changes
+    // The user should manually control collapse/expand after initial load
+  }, [isComplete]);
+  
   const getSectionColorClasses = () => {
     if (isBlocked) {
       return "border-gray-300 bg-gray-50 dark:bg-gray-900/50";
@@ -48,10 +78,7 @@ export function Phase2SectionWidget({
         >
           {/* Título y descripción - dentro del Card */}
           <div className="px-4 pt-4 pb-3">
-            <div className="flex items-start gap-3">
-              <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-100 border border-gray-300 flex-shrink-0 mt-0.5">
-                <Check className="h-3 w-3 text-green-600 stroke-[2.5]" />
-              </div>
+            <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                   {title}
@@ -62,6 +89,11 @@ export function Phase2SectionWidget({
                   </p>
                 )}
               </div>
+              {isComplete && (
+                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-100 border border-gray-300 flex-shrink-0 mt-0.5 ml-3">
+                  <Check className="h-3 w-3 text-green-600 stroke-[2.5]" />
+                </div>
+              )}
             </div>
           </div>
 

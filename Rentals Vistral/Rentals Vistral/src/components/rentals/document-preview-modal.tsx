@@ -121,8 +121,6 @@ export function DocumentPreviewModal({
     }
   }, [open, documentUrl]);
 
-  if (!documentUrl) return null;
-
   const handleOpenChange = useCallback((newOpen: boolean) => {
     console.log("handleOpenChange called:", newOpen, "justOpenedRef:", justOpenedRef.current, "current open:", open);
     
@@ -141,6 +139,9 @@ export function DocumentPreviewModal({
       onOpenChange(true);
     }
   }, [open, onOpenChange]);
+
+  // Early return after all hooks - but only if no documentUrl
+  if (!documentUrl) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} modal={true}>

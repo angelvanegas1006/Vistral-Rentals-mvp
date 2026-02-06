@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Copy, Check, User } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Copy, Check, User, FileText } from "lucide-react";
+import { DocumentSection } from "@/components/ui/DocumentSection";
 import type { Database } from "@/lib/supabase/types";
 
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
@@ -118,7 +119,7 @@ export function TenantSummaryTab({ propertyId, currentPhase, property }: TenantS
         <div className="space-y-4">
           {/* ID Number */}
           <div className="flex justify-between items-center">
-            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">ID Number</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de Identificación</p>
             <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
               {localProperty?.tenant_nif || "No disponible"}
             </p>
@@ -159,7 +160,7 @@ export function TenantSummaryTab({ propertyId, currentPhase, property }: TenantS
 
           {/* Phone */}
           <div className="flex justify-between items-center">
-            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Phone number</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de teléfono</p>
             {localProperty?.tenant_phone ? (
               <div className="flex items-center gap-2">
                 <a
@@ -216,6 +217,63 @@ export function TenantSummaryTab({ propertyId, currentPhase, property }: TenantS
             </div>
           )}
         </div>
+      </Card>
+
+      {/* Documents Section */}
+      <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="p-0 pb-4 border-b border-[#E5E7EB] dark:border-[#374151] mb-4">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <FileText className="h-5 w-5 text-[#6B7280] dark:text-[#9CA3AF]" />
+            Documentos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 space-y-6">
+          {/* Identidad */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] border-b border-[#E5E7EB] dark:border-[#374151] pb-2">
+              Identidad
+            </h4>
+            <DocumentSection
+              title="Identidad"
+              icon={User}
+              fixedFields={[
+                {
+                  dbField: "tenant_identity_doc_url",
+                  label: "Documento de Identidad",
+                  path: "tenant/identity",
+                },
+              ]}
+              customField="tenant_custom_identity_documents"
+              customPath="tenant/identity"
+              property={localProperty}
+              onPropertyUpdate={(updates) => {
+                setLocalProperty((prev) => (prev ? { ...prev, ...updates } : null));
+              }}
+              hideTitle={true}
+              searchQuery=""
+            />
+          </div>
+
+          {/* Otros */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] border-b border-[#E5E7EB] dark:border-[#374151] pb-2">
+              Otros
+            </h4>
+            <DocumentSection
+              title="Otros"
+              icon={FileText}
+              fixedFields={[]}
+              customField="tenant_custom_other_documents"
+              customPath="tenant/other"
+              property={localProperty}
+              onPropertyUpdate={(updates) => {
+                setLocalProperty((prev) => (prev ? { ...prev, ...updates } : null));
+              }}
+              hideTitle={true}
+              searchQuery=""
+            />
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

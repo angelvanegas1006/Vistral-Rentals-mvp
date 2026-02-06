@@ -36,6 +36,8 @@ const nextConfig = {
     config.resolve.extensions = ['.tsx', '.ts', '.jsx', '.js', '.json'];
     return config;
   },
+  // Turbopack configuration (empty to silence error, webpack config above is still used)
+  turbopack: {},
 };
 
 module.exports = nextConfig;

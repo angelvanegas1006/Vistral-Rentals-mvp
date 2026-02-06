@@ -721,18 +721,16 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
                       <Badge variant="secondary" className="text-xs">
                         {localUnguidedLeads.length}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddLead("unguided");
                         }}
-                        className="h-8 px-2 text-xs"
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium h-8 px-2 hover:bg-[var(--vistral-gray-100)] hover:text-foreground dark:hover:bg-[var(--vistral-gray-800)] transition-all duration-200 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline ml-1">Añadir</span>
-                      </Button>
+                      </span>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -763,18 +761,16 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
                       <Badge variant="secondary" className="text-xs">
                         {localScheduledLeads.length}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddLead("scheduled");
                         }}
-                        className="h-8 px-2 text-xs"
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium h-8 px-2 hover:bg-[var(--vistral-gray-100)] hover:text-foreground dark:hover:bg-[var(--vistral-gray-800)] transition-all duration-200 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline ml-1">Añadir</span>
-                      </Button>
+                      </span>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -806,18 +802,16 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
                       <Badge variant="secondary" className="text-xs">
                         {localVisitedLeads.length}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddLead("visited");
                         }}
-                        className="h-8 px-2 text-xs"
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium h-8 px-2 hover:bg-[var(--vistral-gray-100)] hover:text-foreground dark:hover:bg-[var(--vistral-gray-800)] transition-all duration-200 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline ml-1">Añadir</span>
-                      </Button>
+                      </span>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -847,18 +841,16 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
                       <Badge variant="secondary" className="text-xs">
                         {localDiscardedLeads.length}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddLead("discarded");
                         }}
-                        className="h-8 px-2 text-xs"
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium h-8 px-2 hover:bg-[var(--vistral-gray-100)] hover:text-foreground dark:hover:bg-[var(--vistral-gray-800)] transition-all duration-200 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline ml-1">Añadir</span>
-                      </Button>
+                      </span>
                     </div>
                   </div>
                 </AccordionTrigger>

@@ -161,6 +161,10 @@ export interface Database {
           client_email: string | null;
           client_iban: string | null;
           client_bank_certificate_url: string | null;
+          // Rent receiving bank account fields (Phase 4: Inquilino aceptado)
+          client_rent_receiving_iban: string | null;
+          client_rent_receiving_bank_certificate_url: string | null;
+          client_wants_to_change_bank_account: boolean | null;
           // Custom documents JSONB fields
           custom_legal_documents: Json | null;
           custom_insurance_documents: Json | null;
@@ -178,12 +182,20 @@ export interface Database {
           // Contract fields (Inquilino aceptado phase)
           contract_signed: boolean | null;
           contract_signature_date: string | null;
+          signed_lease_contract_url: string | null;
+          final_rent_amount: number | null;
+          lease_start_date: string | null;
+          lease_end_date: string | null;
+          lease_duration: string | null;
+          lease_duration_unit: "months" | "years" | null;
+          // Legacy contract fields (deprecated, kept for compatibility)
           contract_start_date: string | null;
           contract_duration: string | null;
           contract_duration_unit: string | null;
           final_rent_price: number | null;
           guarantee_id: string | null;
           guarantee_signed: boolean | null;
+          guarantee_sent_to_signature: boolean | null;
           contract_file_url: string | null;
           guarantee_file_url: string | null;
           // Pending procedures fields (Pendiente de trámites phase)

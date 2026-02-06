@@ -72,9 +72,18 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "client/financial",
   },
+  client_rent_receiving_bank_certificate_url: {
+    bucket: "properties-restricted-docs",
+    folder: "client/financial",
+  },
   client_custom_other_documents: {
     bucket: "properties-restricted-docs",
     folder: "client/other",
+  },
+  // Tenant Data (V2.1 Architecture)
+  tenant_identity_doc_url: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/identity",
   },
   // Tenant custom documents (V2.1 Architecture)
   tenant_custom_identity_documents: {
@@ -88,6 +97,16 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
   tenant_custom_other_documents: {
     bucket: "properties-restricted-docs",
     folder: "tenant/other",
+  },
+  // Rental Data (Phase 4: Inquilino aceptado)
+  signed_lease_contract_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/lease_contract",
+  },
+  // Guarantee file (Phase 5: Pendiente de trámites)
+  guarantee_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/non-payment_insurance",
   },
   custom_insurance_documents: {
     bucket: "properties-restricted-docs",
@@ -310,10 +329,11 @@ export async function POST(request: NextRequest) {
     let updateData: Record<string, unknown>;
     
     // Check if this is a custom document field (requires title from formData)
-    // Custom document fields can start with: custom_, property_custom_, client_custom_
+    // Custom document fields can start with: custom_, property_custom_, client_custom_, tenant_custom_
     const isCustomDocument = fieldName.startsWith("custom_") || 
                              fieldName.startsWith("property_custom_") || 
-                             fieldName.startsWith("client_custom_");
+                             fieldName.startsWith("client_custom_") ||
+                             fieldName.startsWith("tenant_custom_");
     
     if (isCustomDocument && customTitle) {
       // Custom documents: add to JSONB array with title

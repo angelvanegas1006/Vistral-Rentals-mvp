@@ -113,13 +113,15 @@ export function DocumentUploadModal({
   const isValidFileType = (file: File): boolean => {
     const validTypes = [
       "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "image/jpeg",
       "image/jpg",
       "image/png",
       "image/gif",
       "image/webp",
     ];
-    const validExtensions = [".pdf", ".jpg", ".jpeg", ".png", ".gif", ".webp"];
+    const validExtensions = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".gif", ".webp"];
     const fileName = file.name.toLowerCase();
     return (
       validTypes.includes(file.type) ||
@@ -232,7 +234,7 @@ export function DocumentUploadModal({
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">
-                    Formatos soportados: PDF, JPG, PNG, GIF, WEBP
+                    Formatos soportados: PDF, DOC, DOCX, JPG, PNG, GIF, WEBP
                   </p>
                 </div>
               )}
@@ -242,7 +244,7 @@ export function DocumentUploadModal({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp"
               className="hidden"
               onChange={handleFileSelect}
               disabled={isUploading}

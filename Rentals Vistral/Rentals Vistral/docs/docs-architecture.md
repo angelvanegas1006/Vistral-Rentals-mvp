@@ -1,4 +1,4 @@
-# Tech Spec: Document Management Architecture V2.1 (Client & Property)
+# Tech Spec: Document Management Architecture V2.1 (Client, Property & Tenant)
 
 **Context:**
 Refactoring document management to a "Hybrid Model" (Fixed + Custom) with strict folder hierarchy and unified naming ("Client" instead of Owner/Investor).
@@ -37,6 +37,9 @@ Type: `jsonb` | Default: `[]`
 * `client_custom_identity_documents`
 * `client_custom_financial_documents`
 * `client_custom_other_documents`
+* `tenant_identity_doc_url`
+* `tenant_custom_identity_documents`
+* `tenant_custom_other_documents`
 * `custom_insurance_documents`
 * `custom_technical_documents` (Pluralized)
 * `custom_legal_documents`
@@ -156,6 +159,30 @@ Type: `jsonb` | Default: `[]`
 | Sub-Folder (Folder 2) | SQL Variable (DB) | Type | Full Storage Path |
 | :--- | :--- | :--- | :--- |
 | **other** | `property_custom_other_documents` | JSONB (Custom) | `/property/other/` |
+
+#### C. TENANT SECTION (Folder 1: `tenant`)
+
+| Sub-Folder (Folder 2) | SQL Variable (DB) | Type | Full Storage Path |
+| :--- | :--- | :--- | :--- |
+| **identity** | `tenant_identity_doc_url` | TEXT (Fixed) | `/tenant/identity/` |
+| **identity** | `tenant_custom_identity_documents` | JSONB (Custom) | `/tenant/identity/` |
+| **other** | `tenant_custom_other_documents` | JSONB (Custom) | `/tenant/other/` |
+
+#### D. RENTAL SECTION (Folder 1: `rental`)
+
+*Documents related to rental contracts and lease agreements (Phase 4: Inquilino aceptado) and guarantee documents (Phase 5: Pendiente de trámites).*
+
+| Sub-Folder (Folder 2) | SQL Variable (DB) | Type | Full Storage Path |
+| :--- | :--- | :--- | :--- |
+| **lease_contract** | `signed_lease_contract_url` | TEXT (Fixed) | `/rental/lease_contract/` |
+| **non-payment_insurance** | `guarantee_file_url` | TEXT (Fixed) | `/rental/non-payment_insurance/` |
+
+**Notes:**
+- The lease contract is a single document (TEXT field, not JSONB array)
+- Only one contract can be uploaded at a time
+- To replace the contract, the existing one must be deleted first
+- The guarantee file (`guarantee_file_url`) stores the signed Finaer non-payment insurance document (Phase 5)
+- Documents are stored in the `properties-restricted-docs` bucket
 
 ---
 

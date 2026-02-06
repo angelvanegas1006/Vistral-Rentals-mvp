@@ -232,19 +232,74 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   }, [supabaseProperty, loading, initializeFormData, sectionId]);
 
   // Validación de completitud
+  // Calculate completion directly from supabaseProperty for initial render to avoid flicker
   const isSection1Complete = () => {
+    // If data is not initialized yet, calculate from supabaseProperty directly
+    if (!hasInitializedRef.current && supabaseProperty) {
+      return supabaseProperty.client_presentation_done === true && 
+             supabaseProperty.client_presentation_date !== null && 
+             supabaseProperty.client_presentation_date !== "" &&
+             supabaseProperty.client_presentation_channel !== null &&
+             supabaseProperty.client_presentation_channel !== "";
+    }
+    // Otherwise use local state
     return clientPresentationDone === true && 
            clientPresentationDate !== "" && 
            clientPresentationChannel !== "";
   };
 
   const isSection2Complete = () => {
+    // If data is not initialized yet, calculate from supabaseProperty directly
+    if (!hasInitializedRef.current && supabaseProperty) {
+      return supabaseProperty.announcement_price !== null && 
+             supabaseProperty.announcement_price !== undefined &&
+             parseFloat(String(supabaseProperty.announcement_price)) > 0 && 
+             supabaseProperty.price_approval === true;
+    }
+    // Otherwise use local state
     return announcementPrice !== "" && 
            parseFloat(announcementPrice) > 0 && 
            priceApproval === true;
   };
 
   const isSection3Complete = () => {
+    // If data is not initialized yet, calculate from supabaseProperty directly
+    if (!hasInitializedRef.current && supabaseProperty?.technical_inspection_report) {
+      try {
+        const report = typeof supabaseProperty.technical_inspection_report === 'string' 
+          ? JSON.parse(supabaseProperty.technical_inspection_report)
+          : supabaseProperty.technical_inspection_report;
+        
+        const allRooms = getAllRooms();
+        return allRooms.every(room => {
+          let roomData;
+          if (room.type === "bedrooms" && room.index !== undefined) {
+            roomData = report.bedrooms?.[room.index];
+          } else if (room.type === "bathrooms" && room.index !== undefined) {
+            roomData = report.bathrooms?.[room.index];
+          } else {
+            roomData = report[room.type];
+          }
+          
+          if (!roomData) return false;
+          const status = roomData.status;
+          if (!status) return false;
+          
+          if (status === "good") {
+            return Array.isArray(roomData.marketing_photos) && roomData.marketing_photos.length > 0;
+          } else if (status === "incident") {
+            if (!roomData.comment || !Array.isArray(roomData.incident_photos) || roomData.incident_photos.length === 0 || roomData.affects_commercialization === null) return false;
+            if (roomData.affects_commercialization === true) return false;
+            return Array.isArray(roomData.marketing_photos) && roomData.marketing_photos.length > 0;
+          }
+          return false;
+        });
+      } catch {
+        return false;
+      }
+    }
+    
+    // Otherwise use local state
     // Obtener todas las estancias que deben estar completas
     const allRooms = getAllRooms();
     
@@ -349,6 +404,15 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
 
   const isSection4Complete = () => {
+    // If data is not initialized yet, calculate from supabaseProperty directly
+    if (!hasInitializedRef.current && supabaseProperty) {
+      return supabaseProperty.publish_online === false || 
+             (supabaseProperty.publish_online === true && 
+              supabaseProperty.idealista_description !== null && 
+              supabaseProperty.idealista_description !== undefined &&
+              supabaseProperty.idealista_description.trim() !== "");
+    }
+    // Otherwise use local state
     return publishOnline === false || 
            (publishOnline === true && idealistaDescription.trim() !== "");
   };
@@ -1178,7 +1242,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   };
 
   if (!supabaseProperty) {
-    return <div>Cargando...</div>;
+    return null;
   }
 
   return (

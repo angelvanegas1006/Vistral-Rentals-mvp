@@ -17,6 +17,11 @@
     display: none; /* Chrome, Safari, Opera */
   }
 
+  /* Prevent layout shift when scrollbar appears */
+  .scrollbar-stable {
+    scrollbar-gutter: stable;
+  }
+
   .scrollbar-overlay::-webkit-scrollbar {
     width: 8px;
     height: 8px;

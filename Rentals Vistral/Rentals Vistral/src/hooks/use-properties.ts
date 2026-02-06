@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 import type { Database, PropheroSectionReviews, PropheroSectionReview } from "@/lib/supabase/types";
-import { detectAndResetPropheroSection } from "@/lib/prophero-field-change-detector";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
 
@@ -48,80 +46,42 @@ export function useProperties(options: UsePropertiesOptions = {}) {
           kanbanType: options.kanbanType,
         });
 
-        const supabase = createClient();
-        let query = supabase.from("properties").select("*");
-
-        // Aplicar filtros según kanbanType (solo si se especifica)
-        // NOTA: La columna en Supabase puede ser "current_stage" en lugar de "current_phase"
-        const phaseColumn = "current_stage"; // Cambiar a "current_phase" si es necesario
-        
-        if (options.kanbanType === "captacion") {
-          // Filtrar por fases de Captación y Cierre
-          query = query.in(phaseColumn, [
-            "Viviendas Prophero",
-            "Listo para Alquilar",
-            "Publicado",
-            "Inquilino aceptado",
-            "Pendiente de trámites",
-          ]);
-        } else if (options.kanbanType === "portfolio") {
-          // Filtrar por fases de Gestión De Cartera
-          query = query.in(phaseColumn, [
-            "Alquilado",
-            "Actualización de Renta (IPC)",
-            "Gestión de Renovación",
-            "Finalización y Salida",
-          ]);
+        // Construir query params para la API route
+        const params = new URLSearchParams();
+        if (options.kanbanType) {
+          params.append("kanbanType", options.kanbanType);
         }
-        // Si no se especifica kanbanType, se obtienen todas las propiedades
-
-        // Aplicar búsqueda si existe
         if (options.searchQuery?.trim()) {
-          const search = `%${options.searchQuery.toLowerCase()}%`;
-          // Intentar buscar en diferentes columnas posibles (id, property_unique_id, address, city)
-          query = query.or(
-            `id.ilike.${search},property_unique_id.ilike.${search},address.ilike.${search},city.ilike.${search}`
-          );
+          params.append("searchQuery", options.searchQuery.trim());
+        }
+        if (options.filters?.property_type) {
+          const propertyTypes = Array.isArray(options.filters.property_type)
+            ? options.filters.property_type
+            : [options.filters.property_type];
+          params.append("property_type", propertyTypes.join(","));
+        }
+        if (options.filters?.area_cluster) {
+          const areaClusters = Array.isArray(options.filters.area_cluster)
+            ? options.filters.area_cluster
+            : [options.filters.area_cluster];
+          params.append("area_cluster", areaClusters.join(","));
+        }
+        if (options.filters?.admin_name) {
+          const managers = Array.isArray(options.filters.admin_name)
+            ? options.filters.admin_name
+            : [options.filters.admin_name];
+          params.append("admin_name", managers.join(","));
         }
 
-        // Aplicar filtros (soporta arrays para múltiple selección)
-        if (options.filters) {
-          if (options.filters.property_type) {
-            const propertyTypes = Array.isArray(options.filters.property_type)
-              ? options.filters.property_type
-              : [options.filters.property_type];
-            if (propertyTypes.length > 0) {
-              query = query.in("property_asset_type", propertyTypes);
-            }
-          }
-          if (options.filters.area_cluster) {
-            const areaClusters = Array.isArray(options.filters.area_cluster)
-              ? options.filters.area_cluster
-              : [options.filters.area_cluster];
-            if (areaClusters.length > 0) {
-              query = query.in("area_cluster", areaClusters);
-            }
-          }
-          if (options.filters.admin_name) {
-            const managers = Array.isArray(options.filters.admin_name)
-              ? options.filters.admin_name
-              : [options.filters.admin_name];
-            if (managers.length > 0) {
-              query = query.in("admin_name", managers);
-            }
-          }
+        // Usar API route con service role key para evitar problemas de RLS
+        const response = await fetch(`/api/properties?${params.toString()}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
 
-        // Ordenar por días en fase (puede ser "days_in_stage" o "days_in_phase")
-        const daysColumn = "days_in_stage"; // Cambiar a "days_in_phase" si es necesario
-        const { data, error: fetchError } = await query.order(daysColumn, {
-          ascending: true,
-        });
-
-        if (fetchError) {
-          console.error("❌ Error de Supabase:", fetchError);
-          throw fetchError;
-        }
+        const { properties: data } = await response.json();
 
         console.log("✅ Propiedades obtenidas de Supabase:", data?.length || 0, "propiedades");
         
@@ -189,10 +149,14 @@ export function useProperties(options: UsePropertiesOptions = {}) {
                   
                   // Si hay cambios, actualizar en Supabase y devolver propiedad actualizada
                   if (hasChanges) {
-                    await supabase
-                      .from("properties")
-                      .update({ prophero_section_reviews: updatedReviews })
-                      .eq("property_unique_id", prop.property_unique_id);
+                    // Usar API route para actualizar (bypass RLS)
+                    await fetch(`/api/properties/${prop.property_unique_id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        prophero_section_reviews: updatedReviews,
+                      }),
+                    });
                     
                     return {
                       ...prop,
