@@ -198,6 +198,12 @@ export interface Database {
           guarantee_sent_to_signature: boolean | null;
           contract_file_url: string | null;
           guarantee_file_url: string | null;
+          // Tenant supply contracts (Phase 5: Pendiente de trámites - Cambio de suministros)
+          tenant_contract_electricity: string | null;
+          tenant_contract_water: string | null;
+          tenant_contract_gas: string | null;
+          tenant_contract_other: Json | null; // JSONB array: [{title: string, url: string, createdAt: string}]
+          tenant_supplies_toggles: Json | null; // JSONB object: {electricity: boolean, water: boolean, gas: boolean, other: boolean}
           // Pending procedures fields (Pendiente de trámites phase)
           utilities_validated: boolean | null;
           ownership_changed: boolean | null;
@@ -205,7 +211,9 @@ export interface Database {
           liquidation_completed: boolean | null;
           documents_closed: boolean | null;
           utilities_files_urls: Json | null;
+          deposit_responsible: "Prophero" | "Inversor" | null;
           deposit_receipt_file_url: string | null;
+          first_rent_payment_file_url: string | null;
           payment_receipt_file_url: string | null;
           // Rented phase fields
           is_vacant: boolean | null;

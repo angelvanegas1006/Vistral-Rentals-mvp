@@ -176,12 +176,31 @@ Type: `jsonb` | Default: `[]`
 | :--- | :--- | :--- | :--- |
 | **lease_contract** | `signed_lease_contract_url` | TEXT (Fixed) | `/rental/lease_contract/` |
 | **non-payment_insurance** | `guarantee_file_url` | TEXT (Fixed) | `/rental/non-payment_insurance/` |
+| **deposit** | `deposit_receipt_file_url` | TEXT (Fixed) | `/rental/deposit/` |
+| **tenant_utilities** | `tenant_contract_electricity` | TEXT (Fixed) | `/rental/tenant_utilities/` |
+| **tenant_utilities** | `tenant_contract_water` | TEXT (Fixed) | `/rental/tenant_utilities/` |
+| **tenant_utilities** | `tenant_contract_gas` | TEXT (Fixed) | `/rental/tenant_utilities/` |
+| **tenant_utilities** | `tenant_contract_other` | JSONB (Custom) | `/rental/tenant_utilities/` |
+| **first_rent_payment** | `first_rent_payment_file_url` | TEXT (Fixed) | `/rental/first_rent_payment/` |
 
 **Notes:**
 - The lease contract is a single document (TEXT field, not JSONB array)
 - Only one contract can be uploaded at a time
 - To replace the contract, the existing one must be deleted first
 - The guarantee file (`guarantee_file_url`) stores the signed Finaer non-payment insurance document (Phase 5)
+- **Deposit receipt** (Phase 5: Depósito de la fianza):
+  - `deposit_receipt_file_url` stores the deposit receipt document (Resguardo del depósito de la fianza)
+  - Only required when `deposit_responsible` is "Prophero"
+  - Stored in `/rental/deposit/` subfolder
+- **Tenant utilities contracts** (Phase 5: Cambio de suministros):
+  - `tenant_contract_electricity`, `tenant_contract_water`, `tenant_contract_gas` are single documents (TEXT fields)
+  - `tenant_contract_other` is a JSONB array supporting multiple "other" supply contracts (internet, phone, etc.)
+  - Structure for `tenant_contract_other`: `[{title: string, url: string, createdAt: string}]`
+  - All tenant utility contracts are stored in `/rental/tenant_utilities/` subfolder
+- **First rent payment transfer receipt** (Phase 5: Transferencia del mes en curso):
+  - `first_rent_payment_file_url` stores the transfer receipt document (Comprobante de transferencia del mes en curso)
+  - Required to complete the "Transferencia del mes en curso" section
+  - Stored in `/rental/first_rent_payment/` subfolder
 - Documents are stored in the `properties-restricted-docs` bucket
 
 ---

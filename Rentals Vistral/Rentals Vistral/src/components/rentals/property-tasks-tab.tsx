@@ -46,6 +46,7 @@ interface PropertyTasksTabProps {
   onCanSubmitCommentsChange?: (canSubmit: boolean) => void;
   onPhase2ProgressChange?: (progress: number) => void; // Progress percentage (0-100)
   onPhase4ProgressChange?: (progress: number) => void; // Progress percentage (0-100) for phase 4
+  onPhase5ProgressChange?: (progress: number) => void; // Progress percentage (0-100) for phase 5
 }
 
 export function PropertyTasksTab({ 
@@ -60,6 +61,7 @@ export function PropertyTasksTab({
   onCanSubmitCommentsChange,
   onPhase2ProgressChange,
   onPhase4ProgressChange,
+  onPhase5ProgressChange,
 }: PropertyTasksTabProps) {
   const { formData } = usePropertyForm();
   const { property: supabaseProperty, loading: propertyLoading } = useProperty(propertyId);
@@ -272,12 +274,36 @@ export function PropertyTasksTab({
       case "Pendiente de trámites":
         return [
           {
-            id: "guarantee",
+            id: "guarantee-signing",
             title: "Firma de la Garantía de renta ilimitada de Finaer",
             required: true,
             fields: [
               { id: "guaranteeSigned", required: true },
               { id: "guaranteeFile", required: true },
+            ],
+          },
+          {
+            id: "supplies-change",
+            title: "Cambio de suministros",
+            required: true,
+            fields: [
+              { id: "suppliesChange", required: true },
+            ],
+          },
+          {
+            id: "deposit",
+            title: "Depósito de la fianza",
+            required: true,
+            fields: [
+              { id: "depositReceipt", required: true },
+            ],
+          },
+          {
+            id: "first-rent-payment",
+            title: "Transferencia del mes en curso",
+            required: true,
+            fields: [
+              { id: "firstRentPayment", required: true },
             ],
           },
         ];
@@ -765,6 +791,123 @@ export function PropertyTasksTab({
       onPhase4ProgressChange(100);
     }
   }, [currentPhase, supabaseProperty, onPhase4ProgressChange, progressSections]);
+
+  // Calcular progreso de fase 5 (Pendiente de trámites) y exponerlo al componente padre
+  useEffect(() => {
+    if (currentPhase === "Pendiente de trámites" && onPhase5ProgressChange && supabaseProperty) {
+      if (progressSections.length === 0) {
+        onPhase5ProgressChange(0);
+        return;
+      }
+
+      // Helper para calcular progreso de una sección específica de fase 5
+      const calculateSectionProgress = (section: Section) => {
+        const pendingProceduresSectionIds = ["guarantee-signing", "deposit", "supplies-change", "first-rent-payment"];
+        const isPendingProceduresSection = pendingProceduresSectionIds.includes(section.id);
+        
+        if (isPendingProceduresSection && supabaseProperty) {
+          if (section.id === "guarantee-signing") {
+            // Guarantee section for Phase 5: Check both guarantee_signed and guarantee_file_url
+            const guaranteeSigned = supabaseProperty.guarantee_signed;
+            const guaranteeFileUrl = supabaseProperty.guarantee_file_url;
+            
+            let completed = 0;
+            const total = 2;
+            
+            if (guaranteeSigned === true) completed++;
+            if (guaranteeFileUrl && typeof guaranteeFileUrl === 'string' && guaranteeFileUrl.trim() !== '') completed++;
+            
+            return { completed, total };
+          }
+          
+          if (section.id === "deposit") {
+            const depositResponsible = supabaseProperty.deposit_responsible;
+            const depositReceiptUrl = supabaseProperty.deposit_receipt_file_url;
+            
+            let completed = 0;
+            const total = 1;
+            
+            if (depositResponsible === "Inversor") {
+              completed = 1;
+            } else if (depositResponsible === "Prophero") {
+              if (depositReceiptUrl && typeof depositReceiptUrl === 'string' && depositReceiptUrl.trim() !== '') {
+                completed = 1;
+              }
+            }
+            
+            return { completed, total };
+          }
+          
+          if (section.id === "supplies-change") {
+            const toggles = supabaseProperty.tenant_supplies_toggles || {};
+            const tenantContractElectricity = supabaseProperty.tenant_contract_electricity;
+            const tenantContractWater = supabaseProperty.tenant_contract_water;
+            const tenantContractGas = supabaseProperty.tenant_contract_gas;
+            const tenantContractOther = supabaseProperty.tenant_contract_other;
+            
+            const hasAnyToggleEnabled = Object.values(toggles).some((v: any) => v === true);
+            if (!hasAnyToggleEnabled) {
+              return { completed: 1, total: 1 };
+            }
+            
+            let completed = 0;
+            let total = 0;
+            
+            if (toggles.electricity) {
+              total++;
+              if (tenantContractElectricity && typeof tenantContractElectricity === 'string' && tenantContractElectricity.trim() !== '') completed++;
+            }
+            if (toggles.water) {
+              total++;
+              if (tenantContractWater && typeof tenantContractWater === 'string' && tenantContractWater.trim() !== '') completed++;
+            }
+            if (toggles.gas) {
+              total++;
+              if (tenantContractGas && typeof tenantContractGas === 'string' && tenantContractGas.trim() !== '') completed++;
+            }
+            if (toggles.other) {
+              total++;
+              if (tenantContractOther && Array.isArray(tenantContractOther) && tenantContractOther.length > 0) completed++;
+            }
+            
+            return { completed, total: total || 1 };
+          }
+          
+          if (section.id === "first-rent-payment") {
+            const firstRentPaymentUrl = supabaseProperty.first_rent_payment_file_url;
+            
+            let completed = 0;
+            const total = 1;
+            
+            if (firstRentPaymentUrl && typeof firstRentPaymentUrl === 'string' && firstRentPaymentUrl.trim() !== '') {
+              completed = 1;
+            }
+            
+            return { completed, total };
+          }
+        }
+        
+        // Fallback for other sections
+        return { completed: 0, total: 1 };
+      };
+
+      // Calcular progreso global (solo secciones requeridas)
+      const requiredSections = progressSections.filter((s) => s.required);
+      const completedSections = requiredSections.filter((section) => {
+        const { completed, total } = calculateSectionProgress(section);
+        return completed === total;
+      }).length;
+      
+      const percentage = requiredSections.length > 0
+        ? Math.round((completedSections / requiredSections.length) * 100)
+        : 100;
+      
+      onPhase5ProgressChange(percentage);
+    } else if (currentPhase !== "Pendiente de trámites" && onPhase5ProgressChange) {
+      // Reset progress when not in phase 5
+      onPhase5ProgressChange(100);
+    }
+  }, [currentPhase, supabaseProperty, onPhase5ProgressChange, progressSections]);
 
   // Determinar qué tareas mostrar según la fase
   const isProphero = currentPhase === "Viviendas Prophero";

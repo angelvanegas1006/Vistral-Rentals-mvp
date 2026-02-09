@@ -108,6 +108,33 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "rental/non-payment_insurance",
   },
+  // Deposit receipt (Phase 5: Pendiente de trámites - Depósito de la fianza)
+  deposit_receipt_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/deposit",
+  },
+  // Tenant supply contracts (Phase 5: Pendiente de trámites - Cambio de suministros)
+  tenant_contract_electricity: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/tenant_utilities",
+  },
+  tenant_contract_water: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/tenant_utilities",
+  },
+  tenant_contract_gas: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/tenant_utilities",
+  },
+  tenant_contract_other: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/tenant_utilities",
+  },
+  // First rent payment transfer receipt (Phase 5: Pendiente de trámites - Transferencia del mes en curso)
+  first_rent_payment_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/first_rent_payment",
+  },
   custom_insurance_documents: {
     bucket: "properties-restricted-docs",
     folder: "property/insurance",

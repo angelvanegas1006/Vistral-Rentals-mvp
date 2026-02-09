@@ -107,6 +107,33 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "rental/non-payment_insurance",
   },
+  // Deposit receipt (Phase 5: Pendiente de trámites - Depósito de la fianza)
+  deposit_receipt_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/deposit",
+  },
+  // Tenant supply contracts (Phase 5: Pendiente de trámites - Cambio de suministros)
+  tenant_contract_electricity: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/tenant_utilities",
+  },
+  tenant_contract_water: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/tenant_utilities",
+  },
+  tenant_contract_gas: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/tenant_utilities",
+  },
+  tenant_contract_other: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/tenant_utilities",
+  },
+  // First rent payment transfer receipt (Phase 5: Pendiente de trámites - Transferencia del mes en curso)
+  first_rent_payment_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/first_rent_payment",
+  },
   // Property Marketing Photos (Listo para Alquilar phase)
   marketing_photos_common_areas: {
     bucket: "properties-public-docs",
@@ -216,7 +243,7 @@ const JSONB_ARRAY_FIELDS = [
   "incident_photos_terrace",
   "incident_photos_storage",
 ];
-const CUSTOM_DOCUMENT_FIELDS = ["custom_legal_documents", "custom_insurance_documents", "custom_supplies_documents", "custom_investor_documents", "tenant_custom_identity_documents", "tenant_custom_financial_documents", "tenant_custom_other_documents"];
+const CUSTOM_DOCUMENT_FIELDS = ["custom_legal_documents", "custom_insurance_documents", "custom_supplies_documents", "custom_investor_documents", "tenant_custom_identity_documents", "tenant_custom_financial_documents", "tenant_custom_other_documents", "tenant_contract_other"];
 
 /**
  * Extract storage path from a Supabase Storage URL

@@ -78,6 +78,9 @@ export default function PropertyDetailPage() {
   // Estado para progreso de fase 4 (Inquilino aceptado)
   const [phase4Progress, setPhase4Progress] = useState<number>(0);
   
+  // Estado para progreso de fase 5 (Pendiente de trámites)
+  const [phase5Progress, setPhase5Progress] = useState<number>(0);
+  
   // Función estabilizada para actualizar propheroSectionReviews
   // Solo actualiza si los valores realmente cambiaron para evitar re-renderizados innecesarios
   const handlePropheroReviewsChange = useCallback((reviews: PropheroSectionReviews | undefined) => {
@@ -345,9 +348,16 @@ export default function PropertyDetailPage() {
       return blocked;
     }
     
+    // Block phase 5 (Pendiente de trámites) if progress is not 100%
+    if (property.currentPhase === "Pendiente de trámites") {
+      const blocked = phase5Progress < 100;
+      console.log(`🔒 Phase 5 blocked check - currentPhase: ${property.currentPhase}, progress: ${phase5Progress}%, blocked: ${blocked}`);
+      return blocked;
+    }
+    
     return false;
-  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews, phase2Progress, phase4Progress]);
-  const blockedMessage = property.currentPhase === "Listo para Alquilar" || property.currentPhase === "Inquilino aceptado"
+  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews, phase2Progress, phase4Progress, phase5Progress]);
+  const blockedMessage = property.currentPhase === "Listo para Alquilar" || property.currentPhase === "Inquilino aceptado" || property.currentPhase === "Pendiente de trámites"
     ? "Avance bloqueado - Completa el Progreso General de la fase"
     : "Avance bloqueado - Completa todas las secciones requeridas";
 
@@ -414,6 +424,7 @@ export default function PropertyDetailPage() {
             onCanSubmitCommentsChange={setCanSubmitComments}
             onPhase2ProgressChange={setPhase2Progress}
             onPhase4ProgressChange={setPhase4Progress}
+            onPhase5ProgressChange={setPhase5Progress}
           />
         );
       case "property-summary":
@@ -446,6 +457,7 @@ export default function PropertyDetailPage() {
             onCanSubmitCommentsChange={setCanSubmitComments}
             onPhase2ProgressChange={setPhase2Progress}
             onPhase4ProgressChange={setPhase4Progress}
+            onPhase5ProgressChange={setPhase5Progress}
           />
         );
     }

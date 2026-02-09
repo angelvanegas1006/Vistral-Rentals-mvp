@@ -426,11 +426,11 @@ export function ProgressOverviewWidget({
     
     // Special handling for "Pendiente de trámites" phase sections
     // These sections read from supabaseProperty directly, not formData
-    const pendingProceduresSectionIds = ["guarantee"];
+    const pendingProceduresSectionIds = ["guarantee-signing", "deposit", "supplies-change", "first-rent-payment"];
     const isPendingProceduresSection = pendingProceduresSectionIds.includes(section.id);
     
     if (isPendingProceduresSection && supabaseProperty) {
-      if (section.id === "guarantee") {
+      if (section.id === "guarantee-signing") {
         // Guarantee section for Phase 5: Check both guarantee_signed and guarantee_file_url
         // 1. guarantee_signed === true (confirmation that guarantee was signed)
         // 2. guarantee_file_url exists (signed document uploaded)
@@ -448,6 +448,97 @@ export function ProgressOverviewWidget({
         // Check if guarantee file is uploaded
         if (guaranteeFileUrl && typeof guaranteeFileUrl === 'string' && guaranteeFileUrl.trim() !== '') {
           completed++;
+        }
+        
+        return { completed, total };
+      }
+      
+      if (section.id === "deposit") {
+        // Deposit section for Phase 5: Check deposit_responsible and deposit_receipt_file_url
+        // Complete if:
+        // - deposit_responsible === "Inversor" (no document needed), OR
+        // - deposit_responsible === "Prophero" AND deposit_receipt_file_url exists
+        const depositResponsible = supabaseProperty.deposit_responsible;
+        const depositReceiptUrl = supabaseProperty.deposit_receipt_file_url;
+        
+        let completed = 0;
+        const total = 1; // 1 field: responsible selection (document is conditional)
+        
+        // Check if responsible is selected
+        if (depositResponsible === "Inversor") {
+          // Inversor is responsible - section is complete
+          completed = 1;
+        } else if (depositResponsible === "Prophero") {
+          // Prophero is responsible - need document
+          if (depositReceiptUrl && typeof depositReceiptUrl === 'string' && depositReceiptUrl.trim() !== '') {
+            completed = 1;
+          }
+        }
+        
+        return { completed, total };
+      }
+      
+      if (section.id === "supplies-change") {
+        // Supplies change section: Check if all required tenant contracts are uploaded
+        // Based on toggle states and contract uploads
+        const toggles = supabaseProperty.tenant_supplies_toggles || {};
+        const tenantContractElectricity = supabaseProperty.tenant_contract_electricity;
+        const tenantContractWater = supabaseProperty.tenant_contract_water;
+        const tenantContractGas = supabaseProperty.tenant_contract_gas;
+        const tenantContractOther = supabaseProperty.tenant_contract_other;
+        
+        // If no toggles are enabled, section is complete
+        const hasAnyToggleEnabled = Object.values(toggles).some((v: any) => v === true);
+        if (!hasAnyToggleEnabled) {
+          return { completed: 1, total: 1 };
+        }
+        
+        // Check if all required contracts are uploaded
+        let completed = 0;
+        let total = 0;
+        
+        if (toggles.electricity) {
+          total++;
+          if (tenantContractElectricity && typeof tenantContractElectricity === 'string' && tenantContractElectricity.trim() !== '') {
+            completed++;
+          }
+        }
+        
+        if (toggles.water) {
+          total++;
+          if (tenantContractWater && typeof tenantContractWater === 'string' && tenantContractWater.trim() !== '') {
+            completed++;
+          }
+        }
+        
+        if (toggles.gas) {
+          total++;
+          if (tenantContractGas && typeof tenantContractGas === 'string' && tenantContractGas.trim() !== '') {
+            completed++;
+          }
+        }
+        
+        if (toggles.other) {
+          total++;
+          if (tenantContractOther && Array.isArray(tenantContractOther) && tenantContractOther.length > 0) {
+            completed++;
+          }
+        }
+        
+        return { completed, total: total || 1 };
+      }
+      
+      if (section.id === "first-rent-payment") {
+        // First rent payment section: Check if first_rent_payment_file_url exists
+        // Section is complete when the transfer receipt document is uploaded
+        const firstRentPaymentUrl = supabaseProperty.first_rent_payment_file_url;
+        
+        let completed = 0;
+        const total = 1; // 1 field: document upload
+        
+        // Check if document is uploaded
+        if (firstRentPaymentUrl && typeof firstRentPaymentUrl === 'string' && firstRentPaymentUrl.trim() !== '') {
+          completed = 1;
         }
         
         return { completed, total };
