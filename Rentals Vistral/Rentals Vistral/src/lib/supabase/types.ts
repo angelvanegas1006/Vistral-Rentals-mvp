@@ -186,6 +186,7 @@ export interface Database {
           final_rent_amount: number | null;
           lease_start_date: string | null;
           lease_end_date: string | null;
+          next_rent_update_date: string | null;
           lease_duration: string | null;
           lease_duration_unit: "months" | "years" | null;
           // Legacy contract fields (deprecated, kept for compatibility)
@@ -202,7 +203,6 @@ export interface Database {
           tenant_contract_electricity: string | null;
           tenant_contract_water: string | null;
           tenant_contract_gas: string | null;
-          tenant_contract_other: Json | null; // JSONB array: [{title: string, url: string, createdAt: string}]
           tenant_supplies_toggles: Json | null; // JSONB object: {electricity: boolean, water: boolean, gas: boolean, other: boolean}
           // Pending procedures fields (Pendiente de trámites phase)
           utilities_validated: boolean | null;
@@ -215,6 +215,10 @@ export interface Database {
           deposit_receipt_file_url: string | null;
           first_rent_payment_file_url: string | null;
           payment_receipt_file_url: string | null;
+          // Rental custom documents (JSONB arrays: [{title, url, createdAt}])
+          rental_custom_contractual_financial_documents: Json | null;
+          rental_custom_utilities_documents: Json | null;
+          rental_custom_other_documents: Json | null;
           // Rented phase fields
           is_vacant: boolean | null;
           // IPC Update phase fields

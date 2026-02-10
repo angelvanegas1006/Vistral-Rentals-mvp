@@ -434,6 +434,22 @@ export function TenantAcceptedTasks({ propertyId, property }: TenantAcceptedTask
     return "";
   };
 
+  // Next rent update date = lease_start_date + 1 year (YYYY-MM-DD)
+  const addOneYearToDate = (dateStr: string): string | null => {
+    if (!dateStr || !dateStr.trim()) return null;
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return null;
+      d.setFullYear(d.getFullYear() + 1);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch {
+      return null;
+    }
+  };
+
   // Calculate end date from start date and duration
   const calculateEndDate = (start: string, dur: string, unit: string): string | null => {
     if (!start || !dur || !unit) return null;
@@ -522,6 +538,19 @@ export function TenantAcceptedTasks({ propertyId, property }: TenantAcceptedTask
       }
     }
   }, [supabaseProperty]);
+
+  // Backfill next_rent_update_date when lease_start_date exists but next_rent_update_date is missing
+  useEffect(() => {
+    if (!supabaseProperty?.id || !propertyId) return;
+    const start = supabaseProperty.lease_start_date;
+    const nextRent = supabaseProperty.next_rent_update_date;
+    if (start && (nextRent === null || nextRent === undefined || nextRent === "")) {
+      const calculated = addOneYearToDate(start);
+      if (calculated) {
+        updateProperty(propertyId, { next_rent_update_date: calculated });
+      }
+    }
+  }, [supabaseProperty?.id, supabaseProperty?.lease_start_date, supabaseProperty?.next_rent_update_date, propertyId, updateProperty]);
 
   // Verify contract completion status when supabaseProperty changes
   // This ensures the completion status matches the actual data
@@ -654,8 +683,10 @@ export function TenantAcceptedTasks({ propertyId, property }: TenantAcceptedTask
   // Handle start date change
   const handleStartDateChange = async (value: string) => {
     setStartDate(value);
+    const nextRentUpdate = value ? addOneYearToDate(value) : null;
     await updateProperty(propertyId, {
       lease_start_date: value || null,
+      next_rent_update_date: nextRentUpdate,
     });
     
     // Recalculate end date if not manually edited

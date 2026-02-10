@@ -1096,8 +1096,8 @@ function SuppliesChangeSection({
       const electricity = supabaseProperty.tenant_contract_electricity || null;
       const water = supabaseProperty.tenant_contract_water || null;
       const gas = supabaseProperty.tenant_contract_gas || null;
-      const other = (supabaseProperty.tenant_contract_other && Array.isArray(supabaseProperty.tenant_contract_other)) 
-        ? supabaseProperty.tenant_contract_other 
+      const other = (supabaseProperty.rental_custom_utilities_documents && Array.isArray(supabaseProperty.rental_custom_utilities_documents)) 
+        ? supabaseProperty.rental_custom_utilities_documents 
         : [];
 
       setTenantContractElectricity(electricity);
@@ -1175,11 +1175,11 @@ function SuppliesChangeSection({
         await updateProperty(propertyId, { tenant_contract_gas: null });
       } else if (supplyType === 'other' && tenantContractOther.length > 0) {
         for (const doc of tenantContractOther) {
-          await deleteDocument('tenant_contract_other', propertyId, doc.url);
+          await deleteDocument('rental_custom_utilities_documents', propertyId, doc.url);
         }
         setTenantContractOther([]);
         tenantContractOtherRef.current = [];
-        await updateProperty(propertyId, { tenant_contract_other: [] });
+        await updateProperty(propertyId, { rental_custom_utilities_documents: [] });
       }
     }
 
@@ -1256,7 +1256,7 @@ function SuppliesChangeSection({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("fieldName", "tenant_contract_other");
+      formData.append("fieldName", "rental_custom_utilities_documents");
       formData.append("propertyId", propertyId);
       formData.append("customTitle", title.trim());
 
@@ -1280,7 +1280,7 @@ function SuppliesChangeSection({
       const updatedArray = [...tenantContractOther, newDocument];
       setTenantContractOther(updatedArray);
       tenantContractOtherRef.current = updatedArray; // Update ref immediately
-      await updateProperty(propertyId, { tenant_contract_other: updatedArray });
+      await updateProperty(propertyId, { rental_custom_utilities_documents: updatedArray });
       await checkSuppliesCompletion();
       setUploadModalOpen(false);
     } catch (error) {
@@ -1293,11 +1293,11 @@ function SuppliesChangeSection({
   // Handle delete other contract
   const handleDeleteOtherContract = async (url: string) => {
     try {
-      await deleteDocument('tenant_contract_other', propertyId, url);
+      await deleteDocument('rental_custom_utilities_documents', propertyId, url);
       const updatedArray = tenantContractOther.filter(doc => doc.url !== url);
       setTenantContractOther(updatedArray);
       tenantContractOtherRef.current = updatedArray; // Update ref immediately
-      await updateProperty(propertyId, { tenant_contract_other: updatedArray });
+      await updateProperty(propertyId, { rental_custom_utilities_documents: updatedArray });
       await checkSuppliesCompletion();
       setDeleteConfirmDialog({ open: false, url: null, label: "" });
     } catch (error) {

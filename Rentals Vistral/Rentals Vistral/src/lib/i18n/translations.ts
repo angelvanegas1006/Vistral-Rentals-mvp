@@ -36,7 +36,7 @@ export const translations = {
       kanban: "Kanban",
       acquisitionAndClosing: "Captación y Cierre",
       portfolio: "Gestión De Cartera",
-      leads: "Leads",
+      leads: "Interesados",
       logout: "Cerrar Sesión",
     },
 
@@ -199,7 +199,7 @@ export const translations = {
       kanban: "Kanban",
       acquisitionAndClosing: "Acquisition and Closing",
       portfolio: "Portfolio Management",
-      leads: "Leads",
+      leads: "Interested",
       logout: "Sign Out",
     },
 

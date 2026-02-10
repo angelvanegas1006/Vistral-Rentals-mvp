@@ -9,6 +9,6 @@ ALTER TABLE properties
   ADD COLUMN IF NOT EXISTS first_rent_payment_file_url TEXT;
 
 -- Add comment to document the field
-COMMENT ON COLUMN properties.first_rent_payment_file_url IS 'URL to the first rent payment transfer receipt document (Comprobante de transferencia del mes en curso). Stored in properties-restricted-docs/rental/first_rent_payment/';
+COMMENT ON COLUMN properties.first_rent_payment_file_url IS 'URL to the first rent payment transfer receipt document (Comprobante de transferencia del mes en curso). Stored in properties-restricted-docs/rental/contractual_financial/first_rent_payment/';
 
 COMMIT;

@@ -23,7 +23,7 @@ We use two distinct Supabase Storage buckets to enforce security policies.
 
 ## 2. Database Schema Refactor (Migration)
 
-We need to align the `properties` table with the new structure.
+We need to align the `properties` table with the new structure.0
 
 ### A. Fields to DELETE (Cleanup)
 These fields are deprecated or replaced by the new structure.
@@ -45,6 +45,9 @@ Type: `jsonb` | Default: `[]`
 * `custom_legal_documents`
 * `custom_supplies_documents`
 * `property_custom_other_documents` (Renamed for consistency)
+* `rental_custom_contractual_financial_documents` (Rental – contractual/financial other docs)
+* `rental_custom_utilities_documents` (Rental – utilities other docs)
+* `rental_custom_other_documents` (Rental – other docs)
 
 ---
 
@@ -172,16 +175,34 @@ Type: `jsonb` | Default: `[]`
 
 *Documents related to rental contracts and lease agreements (Phase 4: Inquilino aceptado) and guarantee documents (Phase 5: Pendiente de trámites).*
 
+**Structure:** `rental` (Folder 1) contains three subfolders (Folder 2): `contractual_financial`, `utilities`, and `other`.
+
+**1. Contractual & Financial (Folder 2: `contractual_financial`)**
+
+Documents are stored in sub-subfolders (Folder 3) as follows:
+
+| Sub-Sub-Folder (Folder 3) | SQL Variable (DB) | Type | Full Storage Path |
+| :--- | :--- | :--- | :--- |
+| **lease_contract** | `signed_lease_contract_url` | TEXT (Fixed) | `/rental/contractual_financial/lease_contract/` |
+| **non-payment_insurance** | `guarantee_file_url` | TEXT (Fixed) | `/rental/contractual_financial/non-payment_insurance/` |
+| **deposit** | `deposit_receipt_file_url` | TEXT (Fixed) | `/rental/contractual_financial/deposit/` |
+| **first_rent_payment** | `first_rent_payment_file_url` | TEXT (Fixed) | `/rental/contractual_financial/first_rent_payment/` |
+| **other** | `rental_custom_contractual_financial_documents` | JSONB (Custom) | `/rental/contractual_financial/other/` |
+
+**2. Utilities (Folder 2: `utilities`)**
+
 | Sub-Folder (Folder 2) | SQL Variable (DB) | Type | Full Storage Path |
 | :--- | :--- | :--- | :--- |
-| **lease_contract** | `signed_lease_contract_url` | TEXT (Fixed) | `/rental/lease_contract/` |
-| **non-payment_insurance** | `guarantee_file_url` | TEXT (Fixed) | `/rental/non-payment_insurance/` |
-| **deposit** | `deposit_receipt_file_url` | TEXT (Fixed) | `/rental/deposit/` |
-| **tenant_utilities** | `tenant_contract_electricity` | TEXT (Fixed) | `/rental/tenant_utilities/` |
-| **tenant_utilities** | `tenant_contract_water` | TEXT (Fixed) | `/rental/tenant_utilities/` |
-| **tenant_utilities** | `tenant_contract_gas` | TEXT (Fixed) | `/rental/tenant_utilities/` |
-| **tenant_utilities** | `tenant_contract_other` | JSONB (Custom) | `/rental/tenant_utilities/` |
-| **first_rent_payment** | `first_rent_payment_file_url` | TEXT (Fixed) | `/rental/first_rent_payment/` |
+| **utilities** | `tenant_contract_electricity` | TEXT (Fixed) | `/rental/utilities/` |
+| **utilities** | `tenant_contract_water` | TEXT (Fixed) | `/rental/utilities/` |
+| **utilities** | `tenant_contract_gas` | TEXT (Fixed) | `/rental/utilities/` |
+| **utilities** | `rental_custom_utilities_documents` | JSONB (Custom) | `/rental/utilities/` |
+
+**3. Other (Folder 2: `other`)**
+
+| Sub-Folder (Folder 2) | SQL Variable (DB) | Type | Full Storage Path |
+| :--- | :--- | :--- | :--- |
+| **other** | `rental_custom_other_documents` | JSONB (Custom) | `/rental/other/` |
 
 **Notes:**
 - The lease contract is a single document (TEXT field, not JSONB array)
@@ -191,22 +212,22 @@ Type: `jsonb` | Default: `[]`
 - **Deposit receipt** (Phase 5: Depósito de la fianza):
   - `deposit_receipt_file_url` stores the deposit receipt document (Resguardo del depósito de la fianza)
   - Only required when `deposit_responsible` is "Prophero"
-  - Stored in `/rental/deposit/` subfolder
+  - Stored in `/rental/contractual_financial/deposit/`
 - **Tenant utilities contracts** (Phase 5: Cambio de suministros):
   - `tenant_contract_electricity`, `tenant_contract_water`, `tenant_contract_gas` are single documents (TEXT fields)
-  - `tenant_contract_other` is a JSONB array supporting multiple "other" supply contracts (internet, phone, etc.)
-  - Structure for `tenant_contract_other`: `[{title: string, url: string, createdAt: string}]`
-  - All tenant utility contracts are stored in `/rental/tenant_utilities/` subfolder
+  - `rental_custom_utilities_documents` is a JSONB array supporting multiple "other" supply contracts (internet, phone, etc.; sección "Otros" en la UI)
+  - Structure for `rental_custom_utilities_documents`: `[{title: string, url: string, createdAt: string}]`
+  - All tenant utility contracts and custom utilities documents are stored in `/rental/utilities/`
 - **First rent payment transfer receipt** (Phase 5: Transferencia del mes en curso):
   - `first_rent_payment_file_url` stores the transfer receipt document (Comprobante de transferencia del mes en curso)
   - Required to complete the "Transferencia del mes en curso" section
-  - Stored in `/rental/first_rent_payment/` subfolder
+  - Stored in `/rental/contractual_financial/first_rent_payment/`
+- **Custom rental documents:** `rental_custom_contractual_financial_documents`, `rental_custom_utilities_documents`, and `rental_custom_other_documents` are JSONB arrays for additional documents in each category. Structure: `[{title: string, url: string, createdAt: string}]`
 - Documents are stored in the `properties-restricted-docs` bucket
 
 ---
 
 ## 4. Implementation Rules for Cursor
-
 1.  **Upload Logic:** When creating an upload function, ALWAYS check the target SQL variable name against this matrix to determine the destination Bucket and Folder.
 2.  **Naming Convention:**
     * Files should be renamed upon upload to avoid conflicts.

@@ -98,42 +98,48 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "tenant/other",
   },
-  // Rental Data (Phase 4: Inquilino aceptado)
+  // Rental Data (Folder 1: rental) - contractual_financial (Folder 2)
   signed_lease_contract_url: {
     bucket: "properties-restricted-docs",
-    folder: "rental/lease_contract",
+    folder: "rental/contractual_financial/lease_contract",
   },
-  // Guarantee file (Phase 5: Pendiente de trámites)
   guarantee_file_url: {
     bucket: "properties-restricted-docs",
-    folder: "rental/non-payment_insurance",
+    folder: "rental/contractual_financial/non-payment_insurance",
   },
-  // Deposit receipt (Phase 5: Pendiente de trámites - Depósito de la fianza)
   deposit_receipt_file_url: {
     bucket: "properties-restricted-docs",
-    folder: "rental/deposit",
+    folder: "rental/contractual_financial/deposit",
   },
-  // Tenant supply contracts (Phase 5: Pendiente de trámites - Cambio de suministros)
+  first_rent_payment_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/first_rent_payment",
+  },
+  rental_custom_contractual_financial_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/other",
+  },
+  // Rental - utilities (Folder 2)
   tenant_contract_electricity: {
     bucket: "properties-restricted-docs",
-    folder: "rental/tenant_utilities",
+    folder: "rental/utilities",
   },
   tenant_contract_water: {
     bucket: "properties-restricted-docs",
-    folder: "rental/tenant_utilities",
+    folder: "rental/utilities",
   },
   tenant_contract_gas: {
     bucket: "properties-restricted-docs",
-    folder: "rental/tenant_utilities",
+    folder: "rental/utilities",
   },
-  tenant_contract_other: {
+  rental_custom_utilities_documents: {
     bucket: "properties-restricted-docs",
-    folder: "rental/tenant_utilities",
+    folder: "rental/utilities",
   },
-  // First rent payment transfer receipt (Phase 5: Pendiente de trámites - Transferencia del mes en curso)
-  first_rent_payment_file_url: {
+  // Rental - other (Folder 2)
+  rental_custom_other_documents: {
     bucket: "properties-restricted-docs",
-    folder: "rental/first_rent_payment",
+    folder: "rental/other",
   },
   custom_insurance_documents: {
     bucket: "properties-restricted-docs",
@@ -356,11 +362,12 @@ export async function POST(request: NextRequest) {
     let updateData: Record<string, unknown>;
     
     // Check if this is a custom document field (requires title from formData)
-    // Custom document fields can start with: custom_, property_custom_, client_custom_, tenant_custom_
+    // Custom document fields can start with: custom_, property_custom_, client_custom_, tenant_custom_, rental_custom_
     const isCustomDocument = fieldName.startsWith("custom_") || 
                              fieldName.startsWith("property_custom_") || 
                              fieldName.startsWith("client_custom_") ||
-                             fieldName.startsWith("tenant_custom_");
+                             fieldName.startsWith("tenant_custom_") ||
+                             fieldName.startsWith("rental_custom_");
     
     if (isCustomDocument && customTitle) {
       // Custom documents: add to JSONB array with title

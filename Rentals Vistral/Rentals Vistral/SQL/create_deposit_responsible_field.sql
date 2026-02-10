@@ -20,6 +20,6 @@ ALTER TABLE properties
 
 -- Add comments to document the fields
 COMMENT ON COLUMN properties.deposit_responsible IS 'Responsible party for the security deposit: Prophero or Inversor';
-COMMENT ON COLUMN properties.deposit_receipt_file_url IS 'URL to the deposit receipt document (Resguardo del depósito de la fianza). Stored in properties-restricted-docs/rental/deposit/';
+COMMENT ON COLUMN properties.deposit_receipt_file_url IS 'URL to the deposit receipt document (Resguardo del depósito de la fianza). Stored in properties-restricted-docs/rental/contractual_financial/deposit/';
 
 COMMIT;

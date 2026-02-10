@@ -29,7 +29,7 @@ La fase "Pendiente de trámites" es la quinta fase del proceso de gestión de al
    - Campo para subir el documento de garantía firmado (PDF, DOC, DOCX)
    - El documento es único: solo se puede tener un documento a la vez
    - Si ya existe un documento, se puede eliminar para subir uno nuevo
-   - El documento se guarda en la carpeta `Rental/non-payment_insurance/` del bucket `properties-restricted-docs`
+   - El documento se guarda en la carpeta `rental/contractual_financial/non-payment_insurance/` del bucket `properties-restricted-docs`
    - Soporta drag and drop para facilitar la carga
 
 4. **Completado de la sección**: La sección se marca como completada cuando:
@@ -45,7 +45,7 @@ La fase "Pendiente de trámites" es la quinta fase del proceso de gestión de al
   - `true` = Sí, ha sido firmada
   - `false` = No, no ha sido firmada
   - `null` = No ha respondido aún
-- `guarantee_file_url` (TEXT | null): URL del documento de garantía firmado. Se guarda en `Rental/non-payment_insurance/`
+- `guarantee_file_url` (TEXT | null): URL del documento de garantía firmado. Se guarda en `rental/contractual_financial/non-payment_insurance/`
 
 **Nota:** Todos los campos necesarios ya existen en la base de datos. No se requiere crear nuevos campos.
 
@@ -78,10 +78,11 @@ La sección se considera completada cuando:
 
 ```
 properties-restricted-docs/
-  └── Rental/
-      └── non-payment_insurance/
-          └── {property_unique_id}/
-              └── guarantee_file_url_{timestamp}.pdf
+  └── {property_unique_id}/
+      └── rental/
+          └── contractual_financial/
+              └── non-payment_insurance/
+                  └── guarantee_file_url_{timestamp}.pdf
 ```
 
 #### Task de Completado
@@ -107,7 +108,7 @@ properties-restricted-docs/
    - Campo para subir el resguardo del depósito de la fianza (PDF, DOC, DOCX)
    - El documento es único: solo se puede tener un documento a la vez
    - Si ya existe un documento, se puede eliminar para subir uno nuevo
-   - El documento se guarda en la carpeta `Rental/deposit/` del bucket `properties-restricted-docs`
+   - El documento se guarda en la carpeta `rental/contractual_financial/deposit/` del bucket `properties-restricted-docs`
    - Soporta drag and drop para facilitar la carga
 
 3. **Completado de la sección**: La sección se marca como completada cuando:
@@ -122,7 +123,7 @@ properties-restricted-docs/
   - `"Prophero"` = Prophero es responsable
   - `"Inversor"` = Inversor es responsable
   - `null` = No se ha seleccionado aún
-- `deposit_receipt_file_url` (TEXT | null): URL del resguardo del depósito de la fianza. Se guarda en `Rental/deposit/`
+- `deposit_receipt_file_url` (TEXT | null): URL del resguardo del depósito de la fianza. Se guarda en `rental/contractual_financial/deposit/`
 
 #### Estructura de Datos
 
@@ -151,10 +152,11 @@ La sección se considera completada cuando:
 
 ```
 properties-restricted-docs/
-  └── Rental/
-      └── deposit/
-          └── {property_unique_id}/
-              └── deposit_receipt_file_url_{timestamp}.pdf
+  └── {property_unique_id}/
+      └── rental/
+          └── contractual_financial/
+              └── deposit/
+                  └── deposit_receipt_file_url_{timestamp}.pdf
 ```
 
 #### Task de Completado
@@ -179,7 +181,7 @@ properties-restricted-docs/
 
 2. **Upload de contratos del inquilino**: 
    - Para cada suministro activado, se debe subir el contrato correspondiente del inquilino
-   - Los documentos se guardan en la carpeta `Rental/tenant_utilities/` del bucket `properties-restricted-docs`
+   - Los documentos se guardan en la carpeta `rental/utilities/` del bucket `properties-restricted-docs`
    - Soporta drag and drop para facilitar la carga
    - Para "Otros", se pueden subir múltiples documentos con títulos personalizados
 
@@ -201,7 +203,7 @@ properties-restricted-docs/
 - `tenant_contract_electricity` (TEXT | null): URL del contrato de electricidad del inquilino
 - `tenant_contract_water` (TEXT | null): URL del contrato de agua del inquilino
 - `tenant_contract_gas` (TEXT | null): URL del contrato de gas del inquilino
-- `tenant_contract_other` (JSONB | null): Array de documentos de otros suministros del inquilino
+- `rental_custom_utilities_documents` (JSONB | null): Array de documentos de otros suministros del inquilino (sección "Otros")
   - Estructura: `[{title: string, url: string, createdAt: string}]`
 
 #### Estructura de Datos
@@ -217,7 +219,7 @@ properties-restricted-docs/
   tenant_contract_electricity: string | null;
   tenant_contract_water: string | null;
   tenant_contract_gas: string | null;
-  tenant_contract_other: Array<{
+  rental_custom_utilities_documents: Array<{
     title: string;
     url: string;
     createdAt: string;
@@ -233,7 +235,7 @@ La sección se considera completada cuando:
   - `electricity === true` → `tenant_contract_electricity !== null`
   - `water === true` → `tenant_contract_water !== null`
   - `gas === true` → `tenant_contract_gas !== null`
-  - `other === true` → `tenant_contract_other` es un array con al menos un elemento
+  - `other === true` → `rental_custom_utilities_documents` es un array con al menos un elemento
 
 #### Comportamiento de la UI
 
@@ -248,13 +250,13 @@ La sección se considera completada cuando:
 
 ```
 properties-restricted-docs/
-  └── Rental/
-      └── tenant_utilities/
-          └── {property_unique_id}/
+  └── {property_unique_id}/
+      └── rental/
+          └── utilities/
               ├── tenant_contract_electricity_{timestamp}.pdf
               ├── tenant_contract_water_{timestamp}.pdf
               ├── tenant_contract_gas_{timestamp}.pdf
-              └── tenant_contract_other_{timestamp}.pdf
+              └── rental_custom_utilities_documents_{timestamp}.pdf
 ```
 
 #### Task de Completado
@@ -275,7 +277,7 @@ properties-restricted-docs/
    - Campo para subir el comprobante de transferencia del mes en curso (PDF, DOC, DOCX)
    - El documento es único: solo se puede tener un documento a la vez
    - Si ya existe un documento, se puede eliminar para subir uno nuevo
-   - El documento se guarda en la carpeta `Rental/first_rent_payment/` del bucket `properties-restricted-docs`
+   - El documento se guarda en la carpeta `rental/contractual_financial/first_rent_payment/` del bucket `properties-restricted-docs`
    - Soporta drag and drop para facilitar la carga
 
 2. **Completado de la sección**: La sección se marca como completada cuando:
@@ -285,7 +287,7 @@ properties-restricted-docs/
 
 **Campos Utilizados:**
 
-- `first_rent_payment_file_url` (TEXT | null): URL del comprobante de transferencia del mes en curso. Se guarda en `Rental/first_rent_payment/`
+- `first_rent_payment_file_url` (TEXT | null): URL del comprobante de transferencia del mes en curso. Se guarda en `rental/contractual_financial/first_rent_payment/`
 
 #### Estructura de Datos
 
@@ -311,10 +313,11 @@ La sección se considera completada cuando:
 
 ```
 properties-restricted-docs/
-  └── Rental/
-      └── first_rent_payment/
-          └── {property_unique_id}/
-              └── first_rent_payment_file_url_{timestamp}.pdf
+  └── {property_unique_id}/
+      └── rental/
+          └── contractual_financial/
+              └── first_rent_payment/
+                  └── first_rent_payment_file_url_{timestamp}.pdf
 ```
 
 #### Task de Completado

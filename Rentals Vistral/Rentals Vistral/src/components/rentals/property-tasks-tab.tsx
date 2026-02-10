@@ -312,7 +312,7 @@ export function PropertyTasksTab({
         return [
           {
             id: "leads",
-            title: "Gestión de Leads",
+            title: "Gestión de Interesados",
             required: true,
             fields: [
               { id: "unguidedLeads", required: false },
@@ -843,7 +843,7 @@ export function PropertyTasksTab({
             const tenantContractElectricity = supabaseProperty.tenant_contract_electricity;
             const tenantContractWater = supabaseProperty.tenant_contract_water;
             const tenantContractGas = supabaseProperty.tenant_contract_gas;
-            const tenantContractOther = supabaseProperty.tenant_contract_other;
+            const tenantContractOther = supabaseProperty.rental_custom_utilities_documents;
             
             const hasAnyToggleEnabled = Object.values(toggles).some((v: any) => v === true);
             if (!hasAnyToggleEnabled) {
@@ -938,6 +938,26 @@ export function PropertyTasksTab({
           <h2 className="text-xl font-semibold">Listo para Alquilar</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Presenta el servicio al cliente, define la estrategia de precio, realiza la inspección técnica y prepara el lanzamiento comercial de la propiedad.
+          </p>
+        </div>
+      )}
+
+      {/* Texto descriptivo para fase "Inquilino aceptado" */}
+      {isTenantAccepted && (
+        <div className="border-b pb-2">
+          <h2 className="text-xl font-semibold">Inquilino aceptado</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Confirma los datos bancarios del inversor, gestiona el contrato de arrendamiento, registra las condiciones acordadas y gestiona la garantía Finaer.
+          </p>
+        </div>
+      )}
+
+      {/* Texto descriptivo para fase "Pendiente de trámites" */}
+      {isPendingProcedures && (
+        <div className="border-b pb-2">
+          <h2 className="text-xl font-semibold">Pendiente de trámites</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Gestiona los trámites pendientes para completar el proceso de alquiler: firma de la garantía de Finaer, depósito de la fianza, cambio de suministros y transferencia del mes en curso.
           </p>
         </div>
       )}

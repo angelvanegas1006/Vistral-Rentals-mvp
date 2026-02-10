@@ -110,7 +110,7 @@ La fase "Inquilino aceptado" es la cuarta fase del proceso de gestión de alquil
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `signed_lease_contract_url` | TEXT | URL del contrato de alquiler firmado. Se guarda en `Rental/lease_contract/` |
+| `signed_lease_contract_url` | TEXT | URL del contrato de alquiler firmado. Se guarda en `rental/contractual_financial/lease_contract/` |
 | `contract_signature_date` | DATE | Fecha en que se firmó el contrato |
 | `lease_start_date` | DATE | Fecha de inicio del contrato de alquiler |
 | `lease_duration` | TEXT | Duración del contrato (número) |
@@ -160,10 +160,11 @@ La fase "Inquilino aceptado" es la cuarta fase del proceso de gestión de alquil
 
 ```
 properties-restricted-docs/
-  └── Rental/
-      └── lease_contract/
-          └── {property_unique_id}/
-              └── signed_lease_contract_url_{timestamp}.pdf
+  └── {property_unique_id}/
+      └── rental/
+          └── contractual_financial/
+              └── lease_contract/
+                  └── signed_lease_contract_url_{timestamp}.pdf
 ```
 
 ---

@@ -61,145 +61,63 @@ interface RentalsLeadsKanbanBoardProps {
   loading?: boolean;
 }
 
-// Datos mock para el Kanban de Leads
-export const mockLeadsColumns: LeadsKanbanColumn[] = [
-  {
-    id: "not-contacted",
-    title: "Sin Contactar",
-    leads: [
-      {
-        id: "LEAD-001",
-        name: "Juan Pérez",
-        phone: "+34 600 123 456",
-        email: "juan.perez@email.com",
-        interestedProperty: {
-          id: "PROP-006",
-          address: "Calle Alcalá 100, 5º E",
-          city: "Madrid",
-        },
-        zone: "Centro",
-        currentPhase: "Sin Contactar",
-        daysInPhase: 1,
-      },
-      {
-        id: "LEAD-002",
-        name: "María García",
-        phone: "+34 611 234 567",
-        email: "maria.garcia@email.com",
-        zone: "Chamberí",
-        currentPhase: "Sin Contactar",
-        daysInPhase: 3,
-      },
-      {
-        id: "LEAD-007",
-        name: "Roberto Silva",
-        phone: "+34 666 789 012",
-        email: "roberto.silva@email.com",
-        zone: "Retiro",
-        currentPhase: "Sin Contactar",
-        daysInPhase: 0,
-      },
-    ],
-  },
-  {
-    id: "scheduled",
-    title: "Agendados",
-    leads: [
-      {
-        id: "LEAD-003",
-        name: "Carlos López",
-        phone: "+34 622 345 678",
-        email: "carlos.lopez@email.com",
-        interestedProperty: {
-          id: "PROP-006",
-          address: "Calle Alcalá 100, 5º E",
-          city: "Madrid",
-        },
-        zone: "Centro",
-        currentPhase: "Agendados",
-        daysInPhase: 2,
-      },
-      {
-        id: "LEAD-008",
-        name: "Sofía Martín",
-        phone: "+34 677 890 123",
-        email: "sofia.martin@email.com",
-        interestedProperty: {
-          id: "PROP-006",
-          address: "Calle Alcalá 100, 5º E",
-          city: "Madrid",
-        },
-        zone: "Centro",
-        currentPhase: "Agendados",
-        daysInPhase: 1,
-      },
-    ],
-  },
-  {
-    id: "visited",
-    title: "Visita Hecha / Pendiente de Doc.",
-    leads: [
-      {
-        id: "LEAD-004",
-        name: "Ana Martínez",
-        phone: "+34 633 456 789",
-        email: "ana.martinez@email.com",
-        interestedProperty: {
-          id: "PROP-006",
-          address: "Calle Alcalá 100, 5º E",
-          city: "Madrid",
-        },
-        zone: "Centro",
-        currentPhase: "Visita Hecha / Pendiente de Doc.",
-        daysInPhase: 5,
-      },
-    ],
-  },
-  {
-    id: "accepted",
-    title: "Inquilino Aceptado",
-    leads: [
-      {
-        id: "LEAD-005",
-        name: "Pedro Sánchez",
-        phone: "+34 644 567 890",
-        email: "pedro.sanchez@email.com",
-        interestedProperty: {
-          id: "PROP-006",
-          address: "Calle Alcalá 100, 5º E",
-          city: "Madrid",
-        },
-        zone: "Centro",
-        currentPhase: "Inquilino Aceptado",
-        daysInPhase: 7,
-      },
-    ],
-  },
-  {
-    id: "discarded",
-    title: "Descartados",
-    leads: [
-      {
-        id: "LEAD-006",
-        name: "Laura Fernández",
-        phone: "+34 655 678 901",
-        email: "laura.fernandez@email.com",
-        zone: "Salamanca",
-        currentPhase: "Descartados",
-        daysInPhase: 10,
-      },
-    ],
-  },
-];
+// Fases del Kanban de Interesados (orden fijo)
+const LEAD_PHASE_IDS = [
+  "perfil-cualificado",
+  "visita-agendada",
+  "visita-hecha",
+  "recogiendo-informacion",
+  "calificacion-en-curso",
+  "calificacion-aprobada",
+  "inquilino-aceptado",
+] as const;
+
+const LEAD_PHASE_TITLES: Record<(typeof LEAD_PHASE_IDS)[number], string> = {
+  "perfil-cualificado": "Perfil cualificado",
+  "visita-agendada": "Visita agendada",
+  "visita-hecha": "Visita hecha",
+  "recogiendo-informacion": "Recogiendo Información",
+  "calificacion-en-curso": "Calificación en curso",
+  "calificacion-aprobada": "Calificación aprobada",
+  "inquilino-aceptado": "Inquilino aceptado",
+};
 
 // Mapeo de phaseId a nombre de fase
-const phaseIdToPhaseName: Record<string, string> = {
-  "not-contacted": "Sin Contactar",
-  scheduled: "Agendados",
-  visited: "Visita Hecha / Pendiente de Doc.",
-  accepted: "Inquilino Aceptado",
-  discarded: "Descartados",
+const phaseIdToPhaseName: Record<string, string> = { ...LEAD_PHASE_TITLES };
+
+// Datos mock para el Kanban de Interesados (tarjetas repartidas en las 7 fases)
+const MOCK_LEADS_BY_PHASE: Record<string, Lead[]> = {
+  "perfil-cualificado": [
+    { id: "LEAD-001", name: "Juan Pérez", phone: "+34 600 123 456", email: "juan.perez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Perfil cualificado", daysInPhase: 1 },
+    { id: "LEAD-002", name: "María García", phone: "+34 611 234 567", email: "maria.garcia@email.com", zone: "Chamberí", currentPhase: "Perfil cualificado", daysInPhase: 3 },
+  ],
+  "visita-agendada": [
+    { id: "LEAD-003", name: "Carlos López", phone: "+34 622 345 678", email: "carlos.lopez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Visita agendada", daysInPhase: 2 },
+  ],
+  "visita-hecha": [
+    { id: "LEAD-004", name: "Ana Martínez", phone: "+34 633 456 789", email: "ana.martinez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Visita hecha", daysInPhase: 5 },
+    { id: "LEAD-008", name: "Sofía Martín", phone: "+34 677 890 123", email: "sofia.martin@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Visita hecha", daysInPhase: 1 },
+  ],
+  "recogiendo-informacion": [
+    { id: "LEAD-009", name: "Pablo Ruiz", phone: "+34 688 901 234", email: "pablo.ruiz@email.com", zone: "Retiro", currentPhase: "Recogiendo Información", daysInPhase: 2 },
+  ],
+  "calificacion-en-curso": [
+    { id: "LEAD-010", name: "Elena Torres", phone: "+34 699 012 345", email: "elena.torres@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Calificación en curso", daysInPhase: 4 },
+  ],
+  "calificacion-aprobada": [
+    { id: "LEAD-005", name: "Pedro Sánchez", phone: "+34 644 567 890", email: "pedro.sanchez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Calificación aprobada", daysInPhase: 7 },
+  ],
+  "inquilino-aceptado": [
+    { id: "LEAD-006", name: "Laura Fernández", phone: "+34 655 678 901", email: "laura.fernandez@email.com", zone: "Salamanca", currentPhase: "Inquilino aceptado", daysInPhase: 10 },
+    { id: "LEAD-007", name: "Roberto Silva", phone: "+34 666 789 012", email: "roberto.silva@email.com", zone: "Retiro", currentPhase: "Inquilino aceptado", daysInPhase: 0 },
+  ],
 };
+
+export const mockLeadsColumns: LeadsKanbanColumn[] = LEAD_PHASE_IDS.map((id) => ({
+  id,
+  title: LEAD_PHASE_TITLES[id],
+  leads: MOCK_LEADS_BY_PHASE[id] || [],
+}));
 
 // Componente de tarjeta ordenable
 function SortableLeadCard({
@@ -282,14 +200,8 @@ export function RentalsLeadsKanbanBoard({
   const [localColumns, setLocalColumns] = useState<LeadsKanbanColumn[]>([]);
   const [originalColumns, setOriginalColumns] = useState<LeadsKanbanColumn[]>([]);
 
-  // Definir las fases del Kanban de Leads
-  const leadPhases = [
-    "Sin Contactar",
-    "Agendados",
-    "Visita Hecha / Pendiente de Doc.",
-    "Inquilino Aceptado",
-    "Descartados",
-  ];
+  // Fases del Kanban de Interesados (mismo orden que LEAD_PHASE_IDS / LEAD_PHASE_TITLES)
+  const leadPhases = LEAD_PHASE_IDS.map((id) => LEAD_PHASE_TITLES[id]);
 
   // Sensores para drag & drop
   const sensors = useSensors(
@@ -317,16 +229,11 @@ export function RentalsLeadsKanbanBoard({
 
     const columnsMap: Record<string, Lead[]> = {};
 
-    // Agrupar leads por fase
+    // Agrupar leads por fase (por nombre de fase; si no coincide, a la primera)
     allSupabaseLeads.forEach((leadRow) => {
       const mappedLead = mapLeadFromSupabase(leadRow);
-      const phaseId = [
-        "not-contacted",
-        "scheduled",
-        "visited",
-        "accepted",
-        "discarded",
-      ][leadPhases.indexOf(mappedLead.currentPhase)] || "not-contacted";
+      const phaseIndex = leadPhases.indexOf(mappedLead.currentPhase);
+      const phaseId = phaseIndex >= 0 ? LEAD_PHASE_IDS[phaseIndex] : LEAD_PHASE_IDS[0];
 
       if (!columnsMap[phaseId]) {
         columnsMap[phaseId] = [];
@@ -334,23 +241,12 @@ export function RentalsLeadsKanbanBoard({
       columnsMap[phaseId].push(mappedLead);
     });
 
-    // Convertir a formato de columnas
-    const phaseTitles: Record<string, string> = {
-      "not-contacted": "Sin Contactar",
-      scheduled: "Agendados",
-      visited: "Visita Hecha / Pendiente de Doc.",
-      accepted: "Inquilino Aceptado",
-      discarded: "Descartados",
-    };
-
-    return leadPhases.map((phase, index) => {
-      const phaseId = ["not-contacted", "scheduled", "visited", "accepted", "discarded"][index];
-      return {
-        id: phaseId,
-        title: phaseTitles[phaseId] || phase,
-        leads: columnsMap[phaseId] || [],
-      };
-    });
+    // Convertir a formato de columnas (todas las fases en orden)
+    return LEAD_PHASE_IDS.map((phaseId) => ({
+      id: phaseId,
+      title: LEAD_PHASE_TITLES[phaseId],
+      leads: columnsMap[phaseId] || [],
+    }));
   }, [allSupabaseLeads]);
 
   // Seleccionar columnas: Supabase primero, luego mock como fallback
@@ -721,10 +617,10 @@ export function RentalsLeadsKanbanBoard({
                 {column.leads.length === 0 ? (
                   <div className="bg-card dark:bg-[#000000] border border-border rounded-lg p-6 md:border-0 md:bg-transparent text-center">
                     <p className="text-sm font-medium text-muted-foreground">
-                      No hay leads
+                      No hay interesados
                     </p>
                     <p className="text-xs text-muted-foreground/70 mt-1">
-                      Los leads aparecerán aquí
+                      Los interesados aparecerán aquí
                     </p>
                   </div>
                 ) : (

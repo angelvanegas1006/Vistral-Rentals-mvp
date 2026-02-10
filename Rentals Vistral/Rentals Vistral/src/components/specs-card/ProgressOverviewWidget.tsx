@@ -485,7 +485,7 @@ export function ProgressOverviewWidget({
         const tenantContractElectricity = supabaseProperty.tenant_contract_electricity;
         const tenantContractWater = supabaseProperty.tenant_contract_water;
         const tenantContractGas = supabaseProperty.tenant_contract_gas;
-        const tenantContractOther = supabaseProperty.tenant_contract_other;
+        const tenantContractOther = supabaseProperty.rental_custom_utilities_documents;
         
         // If no toggles are enabled, section is complete
         const hasAnyToggleEnabled = Object.values(toggles).some((v: any) => v === true);

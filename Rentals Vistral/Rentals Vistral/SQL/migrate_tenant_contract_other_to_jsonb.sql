@@ -1,8 +1,11 @@
+-- DEPRECATED: This migration is obsolete. The app now uses rental_custom_utilities_documents
+-- for "Otros" (other) supply contracts instead of tenant_contract_other.
+-- Do not run for new deployments. If you have existing data in tenant_contract_other,
+-- migrate it to rental_custom_utilities_documents and then drop the column.
+--
 -- Migration: Create tenant_contract_other as JSONB (or convert from TEXT if exists)
 -- Date: 2026-02-09
--- Description: Creates tenant_contract_other as JSONB to support multiple "other" supply contracts
---              Structure: [{title: string, url: string, createdAt: string}]
---              If column exists as TEXT, migrates data. If it doesn't exist, creates it as JSONB.
+-- Description: (Deprecated) Previously created tenant_contract_other as JSONB.
 
 BEGIN;
 

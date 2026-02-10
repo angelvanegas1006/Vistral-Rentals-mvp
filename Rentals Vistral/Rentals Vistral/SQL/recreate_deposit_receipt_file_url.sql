@@ -13,6 +13,6 @@ ALTER TABLE properties
   ADD COLUMN deposit_receipt_file_url TEXT;
 
 -- Add comment to document the field
-COMMENT ON COLUMN properties.deposit_receipt_file_url IS 'URL to the deposit receipt document (Resguardo del depósito de la fianza). Stored in properties-restricted-docs/rental/deposit/';
+COMMENT ON COLUMN properties.deposit_receipt_file_url IS 'URL to the deposit receipt document (Resguardo del depósito de la fianza). Stored in properties-restricted-docs/rental/contractual_financial/deposit/';
 
 COMMIT;

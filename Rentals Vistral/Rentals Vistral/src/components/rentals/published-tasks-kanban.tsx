@@ -201,8 +201,8 @@ export function PublishedTasksKanban({
 
   // Mapeo de columnas
   const columns = [
-    { id: "unguided", title: "Leads sin gestionar", leads: unguidedLeads, onChange: onUnguidedLeadsChange },
-    { id: "scheduled", title: "Leads Agendados", leads: scheduledLeads, onChange: onScheduledLeadsChange },
+    { id: "unguided", title: "Interesados sin gestionar", leads: unguidedLeads, onChange: onUnguidedLeadsChange },
+    { id: "scheduled", title: "Interesados Agendados", leads: scheduledLeads, onChange: onScheduledLeadsChange },
     { id: "visited", title: "Visita Hecha / Pend. Doc.", leads: visitedLeads, onChange: onVisitedLeadsChange },
     { id: "discarded", title: "Descartados", leads: discardedLeads, onChange: onDiscardedLeadsChange },
   ];
@@ -282,10 +282,10 @@ export function PublishedTasksKanban({
               {column.leads.length === 0 ? (
                 <div className="bg-card dark:bg-[#000000] border border-border rounded-lg p-6 md:border-0 md:bg-transparent text-center">
                   <p className="text-sm font-medium text-muted-foreground">
-                    No hay leads
+                    No hay interesados
                   </p>
                   <p className="text-xs text-muted-foreground/70 mt-1">
-                    Los leads aparecerán aquí
+                    Los interesados aparecerán aquí
                   </p>
                 </div>
               ) : (

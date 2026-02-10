@@ -39,8 +39,8 @@ interface Lead {
   email: string;
   called?: "Si" | "No";
   discarded?: "Si" | "No";
-  scheduledDate?: string; // Para "Leads sin gestionar"
-  visitDate?: string; // Para "Leads Agendados"
+  scheduledDate?: string; // Para "Interesados sin gestionar"
+  visitDate?: string; // Para "Interesados Agendados"
   qualified?: "Si" | "No"; // Para "Visita Hecha"
 }
 
@@ -310,7 +310,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
                   colSpan={columns.length + 1}
                   className="px-3 py-6 text-center text-sm text-muted-foreground"
                 >
-                  No hay leads en esta lista
+                  No hay interesados en esta lista
                 </td>
               </tr>
             ) : (
@@ -627,7 +627,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">{localUnguidedLeads.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Leads sin gestionar</p>
+                <p className="text-xs text-muted-foreground mt-1">Interesados sin gestionar</p>
               </div>
             </CardContent>
           </Card>
@@ -635,7 +635,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">{localScheduledLeads.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Leads Agendados</p>
+                <p className="text-xs text-muted-foreground mt-1">Interesados Agendados</p>
               </div>
             </CardContent>
           </Card>
@@ -710,13 +710,13 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
       {/* Vista Listas (colapsadas por defecto) */}
       {viewMode === "lists" && (
         <Accordion type="multiple" defaultValue={[]} className="space-y-3">
-          {/* Leads sin gestionar */}
+          {/* Interesados sin gestionar */}
           <AccordionItem value="unguided" className="border rounded-lg overflow-hidden">
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-0 px-4 pt-4">
                 <AccordionTrigger className="hover:no-underline py-2">
                   <div className="flex items-center justify-between w-full pr-4">
-                    <CardTitle className="text-base font-semibold">Leads sin gestionar</CardTitle>
+                    <CardTitle className="text-base font-semibold">Interesados sin gestionar</CardTitle>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {localUnguidedLeads.length}
@@ -750,13 +750,13 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             </Card>
           </AccordionItem>
 
-          {/* Leads Agendados */}
+          {/* Interesados Agendados */}
           <AccordionItem value="scheduled" className="border rounded-lg overflow-hidden">
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-0 px-4 pt-4">
                 <AccordionTrigger className="hover:no-underline py-2">
                   <div className="flex items-center justify-between w-full pr-4">
-                    <CardTitle className="text-base font-semibold">Leads Agendados</CardTitle>
+                    <CardTitle className="text-base font-semibold">Interesados Agendados</CardTitle>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {localScheduledLeads.length}

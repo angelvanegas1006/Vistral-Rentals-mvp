@@ -96,7 +96,7 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
     <div className="space-y-8">
       {/* Investor Information Section - Similar to Property owners reference */}
       <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-6">Propietario</h2>
+        <h2 className="text-xl font-semibold mb-6">Inversor</h2>
         
         {/* Owner Profile */}
         <div className="flex items-center gap-4 mb-8">

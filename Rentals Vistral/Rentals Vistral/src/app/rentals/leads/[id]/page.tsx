@@ -101,7 +101,7 @@ export default function LeadDetailPage() {
             variant="outline"
             onClick={() => router.push("/rentals/leads")}
           >
-            Volver al Kanban de Leads
+            Volver al Kanban de Interesados
           </Button>
         </div>
       </div>
