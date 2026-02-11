@@ -1,0 +1,72 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-11
+glob: "**/*"
+alwaysApply: true
+description: "Core rules - Stack, structure, security basics, and planning workflow"
+---
+
+# Vistral Lab - Core Rules
+
+## Stack y Dependencias Base
+
+- **Framework:** Next.js 16+ (App Router)
+- **Lenguaje:** TypeScript (strict)
+- **UI:** React 19, Radix UI, Tailwind CSS 4
+- **Backend / DB:** Supabase (auth, DB, storage, RLS)
+- **Formularios:** react-hook-form + @hookform/resolvers + Zod
+- **Estilos:** class-variance-authority (cva), clsx, tailwind-merge
+- **Deploy:** Vercel (recomendado)
+
+**Dependencias clave en `package.json`:**
+- `@supabase/ssr`, `@supabase/supabase-js`
+- `next`, `react`, `react-dom`
+- `@radix-ui/*` (dialog, dropdown-menu, label, select, etc.)
+- `tailwindcss`, `@tailwindcss/postcss`
+- `class-variance-authority`, `clsx`, `tailwind-merge`
+- `react-hook-form`, `@hookform/resolvers`, `zod`
+- `lucide-react`, `date-fns`, `sonner` (toasts)
+
+## Estructura de Carpetas
+
+En este proyecto la app está bajo `src/`:
+- `src/app/` - App Router, api, rutas por dominio
+- `src/components/` - ui/, auth/, rentals/, etc.
+- `src/hooks/` - Custom hooks
+- `src/lib/` - auth/, config/, supabase/, i18n/, servicios
+- `supabase/migrations/` - SQL numerados
+- `public/`, `scripts/`
+
+**Rutas:** bajo `src/app/` por dominio. **Componentes:** `src/components/ui/` primitivos. **Servicios:** `src/lib/`; Supabase en `src/lib/supabase/types.ts`. **Migraciones:** solo en `supabase/migrations/`, numeradas.
+
+## SECURITY RULES (CRITICAL)
+
+**NEVER:**
+- Paste real secrets. Always use placeholders
+- Read `.env*`, `*.pem`, `*.key`, or credentials files
+- Commit service role keys, even in `.env.example`
+- Expose `SUPABASE_SERVICE_ROLE_KEY` in client-side code
+
+**ALWAYS:**
+- Use service role key ONLY in `src/app/api/**` or `src/lib/supabase/server.ts`
+- Verify secrets are not exposed in client bundles
+- Use environment variables from `src/lib/config/environment.ts`
+- Check `.cursorignore` excludes sensitive files
+
+## PROTECTED ZONES
+
+**Do not modify unless explicitly asked:**
+- `supabase/migrations/**` - Database migrations (only add new, never modify existing)
+- `src/lib/auth/**` - Auth providers
+- Design tokens CSS (e.g. `src/app/vistral.css` / prophero)
+- `.cursorignore` - Cursor indexing exclusions
+
+## PLANNING WORKFLOW (MANDATORY)
+
+**Before coding:** 1) Summarize intent 2) List steps 3) Identify risks
+**After coding:** 1) Summarize changes 2) List risks introduced 3) Suggest test cases
+
+## Domain Boundaries
+
+When working on a specific domain, do not touch other domains unless explicitly requested. Keep domain logic in domain folders. Use shared utilities from `src/lib/`.

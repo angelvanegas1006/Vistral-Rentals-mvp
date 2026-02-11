@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 
 interface NavbarL2Props {
   backHref?: string;
+  /** Título del header. Si no se pasa, se muestra "Detalle de propiedad". Para leads: "Detalles del interesado" */
+  title?: string;
   className?: string;
   onSave?: () => void | Promise<void>;
   onNextPhase?: () => void | Promise<void>;
@@ -21,6 +23,7 @@ interface NavbarL2Props {
 
 export function NavbarL2({
   backHref,
+  title,
   className,
   onSave,
   onNextPhase,
@@ -66,7 +69,7 @@ export function NavbarL2({
           <div className="h-6 w-px bg-[#E5E7EB] dark:bg-[#374151]" />
           
           {/* Title */}
-          <span className="text-sm font-medium text-[#212121] dark:text-[#F9FAFB]">Detalle de propiedad</span>
+          <span className="text-sm font-medium text-[#212121] dark:text-[#F9FAFB]">{title ?? "Detalle de propiedad"}</span>
         </div>
 
         {/* Right: Action Buttons */}

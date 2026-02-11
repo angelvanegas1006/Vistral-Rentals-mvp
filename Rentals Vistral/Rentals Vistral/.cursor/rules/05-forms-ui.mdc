@@ -1,0 +1,29 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-11
+glob: ["**/*form*.tsx", "**/components/ui/**"]
+description: "Form patterns with react-hook-form, Zod validation, and UI component standards"
+---
+
+# Vistral Lab - Forms & UI Rules
+
+## Form Setup
+
+**Required:** react-hook-form, @hookform/resolvers, zod. Use FormProvider (Form from `@/components/ui/form`). Resolver: zodResolver(schema). Schema with Zod (z.object, z.string().min(), z.email(), etc.).
+
+## Form Components
+
+Always use from `@/components/ui/form`: Form, FormField, FormItem, FormLabel, FormControl, FormMessage. Wrap UI primitives (Input, Select) inside FormControl. Use formState.errors, handleSubmit, watch; for async/complex data use dedicated hooks (e.g. usePropertyData) that call services in src/lib.
+
+## Class Utilities & Variants
+
+**Always use `cn()`** from `@/lib/utils`. Use CVA for variant/size; export componentVariants; merge with cn(componentVariants({ variant, size, className })). Components wrapping native elements: forwardRef and pass ref to DOM.
+
+## Accessibility
+
+Radix UI primitives; proper labels and ARIA; keyboard navigation; focus management.
+
+## Validation
+
+Zod schemas for structure; optional async refine for uniqueness. Display errors via FormMessage (fieldState.error).

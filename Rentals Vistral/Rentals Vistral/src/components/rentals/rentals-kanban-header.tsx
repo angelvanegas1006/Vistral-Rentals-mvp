@@ -31,7 +31,7 @@ export function RentalsKanbanHeader({
       <div className="flex flex-col gap-3 md:hidden">
         {/* Top row: Title, Filter */}
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-bold text-[#212121] flex-1 truncate">{title}</h1>
+          <h1 className="text-lg font-semibold text-foreground flex-1 truncate">{title}</h1>
 
           <button
             onClick={onFilterClick}
@@ -66,7 +66,7 @@ export function RentalsKanbanHeader({
       <div className="hidden md:flex items-center justify-between gap-4">
         {/* Left section: Title */}
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-[#212121] whitespace-nowrap">{title}</h1>
+          <h1 className="text-lg md:text-xl lg:text-2xl font-semibold text-foreground whitespace-nowrap">{title}</h1>
         </div>
 
         {/* Right section: Search, Filter, Add */}

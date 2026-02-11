@@ -17,7 +17,9 @@
 
 # misc
 .DS_Store
+__MACOSX
 *.pem
+*.key
 
 # debug
 npm-debug.log*

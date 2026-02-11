@@ -356,6 +356,12 @@ export interface Database {
           average_income: number | null;
           finaer_status: string | null;
           number_of_occupants: number | null;
+          move_in_timeframe?: string | null;
+          lease_duration_preference?: string | null;
+          employment_status?: string | null;
+          job_title?: string | null;
+          monthly_net_income?: number | null;
+          has_guarantor?: boolean | null;
           needs_update: boolean;
           created_at: string;
           updated_at: string;

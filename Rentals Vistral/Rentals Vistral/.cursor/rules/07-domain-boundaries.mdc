@@ -1,0 +1,25 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-11
+glob: ["**/app/rentals/**", "**/app/admin/**", "**/app/reno/**", "**/app/supply/**"]
+description: "Domain boundaries and isolation rules"
+---
+
+# Vistral Lab - Domain Boundaries Rules
+
+## Domain Isolation Rule
+
+**CRITICAL:** When working on a specific domain, do NOT touch other domains unless explicitly requested.
+
+**This project:** Main app domain under `src/app/rentals/`. If other domains exist (admin, reno, supply), keep their logic in their folders.
+
+**Allowed when working in one domain:** Modify that domain's files; use shared `src/lib/`, `src/components/ui/`. **Not allowed:** Modify other domain folders unless asked.
+
+## Shared Resources
+
+**From src/lib/:** utils.ts, constants.ts, supabase/, auth/, config/. **From src/components/ui/:** All UI primitives. **From src/hooks/:** Generic hooks. Domain-specific components live in domain folders or components/ with clear naming (e.g. components/rentals/). Domain-specific services: lib/*-supabase.ts or similar.
+
+## Cross-Domain
+
+When domains need to interact: use shared services in lib/, or shared API routes. Prefer shared utilities over duplicating logic.

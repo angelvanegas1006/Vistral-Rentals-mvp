@@ -61,24 +61,22 @@ interface RentalsLeadsKanbanBoardProps {
   loading?: boolean;
 }
 
-// Fases del Kanban de Interesados (orden fijo)
-const LEAD_PHASE_IDS = [
+// Fases del Kanban de Interesados (orden fijo) - exportadas para uso en detalle del lead
+export const LEAD_PHASE_IDS = [
   "perfil-cualificado",
   "visita-agendada",
-  "visita-hecha",
   "recogiendo-informacion",
   "calificacion-en-curso",
   "calificacion-aprobada",
   "inquilino-aceptado",
 ] as const;
 
-const LEAD_PHASE_TITLES: Record<(typeof LEAD_PHASE_IDS)[number], string> = {
+export const LEAD_PHASE_TITLES: Record<(typeof LEAD_PHASE_IDS)[number], string> = {
   "perfil-cualificado": "Perfil cualificado",
   "visita-agendada": "Visita agendada",
-  "visita-hecha": "Visita hecha",
   "recogiendo-informacion": "Recogiendo Información",
   "calificacion-en-curso": "Calificación en curso",
-  "calificacion-aprobada": "Calificación aprobada",
+  "calificacion-aprobada": "Inquilino presentado",
   "inquilino-aceptado": "Inquilino aceptado",
 };
 
@@ -94,18 +92,16 @@ const MOCK_LEADS_BY_PHASE: Record<string, Lead[]> = {
   "visita-agendada": [
     { id: "LEAD-003", name: "Carlos López", phone: "+34 622 345 678", email: "carlos.lopez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Visita agendada", daysInPhase: 2 },
   ],
-  "visita-hecha": [
-    { id: "LEAD-004", name: "Ana Martínez", phone: "+34 633 456 789", email: "ana.martinez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Visita hecha", daysInPhase: 5 },
-    { id: "LEAD-008", name: "Sofía Martín", phone: "+34 677 890 123", email: "sofia.martin@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Visita hecha", daysInPhase: 1 },
-  ],
   "recogiendo-informacion": [
+    { id: "LEAD-004", name: "Ana Martínez", phone: "+34 633 456 789", email: "ana.martinez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Recogiendo Información", daysInPhase: 5 },
+    { id: "LEAD-008", name: "Sofía Martín", phone: "+34 677 890 123", email: "sofia.martin@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Recogiendo Información", daysInPhase: 1 },
     { id: "LEAD-009", name: "Pablo Ruiz", phone: "+34 688 901 234", email: "pablo.ruiz@email.com", zone: "Retiro", currentPhase: "Recogiendo Información", daysInPhase: 2 },
   ],
   "calificacion-en-curso": [
     { id: "LEAD-010", name: "Elena Torres", phone: "+34 699 012 345", email: "elena.torres@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Calificación en curso", daysInPhase: 4 },
   ],
   "calificacion-aprobada": [
-    { id: "LEAD-005", name: "Pedro Sánchez", phone: "+34 644 567 890", email: "pedro.sanchez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Calificación aprobada", daysInPhase: 7 },
+    { id: "LEAD-005", name: "Pedro Sánchez", phone: "+34 644 567 890", email: "pedro.sanchez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Inquilino presentado", daysInPhase: 7 },
   ],
   "inquilino-aceptado": [
     { id: "LEAD-006", name: "Laura Fernández", phone: "+34 655 678 901", email: "laura.fernandez@email.com", zone: "Salamanca", currentPhase: "Inquilino aceptado", daysInPhase: 10 },
@@ -179,7 +175,7 @@ function DroppableColumn({
       ref={setNodeRef}
       data-column-id={column.id}
       className={cn(
-        "w-[280px] md:w-[320px] flex-shrink-0 max-w-[280px] md:max-w-[320px] flex flex-col",
+        "flex flex-col flex-shrink-0 min-w-[320px] md:min-w-[320px] w-full md:w-[320px] pt-[7px] pb-[7px]",
         isOver && "ring-2 ring-[var(--vistral-blue-500)] ring-offset-2 rounded-lg"
       )}
     >
@@ -230,9 +226,14 @@ export function RentalsLeadsKanbanBoard({
     const columnsMap: Record<string, Lead[]> = {};
 
     // Agrupar leads por fase (por nombre de fase; si no coincide, a la primera)
+    // Compatibilidad: en BD puede seguir "Calificación aprobada" → se asigna a la columna "Inquilino presentado"
     allSupabaseLeads.forEach((leadRow) => {
       const mappedLead = mapLeadFromSupabase(leadRow);
-      const phaseIndex = leadPhases.indexOf(mappedLead.currentPhase);
+      const phaseNameForIndex =
+        mappedLead.currentPhase === "Calificación aprobada"
+          ? "Inquilino presentado"
+          : mappedLead.currentPhase;
+      const phaseIndex = leadPhases.indexOf(phaseNameForIndex);
       const phaseId = phaseIndex >= 0 ? LEAD_PHASE_IDS[phaseIndex] : LEAD_PHASE_IDS[0];
 
       if (!columnsMap[phaseId]) {
@@ -591,7 +592,7 @@ export function RentalsLeadsKanbanBoard({
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 h-full min-w-max overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+      <div className="flex gap-gutter-md lg:gap-gutter-lg xl:gap-gutter-xl h-full min-w-max overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {filteredColumns.map((column) => (
           <SortableContext
             key={column.id}
@@ -600,13 +601,13 @@ export function RentalsLeadsKanbanBoard({
             strategy={verticalListSortingStrategy}
           >
             <DroppableColumn column={column}>
-              {/* Header de la columna */}
-              <div className="mb-3 md:mb-4">
+              {/* Header de la columna - mismo estilo que Captación/Cierre */}
+              <div className="mb-[7px] flex-shrink-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-base md:text-lg text-foreground">
+                  <h2 className="text-sm font-semibold text-foreground">
                     {column.title}
-                  </h3>
-                  <span className="inline-flex items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium px-2 py-0.5">
+                  </h2>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                     {column.leads.length}
                   </span>
                 </div>
@@ -639,10 +640,10 @@ export function RentalsLeadsKanbanBoard({
         ))}
       </div>
 
-      {/* Overlay para mostrar la tarjeta mientras se arrastra */}
+      {/* Overlay para mostrar la tarjeta mientras se arrastra - mismo ancho que columna */}
       <DragOverlay>
         {activeLead ? (
-          <div className="opacity-90 rotate-2">
+          <div className="opacity-90 rotate-2 w-[320px]">
             <RentalsLeadCard
               lead={activeLead}
               onClick={() => {}}

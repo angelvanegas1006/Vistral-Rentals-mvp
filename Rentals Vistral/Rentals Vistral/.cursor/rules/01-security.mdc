@@ -1,0 +1,48 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-11
+glob: "**/*"
+alwaysApply: true
+description: "Security guardrails and credential protection rules"
+---
+
+# Vistral Lab - Security Rules
+
+## Credential Protection
+
+### Service Role Key Usage
+
+**ALLOWED locations ONLY:**
+- `src/app/api/**/*.ts` - API route handlers
+- `src/lib/supabase/server.ts` - Server-side Supabase client
+
+**FORBIDDEN locations:**
+- Any `"use client"` component
+- Any file in `src/components/`
+- Any file in `src/app/**/page.tsx` (unless Server Component)
+- Any file in `src/hooks/`
+
+**Validation pattern:**
+- CORRECT: Server-side only - createServerClient from `@/lib/supabase/server`
+- WRONG: Client-side - never use service role with createBrowserClient
+
+### Environment Variables
+
+**Public (safe for client):** NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_ENV
+**Private (server-only):** SUPABASE_SERVICE_ROLE_KEY, any *_SECRET, *_KEY, *_PASSWORD
+
+**Best practices:** Always read from `@/lib/config/environment`; never hardcode credentials; use `isDemoMode()` for dev without real credentials.
+
+### File Access Restrictions
+
+**Never read or suggest reading:** `.env*`, `*.pem`, `*.key`, `**/credentials*`, `**/*secret*`, `**/*password*`
+**If user asks to see credentials:** Suggest Vercel dashboard or `.env.local.example`; warn about security.
+
+### Demo Mode Security
+
+Use mock data, not real API calls; never log credentials; clear UI indication that demo mode is active.
+
+### Code Review Checklist
+
+Verify: no hardcoded secrets; service role only in allowed locations; env from config; client components don't access server-only vars; no credentials in console/errors.

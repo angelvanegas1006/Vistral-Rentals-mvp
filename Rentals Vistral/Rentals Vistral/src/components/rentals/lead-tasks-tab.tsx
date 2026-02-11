@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { ProgressOverviewWidget } from "@/components/specs-card/ProgressOverviewWidget";
 
 interface Lead {
   id: string;
@@ -20,16 +20,16 @@ interface LeadTasksTabProps {
   lead: Lead;
 }
 
+/** Espacio de trabajo del interesado: mismo esquema que propiedad (progreso + secciones). De momento sin secciones definidas. */
 export function LeadTasksTab({ lead }: LeadTasksTabProps) {
   return (
     <div className="space-y-4 md:space-y-6">
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-sm text-muted-foreground">
-            No hay tareas específicas para esta fase. Las tareas se definirán más adelante.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Widget de progreso general - vacío hasta que se definan secciones por fase */}
+      <ProgressOverviewWidget
+        sections={[]}
+        formData={{}}
+      />
+      {/* Reservado para futuras secciones de trabajo por fase */}
     </div>
   );
 }

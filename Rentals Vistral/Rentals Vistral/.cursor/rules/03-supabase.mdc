@@ -1,0 +1,31 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-11
+glob: ["**/lib/supabase/**", "**/app/api/**", "**/supabase/**"]
+description: "Supabase client patterns, types, migrations, and environment configuration"
+---
+
+# Vistral Lab - Supabase Rules
+
+## Client Setup
+
+**Browser client:** `src/lib/supabase/client.ts` — only in `"use client"` code. Use createBrowserClient from @supabase/ssr with persistSession, autoRefreshToken, detectSessionInUrl; headers x-client-info, x-supabase-project. NEVER use in Server Components; NEVER access service role from browser client.
+
+**Server client:** `src/lib/supabase/server.ts` — Server Components, API routes, Server Actions. createServerClient with cookies() from next/headers; getAll/setAll for cookies. Can access service role key server-side only.
+
+## Types
+
+**File:** `src/lib/supabase/types.ts` — generated from Supabase (Database, Tables, Enums). Always type clients with `Database`. Use table types (Row, Insert) and Enums (e.g. app_role) from types.
+
+## Environment Variables
+
+**Public:** NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY. **Private:** SUPABASE_SERVICE_ROLE_KEY (NEVER expose to client). Read from `@/lib/config/environment` (config.supabase.url, config.supabase.anonKey). Helpers: getSupabaseProjectName(), isDemoMode() in `@/lib/utils`.
+
+## Migrations
+
+**Location:** `supabase/migrations/`. Naming: 001_description.sql, 002_.... Never modify existing migrations; add new ones for schema changes; run in order. Execute via Supabase Dashboard or CLI; not automatic on Vercel.
+
+## Demo Mode
+
+**Detection:** `isDemoMode()` in `@/lib/utils`. When true: use mock data, mock user auth, no real API calls; clear UI indication. Use for development without real credentials.

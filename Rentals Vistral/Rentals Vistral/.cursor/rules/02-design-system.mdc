@@ -1,0 +1,35 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-11
+glob: ["**/components/**", "**/*.css", "**/app/**/*.tsx"]
+description: "Design system rules - Prophero tokens, component patterns, and styling"
+---
+
+# Vistral Lab - Design System Rules
+
+## Prophero Design System
+
+**Reference:** [Prophero React Design System](https://vistral-design-system.vercel.app/?path=/docs/introduction--docs) — check variants, props, examples, accessibility.
+
+## Design Tokens
+
+**Location:** `src/app/vistral.css` or `prophero.css` in this project. **Variables:** prefix `--prophero-*` (colors, spacing, radius, typography). Use CSS variables for dynamic values; Tailwind when possible; constants from `@/lib/constants` for breakpoints/spacing.
+
+## Grid Responsivo
+
+Breakpoints in `@/lib/constants` and CSS: XS–XXL with margins/gutters. Classes: `container-margin`, `gutter`. Import BREAKPOINTS, SPACING from `@/lib/constants`.
+
+## Theme
+
+`src/app/globals.css` imports Tailwind and design tokens. Dark mode via `.dark` class if applicable.
+
+## Component Patterns
+
+**Always use `cn()` from `@/lib/utils`** to combine classes (clsx + tailwind-merge). Never concatenate class strings by hand.
+
+**Variants:** Use CVA (class-variance-authority) with `variant` and `size`; export `componentVariants` and use `cn(componentVariants({ variant, size, className }))`.
+
+**Refs:** Components wrapping native elements MUST use `forwardRef` and pass `ref` to the DOM element.
+
+**Accessibility:** Use Radix UI for keyboard, focus, ARIA; don't reinvent modals, selects, dropdowns.

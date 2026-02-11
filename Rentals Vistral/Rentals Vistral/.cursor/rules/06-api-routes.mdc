@@ -1,0 +1,29 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-11
+glob: ["**/app/api/**"]
+description: "API route structure, security, responses, and service role usage"
+---
+
+# Vistral Lab - API Routes Rules
+
+## Route Structure
+
+**Directory:** `src/app/api/`. Organize by domain (e.g. admin/, google-maps/, ...). File: `route.ts`. Export GET, POST, etc. as async functions receiving NextRequest, returning NextResponse.
+
+## Security
+
+**Session:** For protected endpoints, get user via createServerClient from `@/lib/supabase/server` and supabase.auth.getUser(). Return 401 if error or !user.
+**Role:** For admin endpoints, get role (e.g. from user_roles) and return 403 if insufficient.
+**Service role:** Use ONLY in API routes when needed for admin operations; never expose to client.
+
+## Responses
+
+**Success:** NextResponse.json({ success: true, data: ... }, { status: 200 or 201 }).
+**Error:** NextResponse.json({ success: false, error: "message", code?: "CODE" }, { status: 400|401|403|404|500 }).
+Use try/catch; log errors server-side; never expose secrets in response.
+
+## Environment
+
+Read from `@/lib/config/environment` or process.env; never expose SUPABASE_SERVICE_ROLE_KEY or other secrets to client.

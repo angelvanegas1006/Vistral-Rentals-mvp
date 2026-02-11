@@ -1,0 +1,32 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-02-11
+glob: ["**/lib/auth/**", "**/app/**/page.tsx", "**/components/**"]
+description: "Authentication layers, roles, permissions, and layout structure"
+---
+
+# Vistral Lab - Authentication & Permissions Rules
+
+## Authentication Layers
+
+1. **Supabase Auth** - Base layer
+2. **SupabaseAuthProvider** - Session context (`src/lib/auth/supabase-auth-provider.tsx`)
+3. **AppAuthProvider** - App roles (`src/lib/auth/app-auth-provider.tsx`)
+
+**Layout order in `src/app/layout.tsx`:** ThemeProvider → I18nProvider → SupabaseAuthProvider → AppAuthProvider → {children} → Toaster.
+
+## Roles
+
+Defined in DB and `Database['public']['Enums']['app_role']`. TypeScript: `type AppRole = Database['public']['Enums']['app_role']`. NEVER hardcode role strings; use AppRole and allowedRoles arrays.
+
+## Permissions
+
+**File:** `src/lib/auth/permissions.ts`. Centralize functions (e.g. canViewProperty, canEditProperty) using AppRole and resource data. Use these in pages/components; don't duplicate logic.
+
+## Hooks
+
+**useSupabaseAuthContext** (or equivalent): user, loading, signOut.
+**useAppAuth:** user, role, isLoading, hasRole(role), hasAnyRole(roles), isAdmin.
+
+Use permission functions and hooks in protected pages; redirect to login when !user and !loading.

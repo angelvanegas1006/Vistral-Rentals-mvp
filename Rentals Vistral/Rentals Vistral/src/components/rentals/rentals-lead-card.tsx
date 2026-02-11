@@ -53,8 +53,8 @@ export function RentalsLeadCard({
       data-lead-id={lead.id}
       onClick={handleClick}
       className={cn(
-        // Estilos base
-        "rounded-lg border-2 border-border bg-card p-5 md:p-6 shadow-sm w-full relative max-w-full",
+        // Estilos base - mismo tamaño que tarjetas de Captación/Cierre
+        "rounded-lg border border-border bg-card p-5 md:p-6 shadow-sm w-full relative max-w-full",
         // Transiciones
         "transition-all duration-200 ease-out",
         // Estados de cursor
@@ -117,20 +117,6 @@ export function RentalsLeadCard({
         <div className="mb-2">
           <span className="text-xs text-muted-foreground">Zona: </span>
           <span className="text-xs font-medium text-foreground">{lead.zone}</span>
-        </div>
-      )}
-
-      {/* Días en fase */}
-      {lead.daysInPhase !== undefined && (
-        <div>
-          <span className="text-xs text-muted-foreground">
-            {lead.daysInPhase === 0
-              ? "Hoy"
-              : lead.daysInPhase === 1
-              ? "1 día"
-              : `${lead.daysInPhase} días`}{" "}
-            en esta fase
-          </span>
         </div>
       )}
     </div>
