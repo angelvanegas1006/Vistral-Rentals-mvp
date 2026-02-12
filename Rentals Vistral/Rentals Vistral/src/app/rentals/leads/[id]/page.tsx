@@ -48,6 +48,15 @@ export default function LeadDetailPage() {
         job_title: leadRow.job_title ?? undefined,
         monthly_net_income: leadRow.monthly_net_income ?? undefined,
         has_guarantor: leadRow.has_guarantor ?? undefined,
+        nationality: leadRow.nationality ?? undefined,
+        identityDocType: leadRow.identity_doc_type ?? undefined,
+        identityDocNumber: leadRow.identity_doc_number ?? undefined,
+        identityDocUrl: leadRow.identity_doc_url ?? undefined,
+        dateOfBirth: leadRow.date_of_birth ?? undefined,
+        age: leadRow.age ?? undefined,
+        familyProfile: leadRow.family_profile ?? undefined,
+        childrenCount: leadRow.children_count ?? undefined,
+        petInfo: leadRow.pet_info ?? undefined,
       }
     : null;
 

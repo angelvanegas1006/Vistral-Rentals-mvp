@@ -193,14 +193,14 @@ export function LeadSummaryTab({ lead }: LeadSummaryTabProps) {
         </div>
         <div className="rounded-lg border border-[#E5E7EB] dark:border-[#374151] overflow-hidden">
           <div className="grid grid-cols-4 divide-x divide-[#E5E7EB] dark:divide-[#374151]">
-            <div className="py-3 text-center">
+            <div className="py-3 text-center min-w-0 px-1">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <Briefcase className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0" />
                 <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
                   Situación laboral
                 </span>
               </div>
-              <p className="text-lg font-semibold text-[#111827] dark:text-[#F9FAFB]">
+              <p className="text-lg font-semibold text-[#111827] dark:text-[#F9FAFB] break-words">
                 {lead?.employment_status ?? "--"}
               </p>
             </div>

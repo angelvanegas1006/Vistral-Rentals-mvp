@@ -111,16 +111,22 @@ const LEASE_DURATION_PREFERENCES = [
   "Corto plazo",
 ];
 
-// Estados que no tienen trabajo remunerado → no tienen job_title
-const EMPLOYMENT_STATUSES_WITHOUT_JOB = ["Jubilado", "Estudiante", "Parado"];
-
+// Valores del enum employment_status en DB
 const EMPLOYMENT_STATUSES = [
   "Empleado",
+  "Funcionario",
   "Autónomo",
-  "Jubilado",
+  "Pensionista",
   "Estudiante",
-  "Parado",
-  "Empresario",
+  "Desempleado",
+  "Ingresos en el exterior",
+] as const;
+
+// Estados que no tienen trabajo remunerado → no tienen job_title
+const EMPLOYMENT_STATUSES_WITHOUT_JOB: string[] = [
+  "Pensionista",
+  "Estudiante",
+  "Desempleado",
 ];
 
 const JOB_TITLES = [
@@ -131,12 +137,13 @@ const JOB_TITLES = [
 
 // Rango de ingresos netos mensuales (€) coherente con cada employment_status
 const INCOME_BY_STATUS: Record<string, { min: number; max: number }> = {
-  Estudiante: { min: 0, max: 900 },       // beca, ayuda familiar
-  Parado: { min: 400, max: 1100 },        // prestación desempleo
-  Jubilado: { min: 800, max: 2200 },      // pensión
+  Estudiante: { min: 0, max: 900 },
+  Desempleado: { min: 400, max: 1100 },
+  Pensionista: { min: 800, max: 2200 },
   Empleado: { min: 1600, max: 4200 },
+  Funcionario: { min: 1600, max: 4200 },
   Autónomo: { min: 1200, max: 4500 },
-  Empresario: { min: 2500, max: 6000 },
+  "Ingresos en el exterior": { min: 2000, max: 6000 },
 };
 
 const GUARANTOR_INCOME_THRESHOLD = 1000; // has_guarantor = true solo si ingreso < 1000€
@@ -179,7 +186,13 @@ function generateEmploymentData(): {
 // Generar 30 leads repartidos en las 6 fases
 // ============================================
 
+/** Formato tipo PROP-023: prefijo + número de 3 dígitos (LEAD-001, LEAD-002, ...) */
+function formatLeadUniqueId(sequence: number): string {
+  return `LEAD-${String(sequence).padStart(3, "0")}`;
+}
+
 interface LeadInsert {
+  leads_unique_id: string;
   current_phase: string;
   name: string;
   phone: string;
@@ -196,11 +209,12 @@ interface LeadInsert {
   raw_qualification_data: Record<string, unknown>;
 }
 
-function buildLead(phase: string, indexInPhase: number): LeadInsert {
+function buildLead(phase: string, indexInPhase: number, uniqueId: string): LeadInsert {
   const name = generateName();
   const { employment_status, job_title, monthly_net_income, has_guarantor } =
     generateEmploymentData();
   return {
+    leads_unique_id: uniqueId,
     current_phase: phase,
     name,
     phone: generatePhone(),
@@ -243,10 +257,12 @@ async function main() {
   const leads: LeadInsert[] = [];
   const totalPerPhase = 5; // 30 / 6 = 5 por fase
 
+  let sequence = 1;
   for (let p = 0; p < PHASES.length; p++) {
     const phase = PHASES[p];
     for (let i = 0; i < totalPerPhase; i++) {
-      leads.push(buildLead(phase, p * totalPerPhase + i));
+      leads.push(buildLead(phase, p * totalPerPhase + i, formatLeadUniqueId(sequence)));
+      sequence += 1;
     }
   }
 

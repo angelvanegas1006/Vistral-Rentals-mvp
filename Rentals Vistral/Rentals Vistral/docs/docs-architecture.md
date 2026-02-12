@@ -19,6 +19,14 @@ We use two distinct Supabase Storage buckets to enforce security policies.
 * **Content:** Sensitive legal contracts, invoices, personal IDs, financial certificates.
 * **Allowed Types:** PDF, Images, DOCX.
 
+### C. Bucket: `lead-restricted-docs`
+* **Privacy:** PRIVATE (Requires RLS Policy & Auth Token).
+* **Content:** Sensitive documents linked to leads (interesados), e.g. identity documents.
+* **Allowed Types:** PDF, Images, DOCX.
+* **Folder structure:** One folder per lead, named by lead id (e.g. `LEAD-001` or the table `id`). Identity documents are stored in subfolder `identity`.
+* **Path pattern:** `{lead_id}/identity/{filename}` → stored in `leads.identity_doc_url`.
+* **Documentation:** See `docs/leads/Fase 3 - Recogiendo Información.md`.
+
 ---
 
 ## 2. Database Schema Refactor (Migration)
@@ -224,6 +232,19 @@ Documents are stored in sub-subfolders (Folder 3) as follows:
   - Stored in `/rental/contractual_financial/first_rent_payment/`
 - **Custom rental documents:** `rental_custom_contractual_financial_documents`, `rental_custom_utilities_documents`, and `rental_custom_other_documents` are JSONB arrays for additional documents in each category. Structure: `[{title: string, url: string, createdAt: string}]`
 - Documents are stored in the `properties-restricted-docs` bucket
+
+#### E. LEADS SECTION (Bucket: `lead-restricted-docs`)
+
+*Documents for the leads pipeline (Interesados). One folder per lead, named by lead id.*
+
+| Sub-Folder (within lead folder) | SQL Variable (DB) | Type | Full Storage Path |
+| :--- | :--- | :--- | :--- |
+| **identity** | `leads.identity_doc_url` | TEXT (Fixed) | `/{lead_id}/identity/` |
+
+- **Bucket:** `lead-restricted-docs`
+- **Path pattern:** `{lead_id}/identity/{filename}` (e.g. `LEAD-001/identity/identity_doc_url_1739123456789.pdf`)
+- Only one identity document per lead; replacing is done by deleting the current file and uploading a new one
+- See `docs/leads/Fase 3 - Recogiendo Información.md` for phase behaviour
 
 ---
 

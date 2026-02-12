@@ -362,6 +362,17 @@ export interface Database {
           job_title?: string | null;
           monthly_net_income?: number | null;
           has_guarantor?: boolean | null;
+          /** Información personal (Fase 3: Recogiendo información) */
+          nationality: string | null;
+          identity_doc_type: "DNI" | "NIE" | "Pasaporte" | null;
+          identity_doc_number: string | null;
+          identity_doc_url: string | null;
+          date_of_birth: string | null;
+          age: number | null;
+          /** Perfil familiar */
+          family_profile: "Soltero" | "Pareja" | "Con hijos" | null;
+          children_count: number | null;
+          pet_info: Record<string, unknown> | null;
           needs_update: boolean;
           created_at: string;
           updated_at: string;

@@ -73,6 +73,16 @@ export function mapLeadFromSupabase(row: LeadRow) {
     finaerStatus: row.finaer_status || undefined,
     numberOfOccupants: row.number_of_occupants || undefined,
     needsUpdate: row.needs_update,
+    // Fase 3: Recogiendo información
+    nationality: row.nationality || undefined,
+    identityDocType: row.identity_doc_type || undefined,
+    identityDocNumber: row.identity_doc_number || undefined,
+    identityDocUrl: row.identity_doc_url || undefined,
+    dateOfBirth: row.date_of_birth || undefined,
+    age: row.age ?? undefined,
+    familyProfile: row.family_profile || undefined,
+    childrenCount: row.children_count ?? undefined,
+    petInfo: row.pet_info ?? undefined,
   };
 }
 
@@ -163,6 +173,15 @@ export function mapLeadToSupabase(lead: {
   finaerStatus?: string;
   numberOfOccupants?: number;
   needsUpdate?: boolean;
+  nationality?: string | null;
+  identityDocType?: "DNI" | "NIE" | "Pasaporte" | null;
+  identityDocNumber?: string | null;
+  identityDocUrl?: string | null;
+  dateOfBirth?: string | null;
+  age?: number | null;
+  familyProfile?: "Soltero" | "Pareja" | "Con hijos" | null;
+  childrenCount?: number | null;
+  petInfo?: Record<string, unknown> | null;
 }) {
   return {
     name: lead.name,
@@ -180,5 +199,14 @@ export function mapLeadToSupabase(lead: {
     finaer_status: lead.finaerStatus || null,
     number_of_occupants: lead.numberOfOccupants || null,
     needs_update: lead.needsUpdate ?? false,
+    nationality: lead.nationality ?? null,
+    identity_doc_type: lead.identityDocType ?? null,
+    identity_doc_number: lead.identityDocNumber ?? null,
+    identity_doc_url: lead.identityDocUrl ?? null,
+    date_of_birth: lead.dateOfBirth ?? null,
+    age: lead.age ?? null,
+    family_profile: lead.familyProfile ?? null,
+    children_count: lead.childrenCount ?? null,
+    pet_info: lead.petInfo ?? null,
   };
 }
