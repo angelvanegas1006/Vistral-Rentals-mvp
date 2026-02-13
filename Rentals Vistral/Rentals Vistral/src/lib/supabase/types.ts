@@ -342,6 +342,7 @@ export interface Database {
       leads: {
         Row: {
           id: string;
+          leads_unique_id: string;
           name: string;
           phone: string;
           email: string | null;

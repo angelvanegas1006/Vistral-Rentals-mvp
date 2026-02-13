@@ -58,6 +58,7 @@ export function mapPropertyFromSupabase(row: any) {
 export function mapLeadFromSupabase(row: LeadRow) {
   return {
     id: row.id,
+    leadsUniqueId: row.leads_unique_id,
     name: row.name,
     phone: row.phone,
     email: row.email || undefined,

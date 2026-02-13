@@ -1,19 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,14 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { NationalityCombobox } from "@/components/ui/nationality-combobox";
 import { LeadIdentityDocumentField } from "@/components/rentals/lead-identity-document-field";
+import { Phase2SectionWidget } from "@/components/rentals/phase2-section-widget";
 import { useUpdateLead } from "@/hooks/use-update-lead";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { NATIONALITIES } from "@/lib/constants/nationalities";
 
 const IDENTITY_DOC_TYPES_ES = ["DNI", "Pasaporte"] as const;
 const IDENTITY_DOC_TYPES_NON_ES = ["NIE", "Pasaporte"] as const;
@@ -47,31 +34,11 @@ function computeAge(dateOfBirth: string | null | undefined): number | null {
   return age >= 0 ? age : null;
 }
 
-const schema = z.object({
-  nationality: z.string(),
-  identity_doc_type: z.enum(["DNI", "NIE", "Pasaporte"]).optional().nullable(),
-  identity_doc_number: z.string().optional(),
-  date_of_birth: z.string().optional(),
-  family_profile: z.enum(["Soltero", "Pareja", "Con hijos"]).optional().nullable(),
-  children_count: z.coerce.number().int().min(0).optional().nullable(),
-  pet_info_notes: z.string().optional(),
-}).refine(
-  (data) => {
-    if (data.nationality === "España") {
-      return !data.identity_doc_type || ["DNI", "Pasaporte"].includes(data.identity_doc_type);
-    }
-    if (data.nationality && data.nationality !== "España") {
-      return !data.identity_doc_type || ["NIE", "Pasaporte"].includes(data.identity_doc_type);
-    }
-    return true;
-  },
-  { message: "Tipo de documento no válido para esta nacionalidad", path: ["identity_doc_type"] }
-);
-
-type FormValues = z.infer<typeof schema>;
+// ---------- Types ----------
 
 export interface LeadPersonalInfoData {
   id: string;
+  leadsUniqueId: string;
   nationality?: string | null;
   identityDocType?: "DNI" | "NIE" | "Pasaporte" | null;
   identityDocNumber?: string | null;
@@ -83,265 +50,348 @@ export interface LeadPersonalInfoData {
   petInfo?: Record<string, unknown> | null;
 }
 
-interface LeadPersonalInfoSectionProps {
-  lead: LeadPersonalInfoData;
+/** Live snapshot of field values — emitted on every change so parent can update progress widget. */
+export interface LeadPersonalInfoLiveData {
+  nationality: string;
+  identityDocType: string | null;
+  identityDocNumber: string;
+  identityDocUrl: string | null;
+  dateOfBirth: string;
+  familyProfile: string | null;
+  childrenCount: number | null;
+  hasPets: string | null;
+  petDetails: string;
 }
 
-export function LeadPersonalInfoSection({ lead }: LeadPersonalInfoSectionProps) {
+interface LeadPersonalInfoSectionProps {
+  lead: LeadPersonalInfoData;
+  /** Called on every field change with the current live values */
+  onFieldsChange?: (data: LeadPersonalInfoLiveData) => void;
+  /** Whether the section is fully complete */
+  isComplete?: boolean;
+}
+
+interface FieldValues {
+  nationality: string;
+  identityDocType: string | null;
+  identityDocNumber: string;
+  dateOfBirth: string;
+  familyProfile: string | null;
+  childrenCount: number | null;
+  hasPets: string | null;
+  petDetails: string;
+}
+
+// ---------- Component ----------
+
+export function LeadPersonalInfoSection({
+  lead,
+  onFieldsChange,
+  isComplete = false,
+}: LeadPersonalInfoSectionProps) {
   const router = useRouter();
   const { updateLead } = useUpdateLead();
 
-  const isSpanish = (n: string) => n === "España";
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
+  // --- Initial field values derived from the lead prop ---
+  const buildInitialFields = useCallback((): FieldValues => {
+    const petInfo = lead.petInfo as { has_pets?: boolean; details?: string; notes?: string } | null;
+    const hasPets =
+      petInfo?.has_pets === true || (petInfo?.notes && petInfo.notes.trim() !== "")
+        ? "yes"
+        : petInfo?.has_pets === false || petInfo === null
+          ? "no"
+          : null;
+    return {
       nationality: lead.nationality ?? "",
-      identity_doc_type: lead.identityDocType ?? null,
-      identity_doc_number: lead.identityDocNumber ?? "",
-      date_of_birth: lead.dateOfBirth ? lead.dateOfBirth.slice(0, 10) : "",
-      family_profile: lead.familyProfile ?? null,
-      children_count: lead.childrenCount ?? null,
-      pet_info_notes: (lead.petInfo as { notes?: string } | null)?.notes ?? "",
-    },
-  });
+      identityDocType: lead.identityDocType ?? null,
+      identityDocNumber: lead.identityDocNumber ?? "",
+      dateOfBirth: lead.dateOfBirth ? lead.dateOfBirth.slice(0, 10) : "",
+      familyProfile: lead.familyProfile ?? null,
+      childrenCount: lead.childrenCount ?? null,
+      hasPets,
+      petDetails: petInfo?.details ?? petInfo?.notes ?? "",
+    };
+  }, [lead]);
 
-  const nationality = form.watch("nationality");
-  const familyProfile = form.watch("family_profile");
-  const showChildrenCount = familyProfile === "Con hijos";
+  // --- State for all fields (single object, like property-form-context) ---
+  const [fields, setFields] = useState<FieldValues>(buildInitialFields);
 
-  // Sync identity_doc_type options when nationality changes: reset if invalid
+  // --- Local state for identity_doc_url (updated optimistically after upload/delete) ---
+  const [identityDocUrl, setIdentityDocUrl] = useState<string | null>(
+    lead.identityDocUrl ?? null
+  );
+
+  // Sync if parent provides new lead data (e.g. after navigation)
   useEffect(() => {
-    const current = form.getValues("identity_doc_type");
-    if (!current) return;
-    const allowed = isSpanish(nationality) ? IDENTITY_DOC_TYPES_ES : IDENTITY_DOC_TYPES_NON_ES;
-    if (!allowed.includes(current)) {
-      form.setValue("identity_doc_type", null);
-    }
-  }, [nationality, form]);
+    setIdentityDocUrl(lead.identityDocUrl ?? null);
+  }, [lead.identityDocUrl]);
 
-  const onSubmit = async (values: FormValues) => {
-    const dateOfBirth = values.date_of_birth || null;
-    const age = computeAge(dateOfBirth);
+  // --- Ref to always hold the latest field values (avoids stale closure in setTimeout) ---
+  const fieldsRef = useRef<FieldValues>(fields);
 
-    const success = await updateLead(lead.id, {
-      nationality: values.nationality || null,
-      identity_doc_type: values.identity_doc_type ?? null,
-      identity_doc_number: values.identity_doc_number || null,
-      date_of_birth: dateOfBirth,
+  // --- Debounce timer ref ---
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, []);
+
+  // --- Save function — reads from ref so it always has fresh values ---
+  const saveToSupabase = useCallback(async (vals: FieldValues) => {
+    const dob = vals.dateOfBirth || null;
+    const age = computeAge(dob);
+    const childrenCount =
+      vals.familyProfile === "Con hijos" ? (vals.childrenCount ?? null) : null;
+
+    const updates = {
+      nationality: vals.nationality || null,
+      identity_doc_type: (vals.identityDocType as "DNI" | "NIE" | "Pasaporte" | null) ?? null,
+      identity_doc_number: vals.identityDocNumber || null,
+      date_of_birth: dob,
       age,
-      family_profile: values.family_profile ?? null,
-      children_count: showChildrenCount ? (values.children_count ?? null) : null,
-      pet_info: values.pet_info_notes
-        ? { notes: values.pet_info_notes }
-        : null,
-    });
+      family_profile: (vals.familyProfile as "Soltero" | "Pareja" | "Con hijos" | null) ?? null,
+      children_count: childrenCount,
+      pet_info:
+        vals.hasPets === "yes"
+          ? { has_pets: true, details: vals.petDetails?.trim() || null }
+          : { has_pets: false },
+    };
 
+    console.log("💾 Guardando lead en Supabase:", { leadId: lead.id, updates });
+    const success = await updateLead(lead.id, updates);
     if (success) {
-      toast.success("Datos guardados correctamente");
+      console.log("✅ Lead guardado exitosamente");
       router.refresh();
     } else {
-      toast.error("Error al guardar. Inténtalo de nuevo.");
+      console.error("❌ Error al guardar lead");
     }
+  }, [lead.id, updateLead, router]);
+
+  // Keep saveToSupabase ref fresh
+  const saveRef = useRef(saveToSupabase);
+  useEffect(() => { saveRef.current = saveToSupabase; });
+
+  // --- Generic field updater — same pattern as property-form-context.tsx ---
+  const updateField = useCallback(<K extends keyof FieldValues>(key: K, value: FieldValues[K]) => {
+    setFields((prev) => {
+      let updated = { ...prev, [key]: value };
+
+      // When nationality changes, reset identity_doc_type if it's no longer valid
+      if (key === "nationality") {
+        const isSpanish = (value as string) === "España";
+        const allowed: readonly string[] = isSpanish ? IDENTITY_DOC_TYPES_ES : IDENTITY_DOC_TYPES_NON_ES;
+        if (updated.identityDocType && !allowed.includes(updated.identityDocType)) {
+          updated = { ...updated, identityDocType: null };
+        }
+      }
+
+      // Update ref with the latest values (critical for debounce)
+      fieldsRef.current = updated;
+
+      // Debounce save — 1 second, matching property-form-context
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(() => {
+        saveRef.current(fieldsRef.current);
+      }, 1000);
+
+      return updated;
+    });
+  }, []);
+
+  // --- Derived values for conditional rendering ---
+  const isSpanish = fields.nationality === "España";
+  const computedAge = computeAge(fields.dateOfBirth);
+  const displayAge = computedAge ?? lead.age;
+  const showChildrenCount = fields.familyProfile === "Con hijos";
+  const showPetDetails = fields.hasPets === "yes";
+
+  // --- Document upload callback (API route already updates DB) ---
+  const handleIdentityDocUpdate = async (url: string | null) => {
+    setIdentityDocUrl(url);
+    router.refresh();
   };
 
-  const handleIdentityDocUpdate = async (url: string | null) => {
-    const success = await updateLead(lead.id, { identity_doc_url: url });
-    if (success) router.refresh();
-  };
+  // --- Notify parent of live field values (for progress widget) ---
+  const onFieldsChangeRef = useRef(onFieldsChange);
+  useEffect(() => { onFieldsChangeRef.current = onFieldsChange; });
+
+  useEffect(() => {
+    onFieldsChangeRef.current?.({
+      ...fields,
+      identityDocUrl,
+    });
+  }, [fields, identityDocUrl]);
+
+  // ---------- Render ----------
+  // Uses Phase2SectionWidget — the same wrapper used by all property kanban sections
 
   return (
-    <Card
-      id="section-personal-info"
-      className="border border-[#E5E7EB] dark:border-[#374151] shadow-sm"
+    <Phase2SectionWidget
+      id="personal-info"
+      title="Información Personal del Interesado"
+      instructions="Rellena los datos personales y de perfil familiar del interesado."
+      required
+      isComplete={isComplete}
     >
-      <div className="px-4 pt-4 pb-3">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Información Personal del Interesado
-        </h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          Rellena los datos personales y de perfil familiar del interesado.
-        </p>
+      {/* Nacionalidad */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Nacionalidad</Label>
+        <NationalityCombobox
+          value={fields.nationality}
+          onChange={(v) => updateField("nationality", v)}
+          placeholder="Buscar nacionalidad..."
+        />
       </div>
-      <div className="border-b border-gray-200 dark:border-gray-700 mx-4" />
-      <CardContent className="space-y-4 px-4 py-4 pt-2">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
-            {/* Nacionalidad */}
-            <FormField
-              control={form.control}
-              name="nationality"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nacionalidad</FormLabel>
-                  <FormControl>
-                    <NationalityCombobox
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Buscar nacionalidad..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            {/* Tipo documento */}
-            <FormField
-              control={form.control}
-              name="identity_doc_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de documento de identidad</FormLabel>
-                  <Select
-                    value={field.value ?? ""}
-                    onValueChange={(v) => field.onChange(v === "" ? null : v)}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(isSpanish(nationality) ? IDENTITY_DOC_TYPES_ES : IDENTITY_DOC_TYPES_NON_ES).map((opt) => (
-                        <SelectItem key={opt} value={opt}>
-                          {opt}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      {/* Tipo y número de documento en paralelo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Tipo de documento de identidad</Label>
+          <Select
+            value={fields.identityDocType ?? ""}
+            onValueChange={(v) => updateField("identityDocType", v === "" ? null : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              {(isSpanish ? IDENTITY_DOC_TYPES_ES : IDENTITY_DOC_TYPES_NON_ES).map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-            {/* Número documento */}
-            <FormField
-              control={form.control}
-              name="identity_doc_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número de documento de identidad</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Ej. 12345678A" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Número de documento de identidad</Label>
+          <Input
+            value={fields.identityDocNumber}
+            onChange={(e) => updateField("identityDocNumber", e.target.value)}
+            placeholder="Ej. 12345678A"
+          />
+        </div>
+      </div>
 
-            {/* Documento de identidad (subida) */}
-            <div className="space-y-2">
-              <LeadIdentityDocumentField
-                leadId={lead.id}
-                value={lead.identityDocUrl ?? null}
-                onUpdate={handleIdentityDocUpdate}
-              />
-            </div>
+      {/* Documento de identidad (subida) */}
+      <div className="space-y-2">
+        <LeadIdentityDocumentField
+          leadId={lead.id}
+          leadsUniqueId={lead.leadsUniqueId}
+          value={identityDocUrl}
+          onUpdate={handleIdentityDocUpdate}
+        />
+      </div>
 
-            {/* Fecha nacimiento */}
-            <FormField
-              control={form.control}
-              name="date_of_birth"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fecha de nacimiento</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} value={field.value ?? ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      {/* Fecha nacimiento y Edad en paralelo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Fecha de nacimiento</Label>
+          <Input
+            type="date"
+            value={fields.dateOfBirth}
+            onChange={(e) => updateField("dateOfBirth", e.target.value)}
+          />
+        </div>
 
-            {/* Edad (solo lectura) */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Edad</Label>
-              <p className={cn(
-                "text-sm rounded-md border border-[#E5E7EB] dark:border-[#374151] bg-muted/30 px-3 py-2",
-                lead.age != null ? "text-[#111827] dark:text-[#F9FAFB]" : "text-muted-foreground"
-              )}>
-                {lead.age != null ? `${lead.age} años` : "Se calcula al guardar la fecha de nacimiento"}
-              </p>
-            </div>
-
-            {/* Perfil familiar */}
-            <FormField
-              control={form.control}
-              name="family_profile"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Perfil familiar</FormLabel>
-                  <Select
-                    value={field.value ?? ""}
-                    onValueChange={(v) => field.onChange(v === "" ? null : v)}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {FAMILY_PROFILES.map((opt) => (
-                        <SelectItem key={opt} value={opt}>
-                          {opt}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Número de hijos - solo si Con hijos */}
-            {showChildrenCount && (
-              <FormField
-                control={form.control}
-                name="children_count"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número de hijos</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value === "" ? null : e.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Edad</Label>
+          <p
+            className={cn(
+              "text-sm rounded-md border border-[#E5E7EB] dark:border-[#374151] bg-muted/30 px-3 py-2",
+              displayAge != null
+                ? "text-[#111827] dark:text-[#F9FAFB]"
+                : "text-muted-foreground"
             )}
+          >
+            {displayAge != null
+              ? `${displayAge} años`
+              : "Se calcula al indicar la fecha de nacimiento"}
+          </p>
+        </div>
+      </div>
 
-            {/* Mascotas */}
-            <FormField
-              control={form.control}
-              name="pet_info_notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mascotas</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Ej. 1 perro, 2 gatos..."
-                      className="min-h-[80px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      {/* Perfil familiar */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Perfil familiar</Label>
+        <Select
+          value={fields.familyProfile ?? ""}
+          onValueChange={(v) => updateField("familyProfile", v === "" ? null : v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccionar" />
+          </SelectTrigger>
+          <SelectContent>
+            {FAMILY_PROFILES.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-            <Button type="submit" className="w-full sm:w-auto">
-              Guardar cambios
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+      {/* Número de hijos - solo si Con hijos */}
+      {showChildrenCount && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Número de hijos</Label>
+          <Input
+            type="number"
+            min={0}
+            value={fields.childrenCount ?? ""}
+            onChange={(e) =>
+              updateField(
+                "childrenCount",
+                e.target.value === "" ? null : parseInt(e.target.value, 10)
+              )
+            }
+          />
+        </div>
+      )}
+
+      {/* Mascotas */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">¿Tiene mascotas?</Label>
+        <RadioGroup
+          value={fields.hasPets ?? ""}
+          onValueChange={(v) => updateField("hasPets", v === "" ? null : v)}
+          className="flex items-center gap-6"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="yes" id="has-pets-yes" />
+            <Label
+              htmlFor="has-pets-yes"
+              className="text-sm font-normal cursor-pointer"
+            >
+              Sí
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="no" id="has-pets-no" />
+            <Label
+              htmlFor="has-pets-no"
+              className="text-sm font-normal cursor-pointer"
+            >
+              No
+            </Label>
+          </div>
+        </RadioGroup>
+      </div>
+      {showPetDetails && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Detalles de mascotas</Label>
+          <Textarea
+            value={fields.petDetails}
+            onChange={(e) => updateField("petDetails", e.target.value)}
+            placeholder="Ej. 3 perros (pequeños) y 1 gato"
+            className="min-h-[80px]"
+          />
+        </div>
+      )}
+    </Phase2SectionWidget>
   );
 }

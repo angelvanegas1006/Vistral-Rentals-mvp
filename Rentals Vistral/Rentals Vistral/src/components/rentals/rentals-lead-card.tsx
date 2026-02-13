@@ -5,6 +5,7 @@ import { Phone } from "lucide-react";
 
 interface Lead {
   id: string;
+  leadsUniqueId?: string;
   name: string;
   phone: string;
   email?: string;
@@ -84,6 +85,13 @@ export function RentalsLeadCard({
       )}
       style={{ pointerEvents: disabled ? "none" : "auto" }}
     >
+      {/* Header con ID */}
+      {lead.leadsUniqueId && (
+        <div className="flex items-start justify-between mb-2">
+          <div className="text-xs font-semibold text-muted-foreground">ID {lead.leadsUniqueId}</div>
+        </div>
+      )}
+
       {/* Nombre del Lead */}
       <div className="mb-2">
         <h3 className="text-sm font-semibold text-foreground truncate">

@@ -33,6 +33,7 @@ import { toast } from "sonner";
 
 interface Lead {
   id: string;
+  leadsUniqueId?: string;
   name: string;
   phone: string;
   email?: string;

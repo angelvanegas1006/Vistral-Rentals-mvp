@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
@@ -9,14 +9,12 @@ type LeadUpdate = Database["public"]["Tables"]["leads"]["Update"];
 export function useUpdateLead() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
 
-  const updateLead = async (leadId: string, updates: LeadUpdate): Promise<boolean> => {
+  const updateLead = useCallback(async (leadId: string, updates: LeadUpdate): Promise<boolean> => {
     try {
       setLoading(true);
       setError(null);
-
-      console.log("Actualizando lead:", { leadId, updates });
 
       // Limpiar updates: remover campos undefined y null innecesarios
       const cleanUpdates: Record<string, any> = {};
@@ -26,9 +24,9 @@ export function useUpdateLead() {
         }
       });
 
-      console.log("Updates limpios:", cleanUpdates);
+      console.log("Actualizando lead:", { leadId, updates: cleanUpdates });
 
-      const { data, error: updateError } = await supabase
+      const { data, error: updateError } = await supabaseRef.current
         .from("leads")
         .update(cleanUpdates)
         .eq("id", leadId)
@@ -48,7 +46,7 @@ export function useUpdateLead() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return { updateLead, loading, error };
 }

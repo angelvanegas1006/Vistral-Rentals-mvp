@@ -330,6 +330,47 @@ export function ProgressOverviewWidget({
       return { completed: 0, total: 1 };
     }
 
+    // Special handling for lead "Información Personal del Interesado" section
+    if (section.id === "personal-info") {
+      const nationality = formData["personal-info.nationality"];
+      const identityDocType = formData["personal-info.identity_doc_type"];
+      const identityDocNumber = formData["personal-info.identity_doc_number"];
+      const identityDocUrl = formData["personal-info.identity_doc_url"];
+      const dateOfBirth = formData["personal-info.date_of_birth"];
+      const familyProfile = formData["personal-info.family_profile"];
+      const childrenCount = formData["personal-info.children_count"];
+      const hasPets = formData["personal-info.has_pets"];
+      const petDetails = formData["personal-info.pet_details"];
+
+      const has = (v: unknown) =>
+        v !== undefined && v !== null && v !== "" && String(v).trim() !== "";
+
+      let completed = 0;
+      let total = 7; // Base: nationality, identity_doc_type, identity_doc_number, identity_doc_url, date_of_birth, family_profile, has_pets
+
+      if (has(nationality)) completed++;
+      if (has(identityDocType)) completed++;
+      if (has(identityDocNumber)) completed++;
+      if (has(identityDocUrl)) completed++;
+      if (has(dateOfBirth)) completed++;
+      if (has(familyProfile)) completed++;
+      if (hasPets === "yes" || hasPets === "no") completed++;
+
+      // children_count: required when family_profile === "Con hijos"
+      if (familyProfile === "Con hijos") {
+        total++;
+        if (childrenCount !== undefined && childrenCount !== null && String(childrenCount).trim() !== "") completed++;
+      }
+
+      // pet_details: required when has_pets === "yes"
+      if (hasPets === "yes") {
+        total++;
+        if (has(petDetails)) completed++;
+      }
+
+      return { completed, total };
+    }
+
     // Special handling for "Inquilino aceptado" phase sections
     // These sections read from supabaseProperty directly, not formData
     const tenantAcceptedSectionIds = ["bank-data", "contract", "guarantee"];

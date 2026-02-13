@@ -10,6 +10,7 @@ import { DocumentUploadModal } from "@/components/rentals/document-upload-modal"
 
 interface LeadIdentityDocumentFieldProps {
   leadId: string;
+  leadsUniqueId: string;
   value: string | null;
   onUpdate: (url: string | null) => Promise<void>;
   disabled?: boolean;
@@ -17,10 +18,11 @@ interface LeadIdentityDocumentFieldProps {
 }
 
 const DOCUMENT_TITLE = "Documento de identidad";
-const ACCEPT = ".pdf,.doc,.docx";
+const ACCEPT = ".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp";
 
 export function LeadIdentityDocumentField({
   leadId,
+  leadsUniqueId,
   value,
   onUpdate,
   disabled = false,
@@ -37,22 +39,24 @@ export function LeadIdentityDocumentField({
   }>({ open: false, url: null, label: DOCUMENT_TITLE });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Handle file upload — same pattern as document-upload-field.tsx
   const handleUpload = async (uploadedFile: File) => {
     setFile(uploadedFile);
     setUploading(true);
     try {
-      const url = await uploadLeadIdentityDocument(leadId, uploadedFile, value || undefined);
+      const url = await uploadLeadIdentityDocument(leadId, leadsUniqueId, uploadedFile, value || undefined);
       await onUpdate(url);
     } catch (error) {
       console.error("Error uploading lead identity document:", error);
       alert("Error al subir el documento. Por favor, inténtalo de nuevo.");
       setFile(null);
-      throw error;
+      throw error; // Re-throw so modal doesn't close on error
     } finally {
       setUploading(false);
     }
   };
 
+  // Handle file removal — same pattern as document-upload-field.tsx
   const handleRemove = async () => {
     if (!value) return;
     try {
@@ -65,54 +69,73 @@ export function LeadIdentityDocumentField({
     }
   };
 
+  // Handle file input change
   const handleFileInput = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     await handleUpload(files[0]);
-    if (e.target) e.target.value = "";
+    if (e.target) {
+      e.target.value = "";
+    }
   };
 
+  // Drag and drop handlers
   const handleDragEnter = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragging(true);
+    }
   };
+
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
   };
+
   const handleDragLeave = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
+
   const handleDrop = async (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+
     const files = e.dataTransfer.files;
-    if (files?.length > 0) {
+    if (files && files.length > 0) {
       const uploadedFile = files[0];
       const validTypes = ACCEPT.split(",").map((ext) => ext.trim());
-      const fileExtension = "." + uploadedFile.name.split(".").pop()?.toLowerCase();
+      const fileExtension =
+        "." + uploadedFile.name.split(".").pop()?.toLowerCase();
       if (validTypes.includes(fileExtension)) {
         await handleUpload(uploadedFile);
       } else {
-        alert(`Por favor, sube un archivo ${ACCEPT.replace(/\./g, "").toUpperCase()}`);
+        alert(
+          `Por favor, sube un archivo ${ACCEPT.replace(/\./g, "").toUpperCase()}`
+        );
       }
     }
   };
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Label className="text-sm font-medium">Documento de identidad</Label>
+      <Label className="text-sm font-medium">{DOCUMENT_TITLE}</Label>
       {value ? (
         <div className="flex items-center justify-between p-3 border border-[#E5E7EB] dark:border-[#374151] rounded-lg transition-colors hover:bg-accent/50">
           <div
             className="flex items-center gap-3 flex-1 cursor-pointer"
-            onClick={() =>
-              setPreviewModal({ open: true, url: value, label: DOCUMENT_TITLE })
-            }
+            onClick={() => {
+              if (value) {
+                setPreviewModal({
+                  open: true,
+                  url: value,
+                  label: DOCUMENT_TITLE,
+                });
+              }
+            }}
           >
             <div className="w-10 h-10 bg-[#F3F4F6] dark:bg-[#374151] rounded flex items-center justify-center">
               <FileText className="h-5 w-5 text-[#6B7280] dark:text-[#9CA3AF]" />
@@ -122,7 +145,10 @@ export function LeadIdentityDocumentField({
                 {DOCUMENT_TITLE}
               </p>
               <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                {file?.name || value.split("/").pop()?.split("?")[0] || "PDF"}
+                {file?.name ||
+                  (value
+                    ? value.split("/").pop()?.split("?")[0] || "PDF"
+                    : "PDF")}
               </p>
             </div>
           </div>
@@ -172,6 +198,7 @@ export function LeadIdentityDocumentField({
         </div>
       )}
 
+      {/* Document Preview Modal */}
       <DocumentPreviewModal
         open={previewModal.open && !!previewModal.url}
         onOpenChange={(open) => setPreviewModal({ ...previewModal, open })}
@@ -179,20 +206,23 @@ export function LeadIdentityDocumentField({
         documentName={previewModal.label || DOCUMENT_TITLE}
       />
 
+      {/* Document Upload Modal */}
       <DocumentUploadModal
         open={uploadModalOpen}
         onOpenChange={(open) => {
           setUploadModalOpen(open);
-          if (!open) setUploading(false);
+          if (!open) {
+            setUploading(false);
+          }
         }}
         onUpload={async (uploadedFile) => {
           try {
             await handleUpload(uploadedFile);
-          } catch (err) {
-            throw err;
+          } catch (error) {
+            throw error;
           }
         }}
-        label="Documento de identidad"
+        label={DOCUMENT_TITLE}
         isEdit={false}
         allowCustomTitle={false}
       />

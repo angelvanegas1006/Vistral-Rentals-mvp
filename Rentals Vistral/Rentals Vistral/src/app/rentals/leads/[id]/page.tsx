@@ -22,7 +22,6 @@ export default function LeadDetailPage() {
   const { lead: leadRow, loading: isLoading, error: loadError } = useLead(leadId);
   const { updateLead } = useUpdateLead();
   const [activeTab, setActiveTab] = useState("tasks");
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showFooter, setShowFooter] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,6 +34,7 @@ export default function LeadDetailPage() {
   const lead = leadRow
     ? {
         id: leadRow.id,
+        leadsUniqueId: leadRow.leads_unique_id,
         name: leadRow.name ?? "",
         phone: leadRow.phone ?? "",
         email: leadRow.email ?? undefined,
@@ -157,12 +157,14 @@ export default function LeadDetailPage() {
         {/* Contenido principal - misma estructura que propiedad */}
         <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#111827] scrollbar-stable">
           <div className="max-w-7xl mx-auto px-6 md:px-12 py-8">
-            {/* Nombre del interesado y fase (sin ID) */}
+            {/* Nombre del interesado, ID y fase */}
             <div className="mb-6">
               <h1 className="text-2xl md:text-3xl font-bold text-[#111827] dark:text-[#F9FAFB] mb-2">
                 {lead.name}
               </h1>
               <div className="flex flex-wrap items-center gap-3 text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+                <span>ID Interesado: {lead.leadsUniqueId}</span>
+                <span className="text-[#E5E7EB] dark:text-[#374151]">|</span>
                 <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs font-semibold uppercase">
                   {lead.currentPhase}
                 </span>
@@ -197,35 +199,9 @@ export default function LeadDetailPage() {
               <div className="lg:col-span-1 space-y-8 relative">
                 <LeadRightSidebar />
               </div>
-            </div>
-          </div>
         </div>
-
-        {/* Footer sticky móvil */}
-        {hasUnsavedChanges && (
-          <div
-            className={[
-              "fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[var(--vistral-gray-900)] px-4 py-4 md:hidden border-t border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out",
-              showFooter ? "translate-y-0" : "translate-y-full",
-            ].join(" ")}
-          >
-            <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
-              <Button
-                className="w-full flex items-center justify-center rounded-lg bg-[var(--vistral-blue-600)] hover:bg-[var(--vistral-blue-700)] text-white h-12 text-base font-medium"
-                onClick={() => setHasUnsavedChanges(false)}
-              >
-                Guardar Cambios
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full flex items-center justify-center rounded-lg h-12 text-base font-medium"
-                onClick={() => setHasUnsavedChanges(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        )}
+        </div>
+        </div>
       </div>
     </div>
   );
