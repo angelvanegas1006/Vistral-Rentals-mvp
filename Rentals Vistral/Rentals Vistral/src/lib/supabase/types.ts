@@ -10,6 +10,19 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+/** Laboral/financial documents for leads. Obligatory: one URL per field key. Complementary: array with type, title, url, createdAt. */
+export interface LaboralFinancialComplementaryDoc {
+  type: string;
+  title: string;
+  url: string;
+  createdAt: string;
+}
+
+export interface LaboralFinancialDocs {
+  obligatory?: Record<string, string>;
+  complementary?: LaboralFinancialComplementaryDoc[];
+}
+
 // Types for Prophero section reviews
 export interface PropheroSectionReview {
   reviewed: boolean;
@@ -361,6 +374,8 @@ export interface Database {
           lease_duration_preference?: string | null;
           employment_status?: string | null;
           job_title?: string | null;
+          employment_contract_type?: string | null;
+          laboral_financial_docs?: LaboralFinancialDocs | null;
           monthly_net_income?: number | null;
           has_guarantor?: boolean | null;
           /** Información personal (Fase 3: Recogiendo información) */

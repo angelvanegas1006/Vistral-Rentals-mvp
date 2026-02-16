@@ -38,22 +38,15 @@ export function Phase2SectionWidget({
     return !isComplete;
   });
   
-  // Only update collapse state on mount if isComplete changes from undefined/initial state
-  // This prevents auto-collapse when a section becomes completed later
+  // Initialize collapse state; do NOT auto-collapse when section becomes complete
+  // (user wants color change + collapse enabled, but section stays expanded)
   useEffect(() => {
-    // Mark as initialized after first render
     if (!hasInitializedCollapse.current) {
       hasInitializedCollapse.current = true;
-      // If isComplete changed from initial value, update state (only on first change)
-      if (prevIsCompleteRef.current !== undefined && prevIsCompleteRef.current !== isComplete) {
-        setIsOpen(!isComplete);
-        prevIsCompleteRef.current = isComplete;
-      }
+      prevIsCompleteRef.current = isComplete;
       return;
     }
-    
-    // After initialization, don't auto-collapse/expand when completion status changes
-    // The user should manually control collapse/expand after initial load
+    prevIsCompleteRef.current = isComplete;
   }, [isComplete]);
   
   const getSectionColorClasses = () => {

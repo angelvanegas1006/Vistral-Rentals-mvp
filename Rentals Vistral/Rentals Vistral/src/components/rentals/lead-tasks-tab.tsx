@@ -6,10 +6,14 @@ import {
   LeadPersonalInfoSection,
   type LeadPersonalInfoLiveData,
 } from "@/components/rentals/lead-personal-info-section";
+import {
+  LeadEmploymentFinancialSection,
+  isEmploymentFinancialSectionComplete,
+} from "@/components/rentals/lead-employment-financial-section";
 
 const PHASE_RECOGIENDO = "Recogiendo Información";
 
-const LEAD_PERSONAL_INFO_SECTIONS = [
+const LEAD_PHASE3_SECTIONS = [
   {
     id: "personal-info",
     title: "Información Personal del Interesado",
@@ -22,6 +26,16 @@ const LEAD_PERSONAL_INFO_SECTIONS = [
       { id: "date_of_birth", required: true },
       { id: "family_profile", required: true },
       { id: "has_pets", required: true },
+    ],
+  },
+  {
+    id: "employment-financial",
+    title: "Información Laboral y Financiera del Interesado",
+    required: true,
+    fields: [
+      { id: "employment_status", required: true },
+      { id: "employment_contract_type", required: false },
+      { id: "obligatory_docs", required: true },
     ],
   },
 ];
@@ -48,10 +62,15 @@ interface Lead {
   familyProfile?: "Soltero" | "Pareja" | "Con hijos" | null;
   childrenCount?: number | null;
   petInfo?: Record<string, unknown> | null;
+  employment_status?: string | null;
+  job_title?: string | null;
+  employment_contract_type?: string | null;
+  laboral_financial_docs?: Record<string, unknown> | null;
 }
 
 interface LeadTasksTabProps {
   lead: Lead;
+  onLeadRefetch?: () => void | Promise<void>;
 }
 
 // ---------- Helpers ----------
@@ -71,6 +90,17 @@ function buildFormDataFromLive(d: LeadPersonalInfoLiveData): Record<string, unkn
   };
 }
 
+/** Build formData for employment-financial section from lead. */
+function buildFormDataFromEmploymentLead(lead: Lead): Record<string, unknown> {
+  const laboral = lead.laboral_financial_docs as { obligatory?: Record<string, string> } | null | undefined;
+  const obligatory = laboral?.obligatory || {};
+  return {
+    "employment-financial.employment_status": lead.employment_status ?? "",
+    "employment-financial.employment_contract_type": lead.employment_contract_type ?? "",
+    "employment-financial.obligatory_docs": obligatory,
+  };
+}
+
 /** Build initial formData from the (stale) lead prop — used before the first onFieldsChange fires. */
 function buildFormDataFromLead(lead: Lead): Record<string, unknown> {
   const petInfo = lead.petInfo as { has_pets?: boolean; details?: string; notes?: string } | null | undefined;
@@ -82,6 +112,7 @@ function buildFormDataFromLead(lead: Lead): Record<string, unknown> {
         : null;
 
   return {
+    ...buildFormDataFromEmploymentLead(lead),
     "personal-info.nationality": lead.nationality ?? "",
     "personal-info.identity_doc_type": lead.identityDocType ?? null,
     "personal-info.identity_doc_number": lead.identityDocNumber ?? "",
@@ -123,10 +154,21 @@ function isSectionComplete(fd: Record<string, unknown>): boolean {
   return true;
 }
 
+/** Check if employment-financial section is complete. */
+function isEmploymentFinancialComplete(fd: Record<string, unknown>): boolean {
+  return isEmploymentFinancialSectionComplete({
+    employment_status: fd["employment-financial.employment_status"] as string | null | undefined,
+    employment_contract_type: fd["employment-financial.employment_contract_type"] as string | null | undefined,
+    laboral_financial_docs: {
+      obligatory: fd["employment-financial.obligatory_docs"] as Record<string, string> | undefined,
+    },
+  });
+}
+
 // ---------- Component ----------
 
 /** Espacio de trabajo del interesado: progreso + secciones por fase (Fase 3: Información personal). */
-export function LeadTasksTab({ lead }: LeadTasksTabProps) {
+export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
   const isRecogiendoInformacion = lead.currentPhase === PHASE_RECOGIENDO;
 
   // --- Live formData state for the progress widget ---
@@ -134,38 +176,63 @@ export function LeadTasksTab({ lead }: LeadTasksTabProps) {
     () => buildFormDataFromLead(lead)
   );
 
-  const isComplete = isSectionComplete(liveFormData);
+  // Merge employment data when lead refetches (employment section triggers onRefetch)
+  const mergedFormData = {
+    ...liveFormData,
+    ...buildFormDataFromEmploymentLead(lead),
+  };
+
+  const isPersonalComplete = isSectionComplete(liveFormData);
+  // Use mergedFormData so employment completion reflects latest lead data after refetch
+  const isEmploymentComplete = isEmploymentFinancialComplete(mergedFormData);
 
   // When the section fields change, rebuild the formData for the progress widget
   const handleFieldsChange = useCallback((data: LeadPersonalInfoLiveData) => {
-    setLiveFormData(buildFormDataFromLive(data));
+    setLiveFormData((prev) => ({
+      ...prev,
+      ...buildFormDataFromLive(data),
+    }));
   }, []);
 
   return (
     <div className="space-y-4 md:space-y-6">
       <ProgressOverviewWidget
-        sections={isRecogiendoInformacion ? LEAD_PERSONAL_INFO_SECTIONS : []}
-        formData={isRecogiendoInformacion ? liveFormData : {}}
+        sections={isRecogiendoInformacion ? LEAD_PHASE3_SECTIONS : []}
+        formData={isRecogiendoInformacion ? mergedFormData : {}}
       />
 
       {isRecogiendoInformacion && (
-        <LeadPersonalInfoSection
-          lead={{
-            id: lead.id,
-            leadsUniqueId: lead.leadsUniqueId,
-            nationality: lead.nationality,
-            identityDocType: lead.identityDocType,
-            identityDocNumber: lead.identityDocNumber,
-            identityDocUrl: lead.identityDocUrl,
-            dateOfBirth: lead.dateOfBirth,
-            age: lead.age,
-            familyProfile: lead.familyProfile,
-            childrenCount: lead.childrenCount,
-            petInfo: lead.petInfo,
-          }}
-          onFieldsChange={handleFieldsChange}
-          isComplete={isComplete}
-        />
+        <>
+          <LeadPersonalInfoSection
+            lead={{
+              id: lead.id,
+              leadsUniqueId: lead.leadsUniqueId,
+              nationality: lead.nationality,
+              identityDocType: lead.identityDocType,
+              identityDocNumber: lead.identityDocNumber,
+              identityDocUrl: lead.identityDocUrl,
+              dateOfBirth: lead.dateOfBirth,
+              age: lead.age,
+              familyProfile: lead.familyProfile,
+              childrenCount: lead.childrenCount,
+              petInfo: lead.petInfo,
+            }}
+            onFieldsChange={handleFieldsChange}
+            isComplete={isPersonalComplete}
+          />
+          <LeadEmploymentFinancialSection
+            lead={{
+              id: lead.id,
+              leadsUniqueId: lead.leadsUniqueId,
+              employment_status: lead.employment_status,
+              job_title: lead.job_title,
+              employment_contract_type: lead.employment_contract_type,
+              laboral_financial_docs: lead.laboral_financial_docs,
+            }}
+            isComplete={isEmploymentComplete}
+            onRefetch={onLeadRefetch}
+          />
+        </>
       )}
     </div>
   );

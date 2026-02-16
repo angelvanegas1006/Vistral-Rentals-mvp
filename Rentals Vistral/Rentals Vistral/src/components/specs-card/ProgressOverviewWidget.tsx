@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Circle, Info } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getObligatoryFieldKeys } from "@/components/rentals/lead-laboral-obligatory-docs";
 
 interface Section {
   id: string;
@@ -366,6 +367,43 @@ export function ProgressOverviewWidget({
       if (hasPets === "yes") {
         total++;
         if (has(petDetails)) completed++;
+      }
+
+      return { completed, total };
+    }
+
+    // Special handling for lead "Información Laboral y Financiera del Interesado" section
+    if (section.id === "employment-financial") {
+      const employmentStatus = formData["employment-financial.employment_status"];
+      const employmentContractType = formData["employment-financial.employment_contract_type"];
+      const obligatory = (formData["employment-financial.obligatory_docs"] as Record<string, string>) || {};
+
+      const has = (v: unknown) =>
+        v !== undefined && v !== null && v !== "" && String(v).trim() !== "";
+
+      const status = typeof employmentStatus === "string" ? employmentStatus : "";
+      const contractType = typeof employmentContractType === "string" ? employmentContractType : null;
+
+      let completed = 0;
+      let total = 0;
+
+      if (!has(status)) {
+        return { completed: 0, total: 1 };
+      }
+      total++;
+      completed++;
+
+      const STATUSES_WITH_CONTRACT = ["Empleado", "Funcionario"];
+      if (STATUSES_WITH_CONTRACT.includes(status)) {
+        total++;
+        if (has(contractType)) completed++;
+      }
+
+      const fieldKeys = getObligatoryFieldKeys(status, contractType);
+      total += fieldKeys.length;
+      for (const key of fieldKeys) {
+        const url = obligatory[key];
+        if (url && typeof url === "string" && url.trim() !== "") completed++;
       }
 
       return { completed, total };

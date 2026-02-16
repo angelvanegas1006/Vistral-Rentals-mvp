@@ -19,7 +19,7 @@ export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const leadId = params.id as string;
-  const { lead: leadRow, loading: isLoading, error: loadError } = useLead(leadId);
+  const { lead: leadRow, loading: isLoading, error: loadError, refetch: refetchLead } = useLead(leadId);
   const { updateLead } = useUpdateLead();
   const [activeTab, setActiveTab] = useState("tasks");
   const [showFooter, setShowFooter] = useState(true);
@@ -46,6 +46,8 @@ export default function LeadDetailPage() {
         lease_duration_preference: leadRow.lease_duration_preference ?? undefined,
         employment_status: leadRow.employment_status ?? undefined,
         job_title: leadRow.job_title ?? undefined,
+        employment_contract_type: leadRow.employment_contract_type ?? undefined,
+        laboral_financial_docs: leadRow.laboral_financial_docs ?? undefined,
         monthly_net_income: leadRow.monthly_net_income ?? undefined,
         has_guarantor: leadRow.has_guarantor ?? undefined,
         nationality: leadRow.nationality ?? undefined,
@@ -188,7 +190,7 @@ export default function LeadDetailPage() {
                   className="pb-24"
                   onScroll={handleScroll}
                 >
-                  {activeTab === "tasks" && <LeadTasksTab lead={lead} />}
+                  {activeTab === "tasks" && <LeadTasksTab lead={lead} onLeadRefetch={refetchLead} />}
                   {activeTab === "summary" && <LeadSummaryTab lead={lead} />}
                   {activeTab === "properties" && (
                     <LeadPropertiesTab lead={lead} />

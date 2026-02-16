@@ -21,10 +21,12 @@ We use two distinct Supabase Storage buckets to enforce security policies.
 
 ### C. Bucket: `leads-restricted-docs`
 * **Privacy:** PRIVATE (Requires RLS Policy & Auth Token).
-* **Content:** Sensitive documents linked to leads (interesados), e.g. identity documents.
+* **Content:** Sensitive documents linked to leads (interesados), e.g. identity documents and laboral/financial documents.
 * **Allowed Types:** PDF, Images, DOCX.
-* **Folder structure:** One folder per lead, named by lead id (e.g. `LEAD-001` or the table `id`). Identity documents are stored in subfolder `identity`.
-* **Path pattern:** `{lead_id}/identity/{filename}` → stored in `leads.identity_doc_url`.
+* **Folder structure:** One folder per lead, named by `leads_unique_id` (e.g. `LEAD-001`). Subfolders: `identity` (documento de identidad), `laboral_financial` (documentos laborales y financieros).
+* **Path patterns:**
+  * `{leads_unique_id}/identity/{filename}` → stored in `leads.identity_doc_url`
+  * `{leads_unique_id}/laboral_financial/{filename}` → stored in `leads.laboral_financial_docs` (JSONB)
 * **Documentation:** See `docs/leads/Fase 3 - Recogiendo Información.md`.
 
 ---
@@ -235,15 +237,19 @@ Documents are stored in sub-subfolders (Folder 3) as follows:
 
 #### E. LEADS SECTION (Bucket: `leads-restricted-docs`)
 
-*Documents for the leads pipeline (Interesados). One folder per lead, named by lead id.*
+*Documents for the leads pipeline (Interesados). One folder per lead, named by `leads_unique_id`.*
 
 | Sub-Folder (within lead folder) | SQL Variable (DB) | Type | Full Storage Path |
 | :--- | :--- | :--- | :--- |
 | **identity** | `leads.identity_doc_url` | TEXT (Fixed) | `/{leads_unique_id}/identity/` |
+| **laboral_financial** | `leads.laboral_financial_docs` | JSONB | `/{leads_unique_id}/laboral_financial/` |
 
 - **Bucket:** `leads-restricted-docs`
-- **Path pattern:** `{leads_unique_id}/identity/{filename}` (e.g. `LEAD-001/identity/identity_doc_url_1739123456789.pdf`)
-- Only one identity document per lead; replacing is done by deleting the current file and uploading a new one
+- **Path patterns:**
+  * Identity: `{leads_unique_id}/identity/{filename}` (e.g. `LEAD-001/identity/identity_doc_url_1739123456789.pdf`)
+  * Laboral/Financial: `{leads_unique_id}/laboral_financial/{fieldKey}_{timestamp}.{ext}` (obligatory) or `{leads_unique_id}/laboral_financial/complementary_{timestamp}.{ext}` (complementary)
+- **Identity:** Only one document per lead; replacing is done by deleting the current file and uploading a new one
+- **Laboral/Financial:** JSONB structure `{ obligatory: { [fieldKey]: url }, complementary: [{ type, title, url, createdAt }] }`. Obligatory fields: one document per field; delete to replace. Complementary: multiple documents with type dropdown and title (required for "Otros")
 - See `docs/leads/Fase 3 - Recogiendo Información.md` for phase behaviour
 
 ---

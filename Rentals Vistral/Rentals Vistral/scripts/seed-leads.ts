@@ -173,7 +173,7 @@ function generateEmploymentData(): {
   monthly_net_income: number;
   has_guarantor: boolean;
 } {
-  const employment_status = random.choice(EMPLOYMENT_STATUSES);
+  const employment_status = random.choice([...EMPLOYMENT_STATUSES]);
   const range = INCOME_BY_STATUS[employment_status] ?? { min: 1200, max: 3500 };
   const monthly_net_income = Math.round(random.float(range.min, range.max) * 100) / 100;
   const hasNoJob = EMPLOYMENT_STATUSES_WITHOUT_JOB.includes(employment_status);
