@@ -400,18 +400,20 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["leads"]["Insert"]>;
       };
-      lead_properties: {
+      leads_properties: {
         Row: {
           id: string;
-          lead_id: string;
-          property_id: string; // References properties.property_unique_id
+          leads_unique_id: string; // References leads.leads_unique_id
+          properties_unique_id: string; // References properties.property_unique_id
+          scheduled_visit_date?: string | null; // Fecha de visita agendada (DATE) - opcional hasta migración
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["lead_properties"]["Row"], "id" | "created_at"> & {
+        Insert: Omit<Database["public"]["Tables"]["leads_properties"]["Row"], "id" | "created_at"> & {
           id?: string;
           created_at?: string;
+          scheduled_visit_date?: string | null;
         };
-        Update: Partial<Database["public"]["Tables"]["lead_properties"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["leads_properties"]["Insert"]>;
       };
     };
     Views: {

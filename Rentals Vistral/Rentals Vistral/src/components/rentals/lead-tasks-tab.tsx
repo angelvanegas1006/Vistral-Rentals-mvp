@@ -10,8 +10,13 @@ import {
   LeadEmploymentFinancialSection,
   isEmploymentFinancialSectionComplete,
 } from "@/components/rentals/lead-employment-financial-section";
+import { LeadPropertyCard } from "@/components/rentals/lead-property-card";
+import { LeadPropertyCardWorkPerfilCualificado } from "@/components/rentals/lead-property-card-work-perfil-cualificado";
+import { useLeadProperties } from "@/hooks/use-lead-properties";
+import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 
 const PHASE_RECOGIENDO = "Recogiendo Información";
+const PHASE_PERFIL_CUALIFICADO = "Perfil cualificado";
 
 const LEAD_PHASE3_SECTIONS = [
   {
@@ -170,6 +175,11 @@ function isEmploymentFinancialComplete(fd: Record<string, unknown>): boolean {
 /** Espacio de trabajo del interesado: progreso + secciones por fase (Fase 3: Información personal). */
 export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
   const isRecogiendoInformacion = lead.currentPhase === PHASE_RECOGIENDO;
+  const isPerfilCualificado = lead.currentPhase === PHASE_PERFIL_CUALIFICADO;
+
+  const { items: leadPropertyItems, loading: leadPropertiesLoading, refetch: refetchLeadProperties } = useLeadProperties(
+    isPerfilCualificado ? lead.leadsUniqueId : undefined
+  );
 
   // --- Live formData state for the progress widget ---
   const [liveFormData, setLiveFormData] = useState<Record<string, unknown>>(
@@ -200,6 +210,37 @@ export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
         sections={isRecogiendoInformacion ? LEAD_PHASE3_SECTIONS : []}
         formData={isRecogiendoInformacion ? mergedFormData : {}}
       />
+
+      {isPerfilCualificado && (
+        <div className="space-y-4">
+          {leadPropertiesLoading ? (
+            <div className="flex justify-center py-8">
+              <RentalsHomeLoader />
+            </div>
+          ) : leadPropertyItems.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-[#E5E7EB] dark:border-[#374151] bg-[#FAFAFA] dark:bg-[#111827] p-8 text-center">
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+                No hay propiedades asignadas. Añade propiedades desde la pestaña{" "}
+                <strong>Propiedades de interés</strong>.
+              </p>
+            </div>
+          ) : (
+            leadPropertyItems.map(({ leadsProperty, property }) => (
+              <LeadPropertyCard
+                key={leadsProperty.id}
+                leadsProperty={leadsProperty}
+                property={property}
+                workSection={
+                  <LeadPropertyCardWorkPerfilCualificado
+                    leadsProperty={leadsProperty}
+                    onUpdated={refetchLeadProperties}
+                  />
+                }
+              />
+            ))
+          )}
+        </div>
+      )}
 
       {isRecogiendoInformacion && (
         <>

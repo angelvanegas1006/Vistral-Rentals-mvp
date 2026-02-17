@@ -2,7 +2,7 @@
 
 ## Referencia de componentes
 
-- **Storybook:** [Prophero React Design System](https://react.design.prophero.com/) — ej. [Alert](https://react.design.prophero.com/?path=/docs/components-alert--docs). Consultar ahí variantes, props y ejemplos de todos los componentes.
+- **Storybook:** [Vistral Design System](https://vistral-design-system.vercel.app/?path=/story/components-sidenav--with-icons) — ej. [Alert](https://vistral-design-system.vercel.app/?path=/docs/components-alert--docs). Consultar ahí variantes, props y ejemplos de todos los componentes.
 
 ## Tokens y variables CSS
 

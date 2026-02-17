@@ -6,7 +6,6 @@ import { NavbarL2 } from "@/components/layout/navbar-l2";
 import { PropertyTabs } from "@/components/layout/property-tabs";
 import { LeadTasksTab } from "@/components/rentals/lead-tasks-tab";
 import { LeadSummaryTab } from "@/components/rentals/lead-summary-tab";
-import { LeadPropertiesTab } from "@/components/rentals/lead-properties-tab";
 import { LeadRightSidebar } from "@/components/rentals/lead-right-sidebar";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { Button } from "@/components/ui/button";
@@ -98,7 +97,6 @@ export default function LeadDetailPage() {
   const tabs = [
     { id: "tasks", label: "Espacio de trabajo", badge: undefined },
     { id: "summary", label: "Interesado", badge: undefined },
-    { id: "properties", label: "Propiedades de interés", badge: undefined },
   ];
 
   const handleTabChange = (tabId: string) => {
@@ -192,9 +190,6 @@ export default function LeadDetailPage() {
                 >
                   {activeTab === "tasks" && <LeadTasksTab lead={lead} onLeadRefetch={refetchLead} />}
                   {activeTab === "summary" && <LeadSummaryTab lead={lead} />}
-                  {activeTab === "properties" && (
-                    <LeadPropertiesTab lead={lead} />
-                  )}
                 </div>
               </div>
 

@@ -62,7 +62,7 @@ sudo chown -R $(whoami) node_modules
 
 **ACCIÓN REQUERIDA**: Ejecutar las queries SQL del archivo `SUPABASE_SETUP.md` en el editor SQL de Supabase:
 - Tabla `leads`
-- Tabla `lead_properties`
+- Tabla `leads_properties`
 - Índices necesarios
 - Políticas RLS (opcional para desarrollo)
 

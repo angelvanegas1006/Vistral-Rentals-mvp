@@ -50,7 +50,7 @@ npm install
 **ACCIÓN REQUERIDA**: Ejecutar las queries SQL proporcionadas en `SUPABASE_SETUP.md`:
 
 - Tabla `leads`
-- Tabla `lead_properties`
+- Tabla `leads_properties`
 - Índices necesarios
 - Políticas RLS (opcional para desarrollo)
 

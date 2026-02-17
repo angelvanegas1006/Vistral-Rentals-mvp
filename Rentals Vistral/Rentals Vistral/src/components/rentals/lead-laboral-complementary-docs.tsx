@@ -351,7 +351,7 @@ export function LeadLaboralComplementaryDocs({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-[#111827] dark:text-[#F9FAFB]">
+        <h4 className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
           Documentos complementarios
         </h4>
         <Button

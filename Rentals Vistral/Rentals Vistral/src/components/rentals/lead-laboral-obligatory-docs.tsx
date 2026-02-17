@@ -316,7 +316,7 @@ export function LeadLaboralObligatoryDocs({
 
   return (
     <div className="space-y-4">
-      <h4 className="text-sm font-semibold text-[#111827] dark:text-[#F9FAFB]">
+      <h4 className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
         Documentos obligatorios
       </h4>
       <div className="space-y-4">

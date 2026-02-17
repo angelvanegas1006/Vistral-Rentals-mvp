@@ -34,7 +34,7 @@ The following files have been updated:
 
 #### 1. **Type Definitions** (`src/lib/supabase/types.ts`)
    - ✅ Added `property_unique_id: string` to `properties.Row`
-   - ✅ Updated comment in `lead_properties` to clarify it references `property_unique_id`
+   - ✅ Table `leads_properties` uses `properties_unique_id` (references `property_unique_id`)
 
 #### 2. **Property Hook** (`src/hooks/use-property.ts`)
    - ✅ Changed search query from `id` or `property_ref_id` to `property_unique_id`
@@ -58,17 +58,13 @@ The following files have been updated:
 1. **URL Routing**: `/rentals/property/{property_unique_id}`
 2. **Database Lookup**: Hook searches by `property_unique_id` column
 3. **Navigation**: Kanban cards pass `property_unique_id` via `property_ref_id` field (mapped)
-4. **Lead Associations**: `lead_properties.property_id` stores `property_unique_id` values
+4. **Lead Associations**: `leads_properties.properties_unique_id` stores `property_unique_id` values
 
 ## ⚠️ Important Notes
 
 ### Database Schema
-- The `lead_properties` table still has a column named `property_id`, but it now stores `property_unique_id` values
-- If you want to rename the column in the database, you'll need to run:
-  ```sql
-  ALTER TABLE lead_properties RENAME COLUMN property_id TO property_unique_id;
-  ```
-  Then update the TypeScript types accordingly.
+- The `leads_properties` table uses `leads_unique_id` and `properties_unique_id` columns
+- Run `SQL/create_leads_properties_table.sql` to create the table or migrate from `lead_properties`
 
 ### Backward Compatibility
 - The mapper includes fallbacks: `property_unique_id || property_ref_id || id`
@@ -97,22 +93,8 @@ After running the SQL script, test:
 - **Solution**: Update bookmarks/links, or add temporary redirect logic
 
 ### Issue: Lead assignments broken
-- **Check**: `lead_properties.property_id` values match `properties.property_unique_id`
-- **Solution**: Run migration script to update `lead_properties` references if needed
-
-## 📝 Additional SQL (If Needed)
-
-If `lead_properties` table has old `property_id` values that reference `id` or `property_ref_id`, update them:
-
-```sql
--- Update lead_properties to use property_unique_id
-UPDATE lead_properties lp
-SET property_id = p.property_unique_id
-FROM properties p
-WHERE (lp.property_id = p.id OR lp.property_id = p.property_ref_id)
-  AND p.property_unique_id IS NOT NULL
-  AND lp.property_id != p.property_unique_id;
-```
+- **Check**: `leads_properties.properties_unique_id` values match `properties.property_unique_id`
+- **Solution**: Run `SQL/create_leads_properties_table.sql` to create/migrate the table
 
 ---
 

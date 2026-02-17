@@ -80,24 +80,24 @@ CREATE TRIGGER update_leads_updated_at BEFORE UPDATE ON leads
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ```
 
-### 3.2 Tabla `lead_properties`
+### 3.2 Tabla `leads_properties`
 
 ```sql
--- Crear tabla lead_properties (relación muchos-a-muchos)
-CREATE TABLE IF NOT EXISTS lead_properties (
+-- Crear tabla leads_properties (relación muchos-a-muchos usando unique IDs)
+CREATE TABLE IF NOT EXISTS leads_properties (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
-  property_id TEXT NOT NULL,
+  leads_unique_id TEXT NOT NULL,
+  properties_unique_id TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(lead_id, property_id)
+  UNIQUE(leads_unique_id, properties_unique_id)
 );
 
 -- Crear índices
-CREATE INDEX IF NOT EXISTS idx_lead_properties_lead_id ON lead_properties(lead_id);
-CREATE INDEX IF NOT EXISTS idx_lead_properties_property_id ON lead_properties(property_id);
+CREATE INDEX IF NOT EXISTS idx_leads_properties_leads_unique_id ON leads_properties(leads_unique_id);
+CREATE INDEX IF NOT EXISTS idx_leads_properties_properties_unique_id ON leads_properties(properties_unique_id);
 
--- Nota: property_id hace referencia a properties.property_ref_id
--- Asegúrate de que la tabla properties tenga una columna property_ref_id
+-- Nota: leads_unique_id referencia leads.leads_unique_id (ej: LEAD-001)
+-- Nota: properties_unique_id referencia properties.property_unique_id (ej: PROP-001)
 ```
 
 ### 3.3 Verificar estructura de tabla `properties`
@@ -137,7 +137,7 @@ Por ahora, puedes deshabilitar RLS para desarrollo o crear políticas básicas:
 ```sql
 -- Deshabilitar RLS temporalmente para desarrollo (NO recomendado para producción)
 ALTER TABLE leads DISABLE ROW LEVEL SECURITY;
-ALTER TABLE lead_properties DISABLE ROW LEVEL SECURITY;
+ALTER TABLE leads_properties DISABLE ROW LEVEL SECURITY;
 
 -- O crear políticas básicas (recomendado)
 -- Permitir lectura a todos los usuarios autenticados
@@ -153,14 +153,14 @@ CREATE POLICY "Allow update access to leads" ON leads
 CREATE POLICY "Allow delete access to leads" ON leads
   FOR DELETE USING (true);
 
--- Políticas similares para lead_properties
-CREATE POLICY "Allow read access to lead_properties" ON lead_properties
+-- Políticas similares para leads_properties
+CREATE POLICY "Allow read access to leads_properties" ON leads_properties
   FOR SELECT USING (true);
 
-CREATE POLICY "Allow insert access to lead_properties" ON lead_properties
+CREATE POLICY "Allow insert access to leads_properties" ON leads_properties
   FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Allow delete access to lead_properties" ON lead_properties
+CREATE POLICY "Allow delete access to leads_properties" ON leads_properties
   FOR DELETE USING (true);
 ```
 

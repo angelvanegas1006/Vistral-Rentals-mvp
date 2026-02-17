@@ -15,12 +15,11 @@ export async function getLeadsForProperty(propertyId: string): Promise<Lead[]> {
   const supabase = createClient();
 
   try {
-    // Obtener los IDs de leads asociados a esta propiedad
-    // propertyId es property_unique_id
+    // propertyId es property_unique_id (properties_unique_id)
     const { data: leadProperties, error: leadPropsError } = await supabase
-      .from("lead_properties")
-      .select("lead_id")
-      .eq("property_id", propertyId);
+      .from("leads_properties")
+      .select("leads_unique_id")
+      .eq("properties_unique_id", propertyId);
 
     if (leadPropsError) throw leadPropsError;
 
@@ -28,13 +27,12 @@ export async function getLeadsForProperty(propertyId: string): Promise<Lead[]> {
       return [];
     }
 
-    const leadIds = leadProperties.map((lp) => lp.lead_id);
+    const leadsUniqueIds = leadProperties.map((lp) => lp.leads_unique_id);
 
-    // Obtener los leads completos
     const { data: leads, error: leadsError } = await supabase
       .from("leads")
       .select("*")
-      .in("id", leadIds);
+      .in("leads_unique_id", leadsUniqueIds);
 
     if (leadsError) throw leadsError;
 
@@ -47,18 +45,19 @@ export async function getLeadsForProperty(propertyId: string): Promise<Lead[]> {
 
 /**
  * Asignar un lead a una propiedad
- * @param propertyId - property_unique_id de la propiedad
+ * @param leadUniqueId - leads_unique_id del lead (ej: LEAD-001)
+ * @param propertyUniqueId - property_unique_id de la propiedad (ej: PROP-001)
  */
 export async function assignLeadToProperty(
-  leadId: string,
-  propertyId: string
+  leadUniqueId: string,
+  propertyUniqueId: string
 ): Promise<boolean> {
   const supabase = createClient();
 
   try {
-    const { error } = await supabase.from("lead_properties").insert({
-      lead_id: leadId,
-      property_id: propertyId, // property_unique_id
+    const { error } = await supabase.from("leads_properties").insert({
+      leads_unique_id: leadUniqueId,
+      properties_unique_id: propertyUniqueId,
     });
 
     if (error) throw error;
@@ -71,20 +70,21 @@ export async function assignLeadToProperty(
 
 /**
  * Desasignar un lead de una propiedad
- * @param propertyId - property_unique_id de la propiedad
+ * @param leadUniqueId - leads_unique_id del lead
+ * @param propertyUniqueId - property_unique_id de la propiedad
  */
 export async function unassignLeadFromProperty(
-  leadId: string,
-  propertyId: string
+  leadUniqueId: string,
+  propertyUniqueId: string
 ): Promise<boolean> {
   const supabase = createClient();
 
   try {
     const { error } = await supabase
-      .from("lead_properties")
+      .from("leads_properties")
       .delete()
-      .eq("lead_id", leadId)
-      .eq("property_id", propertyId); // property_unique_id
+      .eq("leads_unique_id", leadUniqueId)
+      .eq("properties_unique_id", propertyUniqueId);
 
     if (error) throw error;
     return true;
@@ -95,20 +95,48 @@ export async function unassignLeadFromProperty(
 }
 
 /**
- * Obtener todas las propiedades asignadas a un lead
+ * Actualizar un registro de leads_properties
+ * @param leadsPropertyId - id (UUID) del registro en leads_properties
+ * @param data - campos a actualizar (ej. scheduled_visit_date)
  */
-export async function getPropertiesForLead(leadId: string): Promise<string[]> {
+export async function updateLeadsProperty(
+  leadsPropertyId: string,
+  data: { scheduled_visit_date?: string | null }
+): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/leads-properties/${encodeURIComponent(leadsPropertyId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `HTTP ${response.status}`);
+    }
+    return true;
+  } catch (error) {
+    console.error("Error updating leads_properties:", error);
+    return false;
+  }
+}
+
+/**
+ * Obtener todas las propiedades asignadas a un lead
+ * @param leadUniqueId - leads_unique_id del lead (ej: LEAD-001)
+ */
+export async function getPropertiesForLead(leadUniqueId: string): Promise<string[]> {
   const supabase = createClient();
 
   try {
     const { data, error } = await supabase
-      .from("lead_properties")
-      .select("property_id")
-      .eq("lead_id", leadId);
+      .from("leads_properties")
+      .select("properties_unique_id")
+      .eq("leads_unique_id", leadUniqueId);
 
     if (error) throw error;
 
-    return data?.map((item) => item.property_id) || [];
+    return data?.map((item) => item.properties_unique_id) || [];
   } catch (error) {
     console.error("Error fetching properties for lead:", error);
     return [];

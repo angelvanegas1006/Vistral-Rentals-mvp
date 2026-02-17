@@ -15,6 +15,7 @@
     "test:watch": "jest --watch --passWithNoTests",
     "seed": "npx tsx scripts/seed-properties.ts",
     "seed-leads": "npx tsx scripts/seed-leads.ts",
+    "seed-leads-properties": "npx tsx scripts/seed-leads-properties.ts",
     "check-columns": "npx tsx scripts/check-properties-columns.ts",
     "update-rental-fields": "npx tsx scripts/update-rental-fields.ts"
   },

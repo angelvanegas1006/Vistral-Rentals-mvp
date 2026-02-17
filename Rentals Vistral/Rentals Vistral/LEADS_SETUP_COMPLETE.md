@@ -2,7 +2,7 @@
 
 ## 📋 Resumen
 
-Este documento contiene todas las queries SQL necesarias para crear y configurar las tablas `leads` y `lead_properties` en Supabase, con todos los campos que se usan en el frontend.
+Este documento contiene todas las queries SQL necesarias para crear y configurar las tablas `leads` y `leads_properties` en Supabase, con todos los campos que se usan en el frontend.
 
 ## 🔍 Campos Usados en el Frontend
 
@@ -14,8 +14,8 @@ Este documento contiene todas las queries SQL necesarias para crear y configurar
 - **Control**: `needs_update`
 - **Sistema**: `id` (UUID), `created_at`, `updated_at`
 
-### Tabla `lead_properties`:
-- **Relación**: `lead_id` (UUID → leads.id), `property_id` (TEXT → properties.property_ref_id)
+### Tabla `leads_properties`:
+- **Relación**: `leads_unique_id` (TEXT → leads.leads_unique_id), `properties_unique_id` (TEXT → properties.property_unique_id)
 - **Sistema**: `id` (UUID), `created_at`
 
 ## 📝 Paso 1: Crear Tablas
@@ -24,7 +24,7 @@ Ejecuta el archivo `CREATE_LEADS_TABLES.sql` completo en el editor SQL de Supaba
 
 Este archivo incluye:
 - ✅ Creación de tabla `leads` con todos los campos
-- ✅ Creación de tabla `lead_properties` 
+- ✅ Creación de tabla `leads_properties` 
 - ✅ Índices para búsquedas rápidas
 - ✅ Triggers para `updated_at` automático
 - ✅ Políticas RLS (deshabilitadas para desarrollo)
@@ -44,10 +44,10 @@ FROM information_schema.columns
 WHERE table_name = 'leads' 
 ORDER BY ordinal_position;
 
--- Ver estructura de lead_properties
+-- Ver estructura de leads_properties
 SELECT column_name, data_type, is_nullable 
 FROM information_schema.columns 
-WHERE table_name = 'lead_properties' 
+WHERE table_name = 'leads_properties' 
 ORDER BY ordinal_position;
 
 -- Ver datos insertados

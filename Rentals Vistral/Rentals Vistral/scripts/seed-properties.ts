@@ -4,7 +4,7 @@
  * This script:
  * 1. Cleans storage buckets (empties properties-public-docs and properties-restricted-docs)
  * 2. Cleans the database (truncates properties table)
- * 3. Creates 23 distinct properties with mock data
+ * 3. Creates 48 distinct properties with mock data (15 Publicado + 33 in other phases)
  * 4. Uploads accompanying files from ./dummy_files/ to Supabase Storage
  * 5. Ensures all Kanban stages are covered
  * 
@@ -78,6 +78,13 @@ const ALL_STAGES = [
   'Finalización y Salida'
 ] as const;
 
+// Grupos predefinidos para propiedades "Publicado" (zonas de Madrid, para Kanban de Interesados)
+const PUBLISHED_GROUPS = [
+  { bedrooms: [1, 2] as const, rentMin: 400, rentMax: 700, city: 'Madrid', districts: ['Usera', 'Villaverde', 'Vallecas', 'Carabanchel', 'Latina'] },
+  { bedrooms: [2, 3] as const, rentMin: 800, rentMax: 1200, city: 'Madrid', districts: ['Chamberí', 'Retiro', 'Arganzuela', 'Moncloa-Aravaca'] },
+  { bedrooms: [3] as const, rentMin: 1301, rentMax: 2000, city: 'Madrid', districts: ['Salamanca', 'Chamartín', 'Centro'] }
+] as const;
+
 // File mappings
 const DUMMY_FILES_DIR = path.join(process.cwd(), 'docs', 'dummy_files');
 const DUMMY_FILES_DIR_ALT = path.join(process.cwd(), 'dummy_files');
@@ -116,6 +123,19 @@ const INSURANCE_TYPES = [
   'Seguro a todo riesgo',
   'Otro'
 ];
+
+// Precios de renta realistas (ej: 430, 950; no 421, 967)
+const REALISTIC_RENTS = [350, 400, 430, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000];
+const realisticRent = (min: number, max: number) => {
+  const valid = REALISTIC_RENTS.filter((r) => r >= min && r <= max);
+  return valid.length > 0 ? random.choice(valid) : Math.round(min / 50) * 50;
+};
+
+// Campos de gestión de alquiler (para todas las propiedades)
+const RENTAL_TYPES = ['Larga estancia', 'Corta estancia', 'Vacacional'] as const;
+const PM_PLANS = ['Premium', 'Basic'] as const;
+const PROPERTY_MANAGERS = ['JJ'] as const;
+const RENTALS_ANALYSTS = ['Luis Martín', 'Alice Ruggieri'] as const;
 
 // Generate mock names and data
 const generateName = () => {
@@ -219,38 +239,55 @@ function readDummyFile(filename: string): Buffer {
   return fs.readFileSync(filePath);
 }
 
+/** Sleep helper for retries */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
- * Upload file to Supabase Storage
+ * Upload file to Supabase Storage (with retry for rate limits / transient errors)
  */
 async function uploadFile(
   bucket: string,
   filePath: string,
   fileBuffer: Buffer,
-  contentType: string
+  contentType: string,
+  retries = 3
 ): Promise<string> {
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(filePath, fileBuffer, {
-      contentType,
-      upsert: true,
-    });
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const { error } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, fileBuffer, {
+          contentType,
+          upsert: true,
+        });
 
-  if (error) {
-    throw new Error(`Failed to upload ${filePath} to ${bucket}: ${error.message}`);
-  }
+      if (error) {
+        throw new Error(`Upload failed: ${error.message}`);
+      }
 
-  // Use signed URLs for both public and private buckets
-  // This ensures reliable access regardless of bucket configuration or storage policies
-  // Using 10-year expiration (315360000 seconds) for long-term access
-  const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-    .from(bucket)
-    .createSignedUrl(filePath, 315360000); // 10 years in seconds
-  
-  if (signedUrlError || !signedUrlData) {
-    throw new Error(`Failed to create signed URL for ${filePath} in ${bucket}: ${signedUrlError?.message || 'Unknown error'}`);
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(filePath, 315360000); // 10 years
+
+      if (signedUrlError || !signedUrlData) {
+        throw new Error(signedUrlError?.message || 'Failed to create signed URL');
+      }
+
+      return signedUrlData.signedUrl;
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      const isRetryable =
+        msg.includes('JSON') || msg.includes('Unexpected') || msg.includes('fetch') || msg.includes('network');
+      if (attempt < retries && isRetryable) {
+        const delay = 2000 * attempt;
+        console.log(`  ⏳ Retry ${attempt}/${retries} in ${delay}ms for ${filePath}...`);
+        await sleep(delay);
+      } else {
+        throw new Error(`Failed to upload ${filePath} to ${bucket}: ${err?.message || err}`);
+      }
+    }
   }
-  
-  return signedUrlData.signedUrl;
+  throw new Error(`Failed to upload ${filePath} to ${bucket} after ${retries} attempts`);
 }
 
 /**
@@ -459,15 +496,23 @@ async function cleanDatabase(): Promise<void> {
   console.log('✅ Database cleaned successfully');
 }
 
+type PropertyOverrides = {
+  stage?: string;
+  bedrooms?: readonly number[];
+  rentMin?: number;
+  rentMax?: number;
+  city?: string;
+  districts?: readonly string[];
+};
+
 /**
  * Create a single property with all files
  */
-async function createProperty(index: number): Promise<void> {
+async function createProperty(index: number, overrides?: PropertyOverrides): Promise<void> {
   const propertyUniqueId = `PROP-${String(index + 1).padStart(3, '0')}`;
   const systemId = randomUUID();
   
-  // Distribute stages evenly across 23 properties using round-robin
-  const currentStage = ALL_STAGES[index % ALL_STAGES.length];
+  const currentStage = overrides?.stage ?? ALL_STAGES[index % ALL_STAGES.length];
   
   // Generate owner data
   const clientFullName = generateName();
@@ -483,16 +528,28 @@ async function createProperty(index: number): Promise<void> {
   const propertyReadyDate = new Date();
   propertyReadyDate.setDate(propertyReadyDate.getDate() + random.int(0, 90)); // 0-90 days from now
 
+  const bedrooms = overrides?.bedrooms?.length
+    ? random.choice([...overrides.bedrooms])
+    : random.int(1, 5);
+  const city = overrides?.city ?? random.choice(CITIES);
+  const areaCluster = overrides?.districts?.length
+    ? random.choice([...overrides.districts])
+    : random.choice(DISTRICTS);
+  const targetRent =
+    overrides?.rentMin != null && overrides?.rentMax != null
+      ? realisticRent(overrides.rentMin, overrides.rentMax)
+      : realisticRent(500, 2000);
+
   // Generate property data (using Record to allow dynamic assignment)
   const propertyData: Record<string, any> = {
     id: systemId,
     property_unique_id: propertyUniqueId,
     address: generateAddress(),
-    city: random.choice(CITIES),
-    area_cluster: random.choice(DISTRICTS),
+    city,
+    area_cluster: areaCluster,
     property_asset_type: random.choice(PROPERTY_TYPES),
     square_meters: random.int(40, 200),
-    bedrooms: random.int(1, 5),
+    bedrooms,
     bathrooms: random.int(1, 3),
     floor_number: random.int(0, 10),
     construction_year: random.int(1960, 2024),
@@ -517,7 +574,12 @@ async function createProperty(index: number): Promise<void> {
     reno_end_date: renoEndDate.toISOString().split('T')[0],
     property_ready_date: propertyReadyDate.toISOString().split('T')[0],
     days_to_publish_rent: random.int(0, 30),
-    target_rent_price: random.int(500, 2000),
+    target_rent_price: targetRent,
+    announcement_price: overrides?.rentMin != null && overrides?.rentMax != null ? targetRent : null,
+    rental_type: random.choice([...RENTAL_TYPES]),
+    property_management_plan: random.choice([...PM_PLANS]),
+    property_manager: random.choice([...PROPERTY_MANAGERS]),
+    rentals_analyst: random.choice([...RENTALS_ANALYSTS]),
     expected_yield: random.float(3.0, 8.0).toFixed(2),
     days_in_phase: random.int(0, 90),
     actual_yield: random.float(2.5, 7.5).toFixed(2),
@@ -595,18 +657,41 @@ async function createProperty(index: number): Promise<void> {
     // Supplies (8 files)
     const supplies = await uploadSupplies(propertyUniqueId);
     Object.assign(propertyData, supplies);
+
+    // Campos obligatorios para fase "Pendiente de trámites"
+    if (currentStage === 'Pendiente de trámites') {
+      propertyData.signed_lease_contract_url = await uploadSingleDoc(
+        propertyUniqueId,
+        'Contrato Compraventa.pdf',
+        'property/legal/lease_contract',
+        'properties-restricted-docs'
+      );
+      const leaseStart = new Date();
+      leaseStart.setDate(leaseStart.getDate() - random.int(7, 30));
+      const leaseEnd = new Date(leaseStart);
+      leaseEnd.setFullYear(leaseEnd.getFullYear() + 1);
+      propertyData.contract_signature_date = leaseStart.toISOString().split('T')[0];
+      propertyData.lease_start_date = leaseStart.toISOString().split('T')[0];
+      propertyData.lease_end_date = leaseEnd.toISOString().split('T')[0];
+      propertyData.final_rent_amount = targetRent;
+      propertyData.lease_duration = String(random.choice([11, 12]));
+      propertyData.lease_duration_unit = 'months';
+      propertyData.guarantee_id = `GAR-${random.string(8).toUpperCase()}`;
+    }
     
-    // Insert into database
+    // Upsert into database (handles duplicate property_unique_id from partial runs)
     const { error } = await supabase
       .from('properties')
-      .insert([propertyData]);
+      .upsert([propertyData], { onConflict: 'property_unique_id' });
     
     if (error) {
       throw new Error(`Failed to insert property: ${error.message}`);
     }
     
     console.log(`✅ Created ${propertyUniqueId} (Stage: ${currentStage}) - Owner: ${clientFullName} - Files Uploaded.`);
-    
+
+    // Small delay between properties to reduce rate limiting
+    await sleep(200);
   } catch (error: any) {
     console.error(`❌ Error creating ${propertyUniqueId}:`, error.message);
     throw error;
@@ -627,18 +712,45 @@ async function main() {
     // Step 2: Clean database
     await cleanDatabase();
     
-    // Step 3: Create 23 properties
-    console.log('\n🏗️  Creating 23 properties...\n');
+    // Step 3: Create 48 properties (15 Publicado + 33 in other phases)
+    console.log('\n🏗️  Creating 48 properties...\n');
     
-    for (let i = 0; i < 23; i++) {
-      await createProperty(i);
+    let globalIndex = 0;
+    
+    // 3a. Create 15 properties in "Publicado" (3 groups of 5)
+    console.log('📢 Creating 15 properties in phase "Publicado" (3 groups)...\n');
+    for (let g = 0; g < PUBLISHED_GROUPS.length; g++) {
+      const group = PUBLISHED_GROUPS[g];
+      const overrides: PropertyOverrides = {
+        stage: 'Publicado',
+        bedrooms: group.bedrooms,
+        rentMin: group.rentMin,
+        rentMax: group.rentMax,
+        city: group.city,
+        districts: group.districts,
+      };
+      for (let i = 0; i < 5; i++) {
+        await createProperty(globalIndex++, overrides);
+      }
+    }
+    
+    // 3b. Create 33 properties in the other 8 phases (no phase empty)
+    const OTHER_STAGES = ALL_STAGES.filter((s) => s !== 'Publicado');
+    const distribution = [5, 5, 4, 4, 4, 4, 4, 3]; // 33 total
+    let stageIndex = 0;
+    console.log('\n📋 Creating 33 properties in other phases...\n');
+    for (let i = 0; i < 33; i++) {
+      while (distribution[stageIndex] === 0) stageIndex++;
+      await createProperty(globalIndex++, { stage: OTHER_STAGES[stageIndex] });
+      distribution[stageIndex]--;
+      if (distribution[stageIndex] === 0) stageIndex++;
     }
     
     // Step 4: Summary
     console.log('\n📊 Summary:');
     console.log(`✅ Storage buckets cleaned`);
     console.log(`✅ Database cleaned`);
-    console.log(`✅ Created 23 properties`);
+    console.log(`✅ Created 48 properties (15 Publicado + 33 in other phases)`);
     console.log(`✅ All stages covered: ${ALL_STAGES.join(', ')}`);
     console.log('\n🎉 Seeding completed successfully!');
     
