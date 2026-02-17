@@ -14,6 +14,7 @@ interface MultiComboboxProps {
   placeholder?: string;
   emptyMessage?: string;
   className?: string;
+  inputClassName?: string;
 }
 
 export function MultiCombobox({
@@ -23,6 +24,7 @@ export function MultiCombobox({
   placeholder = "Buscar y seleccionar...",
   emptyMessage = "No hay opciones disponibles",
   className,
+  inputClassName,
 }: MultiComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -109,9 +111,37 @@ export function MultiCombobox({
 
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
+      {/* Badges de selección — above input */}
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-1.5">
+          {selected.map((value) => (
+            <Badge
+              key={value}
+              variant="secondary"
+              className="flex items-center gap-1 px-1.5 py-0.5 text-[11px]"
+            >
+              <span>{value}</span>
+              <button
+                type="button"
+                onClick={() => toggleOption(value)}
+                className="ml-0.5 rounded-full hover:bg-muted-foreground/20 transition-colors"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    toggleOption(value);
+                  }
+                }}
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Input con icono de búsqueda */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
         <Input
           ref={inputRef}
           type="text"
@@ -123,37 +153,9 @@ export function MultiCombobox({
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="pl-10 pr-3"
+          className={cn("pl-8 pr-3", inputClassName)}
         />
       </div>
-
-      {/* Badges de selección */}
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {selected.map((value) => (
-            <Badge
-              key={value}
-              variant="secondary"
-              className="flex items-center gap-1.5 px-2 py-1 text-xs"
-            >
-              <span>{value}</span>
-              <button
-                type="button"
-                onClick={() => toggleOption(value)}
-                className="ml-1 rounded-full hover:bg-muted-foreground/20 transition-colors"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    toggleOption(value);
-                  }
-                }}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
 
       {/* Dropdown */}
       {open && (

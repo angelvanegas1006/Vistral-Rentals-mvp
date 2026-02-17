@@ -75,3 +75,76 @@ export async function GET(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+/**
+ * POST /api/leads/[leadId]/properties
+ * Adds a property to the lead (creates a leads_properties record).
+ * Body: { properties_unique_id: string }
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ leadId: string }> }
+) {
+  try {
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: "Server configuration error: Missing Supabase credentials" },
+        { status: 500 }
+      );
+    }
+
+    const { leadId } = await params;
+    if (!leadId?.trim()) {
+      return NextResponse.json(
+        { error: "leadId (leads_unique_id) is required" },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { properties_unique_id } = body;
+
+    if (!properties_unique_id?.trim()) {
+      return NextResponse.json(
+        { error: "properties_unique_id is required" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Check for duplicate
+    const { data: existing } = await supabase
+      .from("leads_properties")
+      .select("id")
+      .eq("leads_unique_id", leadId)
+      .eq("properties_unique_id", properties_unique_id)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "Esta propiedad ya está asignada a este interesado" },
+        { status: 409 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("leads_properties")
+      .insert({
+        leads_unique_id: leadId,
+        properties_unique_id: properties_unique_id,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data }, { status: 201 });
+  } catch (error: unknown) {
+    console.error("Error adding property to lead:", error);
+    const message = error instanceof Error ? error.message : "Error al asignar";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

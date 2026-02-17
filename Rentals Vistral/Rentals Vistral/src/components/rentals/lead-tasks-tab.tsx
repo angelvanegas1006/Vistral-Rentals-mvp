@@ -12,6 +12,7 @@ import {
 } from "@/components/rentals/lead-employment-financial-section";
 import { LeadPropertyCard } from "@/components/rentals/lead-property-card";
 import { LeadPropertyCardWorkPerfilCualificado } from "@/components/rentals/lead-property-card-work-perfil-cualificado";
+import { OtrasPropiedadesCartera } from "@/components/rentals/otras-propiedades-cartera";
 import { useLeadProperties } from "@/hooks/use-lead-properties";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 
@@ -212,33 +213,54 @@ export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
       />
 
       {isPerfilCualificado && (
-        <div className="space-y-4">
-          {leadPropertiesLoading ? (
-            <div className="flex justify-center py-8">
-              <RentalsHomeLoader />
+        <div className="space-y-8">
+          {/* === Sección 1: Propiedades en gestión === */}
+          <div className="rounded-[var(--vistral-radius-xl)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card p-5 md:p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-foreground">
+                Propiedades en gestión
+              </h3>
+              {!leadPropertiesLoading && (
+                <span className="text-xs text-muted-foreground bg-[var(--vistral-gray-100)] dark:bg-[var(--vistral-gray-700)] px-2 py-0.5 rounded-full">
+                  {leadPropertyItems.length}
+                </span>
+              )}
             </div>
-          ) : leadPropertyItems.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#E5E7EB] dark:border-[#374151] bg-[#FAFAFA] dark:bg-[#111827] p-8 text-center">
-              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">
-                No hay propiedades asignadas. Añade propiedades desde la pestaña{" "}
-                <strong>Propiedades de interés</strong>.
-              </p>
-            </div>
-          ) : (
-            leadPropertyItems.map(({ leadsProperty, property }) => (
-              <LeadPropertyCard
-                key={leadsProperty.id}
-                leadsProperty={leadsProperty}
-                property={property}
-                workSection={
-                  <LeadPropertyCardWorkPerfilCualificado
-                    leadsProperty={leadsProperty}
-                    onUpdated={refetchLeadProperties}
-                  />
-                }
-              />
-            ))
-          )}
+
+            {leadPropertiesLoading ? (
+              <div className="flex justify-center py-8">
+                <RentalsHomeLoader />
+              </div>
+            ) : leadPropertyItems.length === 0 ? (
+              <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No hay propiedades en gestión. Añade propiedades desde la
+                  sección <strong>Otras Propiedades en Cartera</strong> de abajo.
+                </p>
+              </div>
+            ) : (
+              leadPropertyItems.map(({ leadsProperty, property }) => (
+                <LeadPropertyCard
+                  key={leadsProperty.id}
+                  leadsProperty={leadsProperty}
+                  property={property}
+                  workSection={
+                    <LeadPropertyCardWorkPerfilCualificado
+                      leadsProperty={leadsProperty}
+                      onUpdated={refetchLeadProperties}
+                    />
+                  }
+                />
+              ))
+            )}
+          </div>
+
+          {/* === Sección 2: Otras Propiedades en Cartera === */}
+          <OtrasPropiedadesCartera
+            leadsUniqueId={lead.leadsUniqueId}
+            leadPropertyItems={leadPropertyItems}
+            onPropertyAdded={refetchLeadProperties}
+          />
         </div>
       )}
 
