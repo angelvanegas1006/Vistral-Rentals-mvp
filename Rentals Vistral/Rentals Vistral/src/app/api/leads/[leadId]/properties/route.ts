@@ -36,6 +36,30 @@ export async function GET(
       },
     });
 
+    // Auto-advance: Visita Agendada -> Pendiente de Evaluación cuando visit_date <= now
+    const now = new Date().toISOString();
+    const { data: toAdvance } = await supabase
+      .from("leads_properties")
+      .select("id, current_status, visit_date, scheduled_visit_date")
+      .eq("leads_unique_id", leadId)
+      .eq("current_status", "visita_agendada");
+
+    if (toAdvance?.length) {
+      for (const lp of toAdvance) {
+        const visitDate = (lp.visit_date ?? lp.scheduled_visit_date) as string | null;
+        const visitDateTime = visitDate?.includes("T") ? visitDate : `${visitDate}T00:00:00.000Z`;
+        if (visitDate && visitDateTime <= now) {
+          await supabase
+            .from("leads_properties")
+            .update({
+              current_status: "pendiente_de_evaluacion",
+              previous_status: "visita_agendada",
+            })
+            .eq("id", lp.id);
+        }
+      }
+    }
+
     const { data: leadProps, error: lpError } = await supabase
       .from("leads_properties")
       .select("*")
@@ -135,6 +159,7 @@ export async function POST(
       .insert({
         leads_unique_id: leadId,
         properties_unique_id: properties_unique_id,
+        current_status: "perfil_cualificado",
       })
       .select()
       .single();

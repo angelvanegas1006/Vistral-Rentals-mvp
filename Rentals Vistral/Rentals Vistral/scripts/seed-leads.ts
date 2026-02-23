@@ -3,12 +3,14 @@
  *
  * 1. Borra todos los registros existentes en la tabla leads.
  * 2. Inserta 30 leads repartidos en las 6 fases del pipe/kanban:
- * - Perfil cualificado
- * - Visita agendada
+ * - Interesado Cualificado
+ * - Visita Agendada
  * - Recogiendo Información
- * - Calificación en curso
- * - Inquilino presentado
- * - Inquilino aceptado
+ * - Calificación en Curso
+ * - Interesado Presentado
+ * - Interesado Aceptado
+ * - Interesado Perdido
+ * - Interesado Rechazado
  *
  * USO:
  *   1. Variables de entorno: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -54,13 +56,16 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // Fases del kanban de leads (títulos tal como se guardan en current_phase)
+// Las dos últimas son fases terminales (Interesado Perdido, Interesado Rechazado)
 const PHASES = [
-  "Perfil cualificado",
-  "Visita agendada",
+  "Interesado Cualificado",
+  "Visita Agendada",
   "Recogiendo Información",
-  "Calificación en curso",
-  "Inquilino presentado",
-  "Inquilino aceptado",
+  "Calificación en Curso",
+  "Interesado Presentado",
+  "Interesado Aceptado",
+  "Interesado Perdido",
+  "Interesado Rechazado",
 ] as const;
 
 // ============================================
@@ -253,13 +258,14 @@ async function main() {
   }
   console.log("Leads existentes borrados.\n");
 
-  // 2. Generar e insertar los 30 nuevos leads
+  // 2. Generar e insertar los 30 nuevos leads (solo en las 6 fases principales, no en terminales)
+  const MAIN_PHASES = PHASES.slice(0, 6); // Excluir Interesado Perdido e Interesado Rechazado
   const leads: LeadInsert[] = [];
   const totalPerPhase = 5; // 30 / 6 = 5 por fase
 
   let sequence = 1;
-  for (let p = 0; p < PHASES.length; p++) {
-    const phase = PHASES[p];
+  for (let p = 0; p < MAIN_PHASES.length; p++) {
+    const phase = MAIN_PHASES[p];
     for (let i = 0; i < totalPerPhase; i++) {
       leads.push(buildLead(phase, p * totalPerPhase + i, formatLeadUniqueId(sequence)));
       sequence += 1;
@@ -275,7 +281,7 @@ async function main() {
   }
 
   console.log("Insertados 30 leads en la tabla leads.");
-  console.log("Fases cubiertas:", PHASES.join(", "));
+  console.log("Fases cubiertas:", MAIN_PHASES.join(", "));
   if (data?.length) {
     console.log("IDs generados:", data.length);
   }

@@ -1,0 +1,284 @@
+# Documentación Maestra: Máquina de Estados y Automatización de Fases (Interesado - Propiedad)
+
+Esta documentación define la lógica de negocio, la base de datos y la automatización de la interfaz.
+
+**Principio Core:** La Fase del Interesado (Lead) es esclava del estado de sus Propiedades (MTPs). No existen botones manuales para mover al Interesado; el sistema lo mueve automáticamente tras una confirmación visual.
+
+---
+
+## 1. Esquema de Base de Datos (Tabla: `leads_properties`)
+
+Para que la máquina de estados y los modales inteligentes funcionen, la mini tarjeta propiedad necesita interactuar con los siguientes campos en la base de datos.
+
+### Campos Existentes
+* `id`
+* `leads_unique_id` (Relación con el Interesado)
+* `properties_unique_id` (Relación con la Propiedad)
+* `current_status` (Estado actual de la mini tarjeta propiedad)
+* `visit_date` (Fecha y hora de la visita agendada)
+* `created_at` (Timestamp de creación)
+
+### Campos Nuevos a Crear (Para gestión del embudo y excepciones)
+* `previous_status` (String) -> Para lógica de Deshacer/Revivir. Guarda el estado anterior.
+* `updated_at` (Timestamp)
+* `visit_feedback` (Text) -> Comentarios positivos del PM tras la visita.
+* `tenant_confirmed_interest` (Boolean/Timestamp) -> Registra si/cuándo el interesado dijo "me lo quedo".
+* `sent_to_finaer_at` (Timestamp) -> Cuándo se mandó la documentación a Finaer.
+* `finaer_status` (String: 'pending', 'approved', 'rejected')
+* `finaer_rejection_reason` (Text) -> Comentarios si Finaer rechaza.
+* `owner_status` (String: 'pending', 'approved', 'rejected')
+* `owner_rejection_reason` (Text) -> Comentarios si el Propietario rechaza.
+* `exit_reason` (String) -> Motivo de descarte, pausa o pérdida.
+* `exit_comments` (Text) -> Detalles extra escritos por el PM al descartar/pausar.
+
+---
+
+## 2. Definición de Estados de la Mini Tarjeta Propiedad (MTP)
+
+*(Nota: Cada cambio de estado aquí dispara el algoritmo de verificación de Fase del Interesado).*
+
+### Estado 1: Perfil Cualificado
+* **Descripción:** El lead es válido y está interesado en una propiedad.
+* **Campos UI (Happy Path):** Selector de Fecha y Hora (Date/Time Picker).
+* **Trigger:** PM hace clic en `[✅ Agendar Visita]`.
+* **DB:** Guarda `visit_date`, estado pasa a **Visita Agendada**.
+
+### Estado 2: Visita Agendada
+* **Descripción:** Visita fijada en el calendario. El PM no hace nada manual en el Happy Path.
+* **Campos UI (Happy Path):** Ninguno. Solo muestra la fecha de la visita.
+* **Trigger:** Automático (Fecha actual >= `visit_date`).
+* **DB:** Estado pasa a **Pendiente de Evaluación**.
+
+### Estado 3: Pendiente de Evaluación
+* **Descripción:** La visita ha ocurrido. El PM debe confirmar que el candidato es apto.
+* **Campos UI (Happy Path):** `Textarea` para redactar "Comentarios sobre la visita".
+* **Trigger:** PM rellena feedback y clica `[✅ Confirmar]` (o `[✅ Confirmar y Avanzar]`).
+* **DB:** Guarda `visit_feedback`, estado pasa a **Esperando Decisión**.
+
+### Estado 4: Esperando Decisión
+* **Descripción:** PM aprobó la visita. Se espera confirmación de alquiler por parte del interesado.
+* **Campos UI (Happy Path):** Pregunta UI: *¿Quiere el Interesado comenzar el proceso de Alquiler de esta propiedad?* (Botón: `Sí`).
+* **Trigger:** PM confirma interés del inquilino (`Sí`).
+* **DB:** `tenant_confirmed_interest = true`, estado pasa a **Recogiendo Información**.
+
+### Estado 5: Recogiendo Información
+* **Descripción:** Recopilación de documentos (DNI, Nóminas).
+* **Campos UI (Happy Path):** Botón `[✅ Enviar a Finaer]`.
+* **Trigger:** PM hace clic en `[✅ Enviar a Finaer]`.
+* **DB:** Guarda `sent_to_finaer_at`, estado pasa a **Calificación en Curso**.
+* **Automatización:** El resto de MTPs de este lead pasan a `En Espera`.
+
+### Estado 6: Calificación en Curso
+* **Descripción:** Finaer evalúa el riesgo financiero del interesado.
+* **Campos UI (Happy Path):** Pregunta UI: *¿Finaer acepta al Interesado?* (Botón: `Sí`).
+* **Happy Path:** Finaer Acepta -> Estado pasa a **Interesado Presentado**.
+* **Rechazo:** Se rellena motivo. Opciones: Descarte Total (Lead Rechazado) o Reciclaje (Lead vuelve a Fase 1).
+* **Actualización DB (Happy Path):** `finaer_status = 'approved'`, cambia `current_status` a **Interesado Presentado**.
+
+### Estado 7: Interesado Presentado
+* **Descripción:** El propietario decide si acepta al candidato.
+* **Campos UI (Happy Path):** Pregunta UI: *¿El propietario acepta al Interesado?* (Botón: `Sí`).
+* **Happy Path:** Propietario Acepta -> Estado pasa a **Interesado Aceptado**.
+* **Rechazo:** Idéntico a Finaer (Descarte Total o Reciclaje a Fase 1 con etiqueta "Rechazado por Propietario").
+* **Actualización DB (Happy Path):** `owner_status = 'approved'`, cambia `current_status` a **Interesado Aceptado**.
+
+### Estado 8: Interesado Aceptado
+* **Descripción:** Estado final de éxito. Interesado validado al 100%.
+* **Fin del flujo.**
+
+---
+
+## 3. Estados de Salida / Secundarios (Destinos del Modal)
+
+Estos estados no tienen Happy Path, son destinos de las excepciones a nivel de propiedad:
+* **En Espera:** Mini tarjeta propiedad pausada. Puede ser revivida.
+* **Descartada:** Rechazada por incompatibilidad (precio, zona, etc.). Puede ser revivida.
+* **Alquilada:** La propiedad fue alquilada a OTRA persona. (Automatización de Cascada Negativa).
+
+---
+
+## 4. Relación de Fases: Interesado <> MTP (Automatización)
+
+En lugar de botones manuales, el sistema evalúa constantemente el "Rango Máximo" de las MTPs activas. Si el Rango Máximo cambia, se dispara el **Modal de Confirmación de Transición** (ver Sección 6).
+
+### Fase 1: Interesado Cualificado -> Visita Agendada
+* **Condición:** Al menos una MTP pasa a `Visita Agendada`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Visita Agendada.
+* **Distribución de UI de la Tarjeta (2 Tabs):**
+  * **Tab 1: Espacio de trabajo:** Widget de Progreso General. Grid/Lista de las Propiedades en Gestión (mini tarjetas) mostrando sus estados y campos de trabajo. Sección con buscador de propiedades en cartera (para añadir nuevas).
+  * **Tab 2: Interesado `(⚠️ Componente ya implementado en código)`:** Display de la información personal/contacto del Interesado. *Nota para IA: Reutilizar componente existente, NO reescribir.*
+
+### Fase 2: Visita Agendada -> Recogiendo Información
+* **Condición:** Al menos una MTP pasa a `Recogiendo Información`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Recogiendo Info.
+* **Distribución de UI de la Tarjeta (3 Tabs):**
+  * **Tab 1: Espacio de trabajo (Foco en Cierre):** Widget de Progreso General. **Selector de Propiedad Principal:** Si hay múltiples mini tarjetas en este estado, el PM selecciona con cuál va a iniciar el proceso. Solo se muestra la mini tarjeta seleccionada. Campos de Información Personal y Laboral `(⚠️ Componentes ya implementados en código)`. *Nota para IA: Importar/reutilizar los campos existentes.* Formulario Finaer: Checkbox de confirmación de solicitud a Finaer + Input para el `ID de la solicitud`. *Acción y Efecto Cascada:* Al enviar la solicitud, la mini tarjeta seleccionada avanza a `Calificación en Curso`. Automáticamente, **el resto de mini tarjetas de este lead pasan al estado `En Espera`**.
+  * **Tab 2: Gestión de Propiedades (Nueva pestaña):** Absorbe la vista antigua del espacio de trabajo: Grid de las propiedades en gestión (ahora en espera) y buscador de cartera.
+  * **Tab 3: Interesado `(⚠️ Componente ya implementado)`:** Display de la información del interesado.
+
+### Fase 3: Recogiendo Información -> Calificación en Curso
+* **Condición:** Una MTP pasa a `Calificación en Curso`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Calificación.
+* **Distribución de UI de la Tarjeta (3 Tabs):** Misma disposición que la fase anterior.
+* **Lógica del Espacio de Trabajo:** Widget de Progreso. Mini tarjeta propiedad seleccionada en proceso de scoring. **Pregunta UI:** *¿Finaer acepta al Interesado?* **SÍ:** Se muestran los campos para confirmar la presentación al Propietario. Al confirmar, la mini tarjeta pasa a `Interesado Presentado`. **NO (Rechazo):** Se muestran inputs para "Motivos" y "Comentarios". Opciones del PM: **Opción A (Descarte Total):** La tarjeta del Interesado pasa a la fase `Interesado Rechazado` (Fin del flujo). **Opción B (Revivir/Reciclar):** Se lee el campo `previous_status` de las mini tarjetas que están `En Espera`. *Regla 1:* Si el estado previo era `Interesado` o `Visita Agendada`, la mini tarjeta revive en la fase inicial `Interesado` (Nota para BD: limpiar el campo `visit_date`). *Regla 2:* Si el estado previo era más avanzado (ej. `Pendiente de Evaluación`), revive exactamente en ese estado. El estado más avanzado de las mini tarjetas revividas definirá la nueva fase de la tarjeta del Interesado.
+
+### Fase 4: Calificación en Curso -> Interesado Presentado
+* **Condición:** Una MTP pasa a `Interesado Presentado`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Presentado.
+* **Distribución de UI de la Tarjeta (3 Tabs):** Misma disposición (Espacio de trabajo, Gestión de Propiedades, Interesado).
+* **Lógica del Espacio de Trabajo:** Widget de Progreso. Mini tarjeta propiedad seleccionada para presentación. **Pregunta UI:** *¿El propietario acepta al Interesado?* **SÍ:** La mini tarjeta cambia al estado `Interesado Aceptado`. **NO (Rechazo):** Trato idéntico al rechazo de Finaer (Descarte Total o Revivir/Reciclar mini tarjetas previas).
+
+### Fase 5: Interesado Presentado -> Interesado Aceptado
+* **Condición:** Una MTP pasa a `Interesado Aceptado`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Aceptado.
+* **Distribución de UI de la Tarjeta (Cambio Radical a 2 Tabs):**
+  * **Tab 1: Registro de Gestión:** Sustituye al espacio de trabajo. Muestra un histórico/timeline de solo lectura con toda la gestión realizada de las propiedades.
+  * **Tab 2: Interesado `(⚠️ Componente ya implementado)`:** Display de los datos personales y de contacto del interesado.
+
+---
+
+## 5. Gestión de Retroceso y Reactivación (Undo/Revive)
+
+Estas acciones también utilizan la lógica de automatización global y el **Modal de Confirmación de Transición**.
+
+### 5.1. Botón Deshacer (Undo)
+* **Ubicación:** Banner bajo el header "Anterior: [Estado]".
+* **UI: Banner de Resumen:**
+  * **Visibilidad:** Visible solo si `previous_status` IS NOT NULL.
+  * **Ubicación:** Debajo del Header.
+  * **Diseño:** Fondo de alerta suave (Gris/Amarillo pálido).
+  * **Contenido:** Etiqueta: "Anterior: **[Nombre Estado Previo]**". Data Snapshot: Resumen del dato clave de ese estado (Fecha, Feedback, etc.). **Botón de Acción:** **`[↩️ Deshacer]`**.
+* **Lógica:**
+    1. PM pulsa `[↩️ Deshacer]`.
+    2. Sistema calcula: ¿Al revertir esta MTP, cambia la fase del Lead?
+    3. **SÍ cambia:** Muestra **Modal de Confirmación de Transición (Hacia atrás)**.
+    4. **NO cambia:** Ejecuta el cambio inmediatamente (esta MTP no es la única que mantiene al Interesado en su fase actual).
+* **Ejecución (Post-Confirmación):** Actualiza `current_status` al valor de `previous_status`. Limpia el campo `previous_status`. Si hubo cambio de fase global, actualiza la UI del Interesado inmediatamente.
+
+### 5.2. Botón Recuperar (Revive)
+* **Ubicación:** Sección "Archivo de Propiedades" (Tab Gestión). Título: "Archivo de Propiedades (Descartadas / En Espera / Alquiladas)". Item de Lista: Tarjeta compacta con estado de salida y botón **`[♻️ Recuperar]`**.
+* **Lógica:**
+    1. PM pulsa `[♻️ Recuperar]`.
+    2. Sistema calcula estado destino (aplica regla de caducidad si es visita antigua):
+       * *Regla Caducidad:* Si (`previous_status` == 'Visita Agendada' AND `visit_date` < HOY) -> Destino = **Perfil Cualificado**.
+       * *Regla Normal:* Destino = `previous_status`.
+    3. Sistema calcula: ¿Este nuevo estado es superior a la fase actual del Lead?
+    4. **SÍ es superior:** Muestra **Modal de Confirmación de Transición (Hacia adelante)**.
+    5. **NO es superior:** Reactiva la MTP en la lista de gestión sin molestar.
+* **Ejecución (Post-Confirmación):** Actualiza `current_status` al Destino calculado. Si aplica la Regla de Caducidad, limpia `visit_date` y obliga al PM a re-agendar. Sincroniza la Fase Global del Interesado según el nuevo estado "Highest Rank".
+
+---
+
+## 6. Componente Global: Modal de Confirmación de Transición
+
+Este modal es el **único mecanismo** para mover al Interesado entre columnas. Se dispara automáticamente ante cualquier cambio de estado (Avance normal, Deshacer o Revivir) que implique un cambio de Fase Global.
+
+### Diseño Visual
+* **Título:** "Actualización de Fase del Interesado"
+* **Iconografía:** Flecha grande conectando dos estados.
+    * *Ejemplo Avance:* `[Fase 1: Cualificado]  ➡️  [Fase 2: Visita Agendada]`
+    * *Ejemplo Retroceso:* `[Fase 3: Recogiendo Info]  ⬅️  [Fase 2: Visita Agendada]` (Color de alerta/naranja).
+* **Contenido:**
+    * "La acción realizada sobre la propiedad **[Dirección]** requiere mover la tarjeta del Interesado."
+* **Mecanismo de Confirmación (Input):**
+    * **Check/Radio Button:** `[ O ]` "Confirmar cambio de fase a **[Nombre Nueva Fase]**".
+* **Botonera:**
+    * `[Cancelar]` (Cancela la acción en la MTP y no mueve nada).
+    * `[Confirmar y Mover]` (Habilitado solo al marcar el check).
+
+---
+
+## 7. Algoritmo Maestro (Para Cursor)
+
+`Observer: On MTP State Change (New, Update, Undo, Revive)`
+
+1. **Simulación:** Calcular cuál sería el `current_status` de la MTP.
+2. **Cálculo Global:** Obtener todas las MTPs activas del Lead + la simulada.
+3. **Determinar Max Rank:** ¿Cuál es la fase más avanzada resultante?
+4. **Comparación:** `if (Calculated_Phase != Lead_Current_Phase)`:
+    * **Stop Action.**
+    * **Trigger UI:** Abrir `TransitionConfirmationModal` con los datos (From -> To).
+    * **On User Confirm:**
+        * Commit del cambio en la MTP.
+        * Update `lead_current_phase`.
+        * Animar movimiento de tarjeta en Kanban.
+5. **Else (No hay cambio de fase):**
+    * Ejecutar cambio en MTP directamente.
+
+### Trigger adicional (Backend Logic) para consistencia tras Undo/Revive
+
+`Trigger: After MTP Update (Undo or Revive)`
+1. Obtener todas las MTPs activas del `lead_id`.
+2. Determinar el `max_state_rank` (el estado más avanzado de entre todas).
+3. Actualizar `lead_current_phase` = `max_state_rank`.
+
+---
+
+# Documentación Técnica: UI y Acciones de la Mini Tarjeta Propiedad
+
+Esta especificación define la estructura visual, el menú de acciones y la visualización de datos históricos de la tarjeta.
+
+---
+
+## 1. Estructura Visual de la Tarjeta
+
+### 1.1. Header (Cabecera)
+* **Distribución (Flexbox):**
+    1.  **Izquierda:** Foto + Dirección + Precio `(⚠️ Componentes ya implementados)`.
+    2.  **Centro/Derecha:** `Status Badge` (Etiqueta de Estado con color dinámico).
+    3.  **Extrema Derecha:** Botón `Kebab Menu` (Icono `⋮`).
+
+### 1.2. Body (Sección de Trabajo)
+* **Comportamiento:** Muestra los inputs/acciones dinámicos correspondientes al `current_status` actual (según definición de Fase 1).
+
+---
+
+## 2. Lógica del Menú de Acciones (Kebab Menu)
+
+Al hacer clic en el icono `⋮`, se despliega un menú flotante (`Dropdown Menu`) con las siguientes opciones:
+
+### Opciones del Menú:
+1.  **👁️ Ver detalles de propiedad** `(⚠️ Ya diseñado e implementado)`
+    * **Acción:** Abre el Modal de Detalles Completo existente.
+    * **Nota Técnica:** Reutilizar el componente `PropertyDetailsModal` (o nombre equivalente en el código actual). NO crear uno nuevo.
+2.  **📋 Registro de Actividad** (NUEVO)
+    * **Acción:** Abre el Modal de Línea de Tiempo (ver sección 3.4).
+    * **Objetivo:** Consultar el histórico de estados y los datos recogidos en cada paso.
+3.  **📅 Reagendar Visita**
+    * **Condición:** Solo visible en fases `Visita Agendada` y `Pendiente Evaluación`.
+    * **Acción:** Abre Modal de Reagendar.
+4.  **⏸️ Pausar (Poner en Espera)**
+    * **Acción:** Abre Modal de Pausa.
+5.  **🗑️ Descartar Propiedad**
+    * **Acción:** Abre Modal de Descarte (Estilo destructivo/rojo).
+
+---
+
+## 3. Definición de Modales (Acciones y Visualización)
+
+### 3.1. Modal de Descarte
+* **Campos:** Motivo (Select) + Comentarios (Textarea).
+* **Acción:** Cambia estado a `Descartada`.
+
+### 3.2. Modal de Pausa
+* **Campos:** Motivo (Select) + Comentarios (Textarea).
+* **Acción:** Cambia estado a `En Espera`.
+
+### 3.3. Modal de Reagendar
+* **Campos:** Justificación (Select+Text) -> Nueva Fecha (Datepicker).
+* **Acción:** Actualiza `visit_date` y devuelve estado a `Visita Agendada`.
+
+### 3.4. Modal de Registro de Actividad (NUEVO)
+Este modal es **exclusivamente de lectura**. Muestra la trazabilidad de la gestión.
+
+* **Título:** "Registro de Actividad - [Dirección Propiedad]"
+* **Diseño Visual:** Timeline Vertical (Stepper).
+* **Orden:** Cronológico inverso (Lo más reciente arriba).
+
+#### Estructura del Item de Actividad (Cada paso del Timeline):
+1.  **Cabecera del Item:**
+    * **Nombre del Estado:** (ej. "Pendiente de Evaluación").
+    * **Fecha y Hora:** Timestamp del cambio (`updated_at`).
+    * **Indicador Visual:** Icono del estado.
+2.  **Cuerpo del Item (Contenido Desplegable):**
+    * Muestra los datos específicos guardados en esa fase (ej. Feedback de visita, ID de Finaer, Motivos de Pausa, etc.).

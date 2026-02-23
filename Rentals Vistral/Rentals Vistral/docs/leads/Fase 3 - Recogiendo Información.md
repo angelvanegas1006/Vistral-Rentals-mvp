@@ -121,6 +121,7 @@ Ver también: `docs/docs-architecture.md` — sección "Leads (lead-restricted-d
 
 ## 7. Documentación relacionada
 
+- **Fases del Kanban de Interesados:** `docs/leads/Kanban-Interesados-Fases.md`
 - **Arquitectura de documentos:** `docs/docs-architecture.md`
 - **SQL de campos de la fase:** `SQL/create_leads_personal_family_fields.sql`
 - **Tipos:** `src/lib/supabase/types.ts` (tabla `leads`)

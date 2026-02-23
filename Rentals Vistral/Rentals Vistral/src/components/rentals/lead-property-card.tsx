@@ -9,9 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PropertySummaryTab } from "@/components/rentals/property-summary-tab";
-import { ExternalLink, ChevronDown } from "lucide-react";
+import { ExternalLink, ChevronDown, MoreVertical, Eye, History, Calendar, Pause, Trash2, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MTP_STATUS_TITLES } from "@/lib/leads/mtp-status";
 import type { Database } from "@/lib/supabase/types";
 
 type LeadsPropertyRow = Database["public"]["Tables"]["leads_properties"]["Row"];
@@ -24,6 +31,11 @@ export interface LeadPropertyCardProps {
   property: PropertyRow;
   workSection: React.ReactNode;
   className?: string;
+  onUndo?: () => void;
+  onReagendar?: () => void;
+  onPausar?: () => void;
+  onDescartar?: () => void;
+  onRegistroActividad?: () => void;
 }
 
 function getFirstImage(property: PropertyRow): string {
@@ -38,6 +50,11 @@ export function LeadPropertyCard({
   property,
   workSection,
   className,
+  onUndo,
+  onReagendar,
+  onPausar,
+  onDescartar,
+  onRegistroActividad,
 }: LeadPropertyCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [workOpen, setWorkOpen] = useState(true);
@@ -48,6 +65,12 @@ export function LeadPropertyCard({
   const bedrooms = property.bedrooms != null ? `${property.bedrooms} hab.` : "";
   const infoLine2 = [areaCluster, price, bedrooms].filter(Boolean).join(" · ");
   const currentPhase = property.current_stage || property.current_phase || "Publicado";
+
+  const status = leadsProperty.current_status ?? "perfil_cualificado";
+  const statusLabel = MTP_STATUS_TITLES[status as keyof typeof MTP_STATUS_TITLES] ?? status;
+  const showReagendar =
+    (status === "visita_agendada" || status === "pendiente_de_evaluacion") &&
+    onReagendar;
 
   return (
     <>
@@ -85,18 +108,71 @@ export function LeadPropertyCard({
             )}
           </div>
 
-          {/* 1.3 Botón Ver más detalles */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="flex-shrink-0"
-            onClick={() => setModalOpen(true)}
-            aria-label="Ver más detalles"
-            title="Ver más detalles"
-          >
-            <ExternalLink className="h-5 w-5" />
-          </Button>
+          {/* 1.3 Status Badge */}
+          <span className="rounded-md border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] px-2 py-1 text-xs font-medium text-foreground">
+            {statusLabel}
+          </span>
+
+          {/* 1.4 Kebab Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="flex-shrink-0"
+                aria-label="Menú de acciones"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setModalOpen(true)}>
+                <Eye className="mr-2 h-4 w-4" />
+                Ver detalles de propiedad
+              </DropdownMenuItem>
+              {onRegistroActividad && (
+                <DropdownMenuItem onClick={onRegistroActividad}>
+                  <History className="mr-2 h-4 w-4" />
+                  Registro de Actividad
+                </DropdownMenuItem>
+              )}
+              {showReagendar && (
+                <DropdownMenuItem onClick={onReagendar}>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Reagendar Visita
+                </DropdownMenuItem>
+              )}
+              {onPausar && (
+                <DropdownMenuItem onClick={onPausar}>
+                  <Pause className="mr-2 h-4 w-4" />
+                  Pausar (Poner en Espera)
+                </DropdownMenuItem>
+              )}
+              {onDescartar && (
+                <DropdownMenuItem onClick={onDescartar} className="text-destructive focus:text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Descartar Propiedad
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
+        {/* Banner Undo: Anterior: [Estado] */}
+        {leadsProperty.previous_status && onUndo && (
+          <div className="flex items-center justify-between gap-2 px-4 md:px-5 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/50 dark:border-amber-800/50">
+            <span className="text-sm text-amber-800 dark:text-amber-200">
+              Anterior:{" "}
+              <strong>
+                {MTP_STATUS_TITLES[leadsProperty.previous_status as keyof typeof MTP_STATUS_TITLES] ?? leadsProperty.previous_status}
+              </strong>
+            </span>
+            <Button variant="ghost" size="sm" onClick={onUndo} className="text-amber-800 dark:text-amber-200">
+              <Undo2 className="mr-1 h-4 w-4" />
+              Deshacer
+            </Button>
+          </div>
+        )}
 
         {/* Toggle de sección de trabajo */}
         <button

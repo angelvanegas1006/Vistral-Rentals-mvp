@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { RentalsLeadCard } from "./rentals-lead-card";
@@ -64,34 +64,41 @@ interface RentalsLeadsKanbanBoardProps {
 
 // Fases del Kanban de Interesados (orden fijo) - exportadas para uso en detalle del lead
 export const LEAD_PHASE_IDS = [
-  "perfil-cualificado",
+  "interesado-cualificado",
   "visita-agendada",
   "recogiendo-informacion",
   "calificacion-en-curso",
   "calificacion-aprobada",
   "inquilino-aceptado",
+  "interesado-perdido",
+  "interesado-rechazado",
 ] as const;
 
 export const LEAD_PHASE_TITLES: Record<(typeof LEAD_PHASE_IDS)[number], string> = {
-  "perfil-cualificado": "Perfil cualificado",
-  "visita-agendada": "Visita agendada",
+  "interesado-cualificado": "Interesado Cualificado",
+  "visita-agendada": "Visita Agendada",
   "recogiendo-informacion": "Recogiendo Información",
-  "calificacion-en-curso": "Calificación en curso",
-  "calificacion-aprobada": "Inquilino presentado",
-  "inquilino-aceptado": "Inquilino aceptado",
+  "calificacion-en-curso": "Calificación en Curso",
+  "calificacion-aprobada": "Interesado Presentado",
+  "inquilino-aceptado": "Interesado Aceptado",
+  "interesado-perdido": "Interesado Perdido",
+  "interesado-rechazado": "Interesado Rechazado",
 };
+
+// Fases terminales: tarjetas desactivadas y columnas diferenciadas del flujo principal
+export const LEAD_TERMINAL_PHASE_IDS = ["interesado-perdido", "interesado-rechazado"] as const;
 
 // Mapeo de phaseId a nombre de fase
 const phaseIdToPhaseName: Record<string, string> = { ...LEAD_PHASE_TITLES };
 
 // Datos mock para el Kanban de Interesados (tarjetas repartidas en las 7 fases)
 const MOCK_LEADS_BY_PHASE: Record<string, Lead[]> = {
-  "perfil-cualificado": [
-    { id: "LEAD-001", name: "Juan Pérez", phone: "+34 600 123 456", email: "juan.perez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Perfil cualificado", daysInPhase: 1 },
-    { id: "LEAD-002", name: "María García", phone: "+34 611 234 567", email: "maria.garcia@email.com", zone: "Chamberí", currentPhase: "Perfil cualificado", daysInPhase: 3 },
+  "interesado-cualificado": [
+    { id: "LEAD-001", name: "Juan Pérez", phone: "+34 600 123 456", email: "juan.perez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Interesado Cualificado", daysInPhase: 1 },
+    { id: "LEAD-002", name: "María García", phone: "+34 611 234 567", email: "maria.garcia@email.com", zone: "Chamberí", currentPhase: "Interesado Cualificado", daysInPhase: 3 },
   ],
   "visita-agendada": [
-    { id: "LEAD-003", name: "Carlos López", phone: "+34 622 345 678", email: "carlos.lopez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Visita agendada", daysInPhase: 2 },
+    { id: "LEAD-003", name: "Carlos López", phone: "+34 622 345 678", email: "carlos.lopez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Visita Agendada", daysInPhase: 2 },
   ],
   "recogiendo-informacion": [
     { id: "LEAD-004", name: "Ana Martínez", phone: "+34 633 456 789", email: "ana.martinez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Recogiendo Información", daysInPhase: 5 },
@@ -99,15 +106,17 @@ const MOCK_LEADS_BY_PHASE: Record<string, Lead[]> = {
     { id: "LEAD-009", name: "Pablo Ruiz", phone: "+34 688 901 234", email: "pablo.ruiz@email.com", zone: "Retiro", currentPhase: "Recogiendo Información", daysInPhase: 2 },
   ],
   "calificacion-en-curso": [
-    { id: "LEAD-010", name: "Elena Torres", phone: "+34 699 012 345", email: "elena.torres@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Calificación en curso", daysInPhase: 4 },
+    { id: "LEAD-010", name: "Elena Torres", phone: "+34 699 012 345", email: "elena.torres@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Calificación en Curso", daysInPhase: 4 },
   ],
   "calificacion-aprobada": [
-    { id: "LEAD-005", name: "Pedro Sánchez", phone: "+34 644 567 890", email: "pedro.sanchez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Inquilino presentado", daysInPhase: 7 },
+    { id: "LEAD-005", name: "Pedro Sánchez", phone: "+34 644 567 890", email: "pedro.sanchez@email.com", interestedProperty: { id: "PROP-006", address: "Calle Alcalá 100, 5º E", city: "Madrid" }, zone: "Centro", currentPhase: "Interesado Presentado", daysInPhase: 7 },
   ],
   "inquilino-aceptado": [
-    { id: "LEAD-006", name: "Laura Fernández", phone: "+34 655 678 901", email: "laura.fernandez@email.com", zone: "Salamanca", currentPhase: "Inquilino aceptado", daysInPhase: 10 },
-    { id: "LEAD-007", name: "Roberto Silva", phone: "+34 666 789 012", email: "roberto.silva@email.com", zone: "Retiro", currentPhase: "Inquilino aceptado", daysInPhase: 0 },
+    { id: "LEAD-006", name: "Laura Fernández", phone: "+34 655 678 901", email: "laura.fernandez@email.com", zone: "Salamanca", currentPhase: "Interesado Aceptado", daysInPhase: 10 },
+    { id: "LEAD-007", name: "Roberto Silva", phone: "+34 666 789 012", email: "roberto.silva@email.com", zone: "Retiro", currentPhase: "Interesado Aceptado", daysInPhase: 0 },
   ],
+  "interesado-perdido": [],
+  "interesado-rechazado": [],
 };
 
 export const mockLeadsColumns: LeadsKanbanColumn[] = LEAD_PHASE_IDS.map((id) => ({
@@ -121,10 +130,12 @@ function SortableLeadCard({
   lead,
   onClick,
   searchQuery,
+  isTerminalPhase,
 }: {
   lead: Lead;
   onClick: () => void;
   searchQuery: string;
+  isTerminalPhase: boolean;
 }) {
   const {
     attributes,
@@ -147,13 +158,13 @@ function SortableLeadCard({
       style={style} 
       {...attributes}
       {...listeners}
-      className="cursor-grab active:cursor-grabbing"
+      className={isTerminalPhase ? "cursor-default" : "cursor-grab active:cursor-grabbing"}
     >
       <RentalsLeadCard
         lead={lead}
         onClick={onClick}
         searchQuery={searchQuery}
-        disabled={isDragging}
+        disabled={isDragging || isTerminalPhase}
       />
     </div>
   );
@@ -163,9 +174,11 @@ function SortableLeadCard({
 function DroppableColumn({
   column,
   children,
+  isTerminalPhase,
 }: {
   column: LeadsKanbanColumn;
   children: React.ReactNode;
+  isTerminalPhase: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -177,7 +190,11 @@ function DroppableColumn({
       data-column-id={column.id}
       className={cn(
         "flex flex-col flex-shrink-0 min-w-[320px] md:min-w-[320px] w-full md:w-[320px] pt-[7px] pb-[7px]",
-        isOver && "ring-2 ring-[var(--vistral-blue-500)] ring-offset-2 rounded-lg"
+        isOver && "ring-2 ring-[var(--vistral-blue-500)] ring-offset-2 rounded-lg",
+        isTerminalPhase && [
+          "border-l border-border pl-4 ml-2",
+          "bg-muted/30 dark:bg-muted/10 rounded-r-lg",
+        ]
       )}
     >
       {children}
@@ -227,13 +244,24 @@ export function RentalsLeadsKanbanBoard({
     const columnsMap: Record<string, Lead[]> = {};
 
     // Agrupar leads por fase (por nombre de fase; si no coincide, a la primera)
-    // Compatibilidad: en BD puede seguir "Calificación aprobada" → se asigna a la columna "Inquilino presentado"
+    // Compatibilidad: en BD puede seguir nombres antiguos → mapear a nombres actuales (Title Case)
+    const phaseNameMap: Record<string, string> = {
+      "Calificación aprobada": "Interesado Presentado",
+      "Inquilino presentado": "Interesado Presentado",
+      "Inquilino aceptado": "Interesado Aceptado",
+      "Perfil cualificado": "Interesado Cualificado",
+      "Interesado cualificado": "Interesado Cualificado",
+      "Visita agendada": "Visita Agendada",
+      "Calificación en curso": "Calificación en Curso",
+      "Interesado presentado": "Interesado Presentado",
+      "Interesado aceptado": "Interesado Aceptado",
+      "Interesado perdido": "Interesado Perdido",
+      "Interesado rechazado": "Interesado Rechazado",
+    };
     allSupabaseLeads.forEach((leadRow) => {
       const mappedLead = mapLeadFromSupabase(leadRow);
       const phaseNameForIndex =
-        mappedLead.currentPhase === "Calificación aprobada"
-          ? "Inquilino presentado"
-          : mappedLead.currentPhase;
+        phaseNameMap[mappedLead.currentPhase] ?? mappedLead.currentPhase;
       const phaseIndex = leadPhases.indexOf(phaseNameForIndex);
       const phaseId = phaseIndex >= 0 ? LEAD_PHASE_IDS[phaseIndex] : LEAD_PHASE_IDS[0];
 
@@ -594,51 +622,70 @@ export function RentalsLeadsKanbanBoard({
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-gutter-md lg:gap-gutter-lg xl:gap-gutter-xl h-full min-w-max overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-        {filteredColumns.map((column) => (
-          <SortableContext
-            key={column.id}
-            id={column.id}
-            items={column.leads.map((lead) => lead.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <DroppableColumn column={column}>
-              {/* Header de la columna - mismo estilo que Captación/Cierre */}
-              <div className="mb-[7px] flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-foreground">
-                    {column.title}
-                  </h2>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                    {column.leads.length}
-                  </span>
-                </div>
-              </div>
+        {filteredColumns.map((column, colIndex) => {
+          const isTerminalPhase = (LEAD_TERMINAL_PHASE_IDS as readonly string[]).includes(column.id);
+          const showSeparatorBefore = isTerminalPhase && colIndex > 0 && !(LEAD_TERMINAL_PHASE_IDS as readonly string[]).includes(filteredColumns[colIndex - 1]?.id ?? "");
 
-              {/* Contenedor de leads con scroll */}
-              <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
-                {column.leads.length === 0 ? (
-                  <div className="bg-card dark:bg-[#000000] border border-border rounded-lg p-6 md:border-0 md:bg-transparent text-center">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      No hay interesados
-                    </p>
-                    <p className="text-xs text-muted-foreground/70 mt-1">
-                      Los interesados aparecerán aquí
-                    </p>
+          return (
+            <React.Fragment key={column.id}>
+              {showSeparatorBefore && (
+                <div className="flex-shrink-0 w-px self-stretch bg-border mx-1" aria-hidden />
+              )}
+              <SortableContext
+                id={column.id}
+                items={column.leads.map((lead) => lead.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <DroppableColumn column={column} isTerminalPhase={isTerminalPhase}>
+                  {/* Header de la columna */}
+                  <div className="mb-[7px] flex-shrink-0">
+                    <div className="flex items-center justify-between">
+                      <h2 className={cn(
+                        "text-sm font-semibold",
+                        isTerminalPhase ? "text-muted-foreground" : "text-foreground"
+                      )}>
+                        {column.title}
+                      </h2>
+                      <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full",
+                        isTerminalPhase ? "text-muted-foreground/80 bg-muted/50" : "text-muted-foreground bg-muted"
+                      )}>
+                        {column.leads.length}
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  column.leads.map((lead) => (
-                    <SortableLeadCard
-                      key={lead.id}
-                      lead={lead}
-                      onClick={() => handleCardClick(lead.id)}
-                      searchQuery={searchQuery}
-                    />
-                  ))
-                )}
-              </div>
-            </DroppableColumn>
-          </SortableContext>
-        ))}
+
+                  {/* Contenedor de leads con scroll */}
+                  <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
+                    {column.leads.length === 0 ? (
+                      <div className={cn(
+                        "rounded-lg p-6 text-center",
+                        isTerminalPhase ? "bg-muted/20 dark:bg-muted/5 border border-dashed border-border" : "bg-card dark:bg-[#000000] border border-border md:border-0 md:bg-transparent"
+                      )}>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          No hay interesados
+                        </p>
+                        <p className="text-xs text-muted-foreground/70 mt-1">
+                          {isTerminalPhase ? "Arrastra aquí para marcar como cerrado" : "Los interesados aparecerán aquí"}
+                        </p>
+                      </div>
+                    ) : (
+                      column.leads.map((lead) => (
+                        <SortableLeadCard
+                          key={lead.id}
+                          lead={lead}
+                          onClick={() => handleCardClick(lead.id)}
+                          searchQuery={searchQuery}
+                          isTerminalPhase={isTerminalPhase}
+                        />
+                      ))
+                    )}
+                  </div>
+                </DroppableColumn>
+              </SortableContext>
+            </React.Fragment>
+          );
+        })}
       </div>
 
       {/* Overlay para mostrar la tarjeta mientras se arrastra - mismo ancho que columna */}

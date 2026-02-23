@@ -1,10 +1,10 @@
 # LeadPropertyCard
 
-Componente de tarjeta reutilizable que representa la relación entre un lead y una propiedad (`leads_properties`). Se usa en el **Espacio de trabajo** del detalle del lead cuando la fase es **Perfil cualificado**.
+Componente de tarjeta reutilizable que representa la relación entre un lead y una propiedad (`leads_properties`). Se usa en el **Espacio de trabajo** del detalle del lead cuando la fase es **Interesado Cualificado**.
 
 ## Propósito
 
-Permite al usuario ver información resumida de cada propiedad asignada al lead y realizar tareas específicas por fase (por ejemplo, registrar la fecha de visita agendada en Perfil cualificado).
+Permite al usuario ver información resumida de cada propiedad asignada al lead y realizar tareas específicas por fase (por ejemplo, registrar la fecha de visita agendada en Interesado Cualificado).
 
 ## Estructura visual
 
@@ -14,8 +14,8 @@ Permite al usuario ver información resumida de cada propiedad asignada al lead 
 │          area_cluster · precio €/mes · N hab.                    │
 ├─────────────────────────────────────────────────────────────────┤
 │  Sección de trabajo (slot flexible)                              │
-│  - Perfil cualificado: Fecha de visita agendada                  │
-│  - Otras fases: campos según corresponda                        │
+│  - Interesado Cualificado: Fecha de visita agendada                  │
+│  - Otras fases: campos según corresponda                         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -77,7 +77,7 @@ flowchart LR
 La prop `workSection` es un slot. Puedes pasar diferentes componentes según la fase:
 
 ```tsx
-// Fase Perfil cualificado
+// Fase Interesado Cualificado
 <LeadPropertyCard
   leadsProperty={lp}
   property={prop}
@@ -107,7 +107,7 @@ La prop `workSection` es un slot. Puedes pasar diferentes componentes según la 
 
 | Ubicación | Condición |
 |-----------|-----------|
-| `LeadTasksTab` | Solo cuando `lead.currentPhase === "Perfil cualificado"` |
+| `LeadTasksTab` | Solo cuando `lead.currentPhase === "Interesado Cualificado"` |
 
 El archivo `src/components/rentals/lead-tasks-tab.tsx` usa `useLeadProperties(lead.leadsUniqueId)` para obtener las tarjetas y las renderiza solo en esa fase.
 
@@ -133,7 +133,7 @@ ADD COLUMN IF NOT EXISTS scheduled_visit_date DATE;
 
 - `src/app/api/leads/[leadId]/properties/route.ts` - API GET para obtener leads_properties + properties
 - `src/components/rentals/lead-property-card.tsx` - Componente principal
-- `src/components/rentals/lead-property-card-work-perfil-cualificado.tsx` - Sección de trabajo para Perfil cualificado
+- `src/components/rentals/lead-property-card-work-perfil-cualificado.tsx` - Sección de trabajo para Interesado Cualificado
 - `src/components/rentals/lead-tasks-tab.tsx` - Integración
 - `src/hooks/use-lead-properties.ts` - Hook de datos
 - `src/services/leads-sync.ts` - Servicio de actualización

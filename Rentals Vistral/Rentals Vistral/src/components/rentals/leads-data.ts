@@ -100,7 +100,7 @@ export const mockLeadsData: Lead[] = [
       city: "Madrid",
     },
     zone: "Centro",
-    currentPhase: "Inquilino Aceptado",
+    currentPhase: "Interesado Aceptado",
   },
   {
     id: "LEAD-006",

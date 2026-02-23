@@ -403,15 +403,41 @@ export interface Database {
       leads_properties: {
         Row: {
           id: string;
-          leads_unique_id: string; // References leads.leads_unique_id
-          properties_unique_id: string; // References properties.property_unique_id
-          scheduled_visit_date?: string | null; // Fecha de visita agendada (DATE) - opcional hasta migración
+          leads_unique_id: string;
+          properties_unique_id: string;
+          scheduled_visit_date?: string | null;
+          current_status?: string | null;
+          previous_status?: string | null;
+          updated_at?: string | null;
+          visit_date?: string | null;
+          visit_feedback?: string | null;
+          tenant_confirmed_interest?: string | null;
+          sent_to_finaer_at?: string | null;
+          finaer_status?: string | null;
+          finaer_rejection_reason?: string | null;
+          owner_status?: string | null;
+          owner_rejection_reason?: string | null;
+          exit_reason?: string | null;
+          exit_comments?: string | null;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["leads_properties"]["Row"], "id" | "created_at"> & {
           id?: string;
           created_at?: string;
           scheduled_visit_date?: string | null;
+          current_status?: string | null;
+          previous_status?: string | null;
+          updated_at?: string | null;
+          visit_date?: string | null;
+          visit_feedback?: string | null;
+          tenant_confirmed_interest?: string | null;
+          sent_to_finaer_at?: string | null;
+          finaer_status?: string | null;
+          finaer_rejection_reason?: string | null;
+          owner_status?: string | null;
+          owner_rejection_reason?: string | null;
+          exit_reason?: string | null;
+          exit_comments?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["leads_properties"]["Insert"]>;
       };

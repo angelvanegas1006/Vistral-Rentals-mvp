@@ -9,26 +9,33 @@ import { LeadSummaryTab } from "@/components/rentals/lead-summary-tab";
 import { LeadRightSidebar } from "@/components/rentals/lead-right-sidebar";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { Button } from "@/components/ui/button";
-import { LEAD_PHASE_IDS, LEAD_PHASE_TITLES } from "@/components/rentals/rentals-leads-kanban-board";
 import { useLead } from "@/hooks/use-lead";
-import { useUpdateLead } from "@/hooks/use-update-lead";
-import { toast } from "sonner";
 
 export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const leadId = params.id as string;
   const { lead: leadRow, loading: isLoading, error: loadError, refetch: refetchLead } = useLead(leadId);
-  const { updateLead } = useUpdateLead();
   const [activeTab, setActiveTab] = useState("tasks");
   const [showFooter, setShowFooter] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [isSaving, setIsSaving] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const rawPhase = leadRow?.current_phase ?? "Perfil cualificado";
-  const currentPhase =
-    rawPhase === "Calificación aprobada" ? "Inquilino presentado" : rawPhase;
+  const rawPhase = leadRow?.current_phase ?? "Interesado Cualificado";
+  const phaseMap: Record<string, string> = {
+    "Calificación aprobada": "Interesado Presentado",
+    "Inquilino presentado": "Interesado Presentado",
+    "Inquilino aceptado": "Interesado Aceptado",
+    "Perfil cualificado": "Interesado Cualificado",
+    "Interesado cualificado": "Interesado Cualificado",
+    "Visita agendada": "Visita Agendada",
+    "Calificación en curso": "Calificación en Curso",
+    "Interesado presentado": "Interesado Presentado",
+    "Interesado aceptado": "Interesado Aceptado",
+    "Interesado perdido": "Interesado Perdido",
+    "Interesado rechazado": "Interesado Rechazado",
+  };
+  const currentPhase = phaseMap[rawPhase] ?? rawPhase;
 
   const lead = leadRow
     ? {
@@ -61,39 +68,7 @@ export default function LeadDetailPage() {
       }
     : null;
 
-  // Orden de fases para calcular "siguiente fase"
-  const currentPhaseIndex = lead
-    ? LEAD_PHASE_IDS.findIndex((id) => LEAD_PHASE_TITLES[id] === lead.currentPhase)
-    : -1;
-  const canAdvancePhase =
-    lead != null && currentPhaseIndex >= 0 && currentPhaseIndex < LEAD_PHASE_IDS.length - 1;
-  const nextPhaseLabel = canAdvancePhase
-    ? `Avanzar a ${LEAD_PHASE_TITLES[LEAD_PHASE_IDS[currentPhaseIndex + 1]]}`
-    : undefined;
-
-  const handleNextPhase = async () => {
-    if (!canAdvancePhase || !lead) return;
-    const nextPhaseId = LEAD_PHASE_IDS[currentPhaseIndex + 1];
-    const nextPhaseName = LEAD_PHASE_TITLES[nextPhaseId];
-    try {
-      setIsSaving(true);
-      const success = await updateLead(leadId, {
-        current_phase: nextPhaseName,
-        days_in_phase: 0,
-      });
-      if (success) {
-        toast.success(`Interesado avanzado a: ${nextPhaseName}`);
-        router.refresh();
-      } else {
-        toast.error("Error al avanzar a la siguiente fase");
-      }
-    } catch {
-      toast.error("Error al avanzar a la siguiente fase");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
+  // La fase del Interesado se mueve automáticamente según el estado de las MTPs (no hay botón manual)
   const tabs = [
     { id: "tasks", label: "Espacio de trabajo", badge: undefined },
     { id: "summary", label: "Interesado", badge: undefined },
@@ -148,10 +123,6 @@ export default function LeadDetailPage() {
         <NavbarL2
           title="Detalles del interesado"
           backHref="/rentals/leads"
-          onNextPhase={handleNextPhase}
-          isSaving={isSaving}
-          canAdvancePhase={canAdvancePhase}
-          nextPhaseLabel={nextPhaseLabel}
         />
 
         {/* Contenido principal - misma estructura que propiedad */}

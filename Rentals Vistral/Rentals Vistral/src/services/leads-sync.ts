@@ -94,14 +94,31 @@ export async function unassignLeadFromProperty(
   }
 }
 
+/** Campos actualizables de leads_properties */
+export type LeadsPropertyUpdate = {
+  scheduled_visit_date?: string | null;
+  current_status?: string | null;
+  previous_status?: string | null;
+  visit_date?: string | null;
+  visit_feedback?: string | null;
+  tenant_confirmed_interest?: string | null;
+  sent_to_finaer_at?: string | null;
+  finaer_status?: string | null;
+  finaer_rejection_reason?: string | null;
+  owner_status?: string | null;
+  owner_rejection_reason?: string | null;
+  exit_reason?: string | null;
+  exit_comments?: string | null;
+};
+
 /**
  * Actualizar un registro de leads_properties
  * @param leadsPropertyId - id (UUID) del registro en leads_properties
- * @param data - campos a actualizar (ej. scheduled_visit_date)
+ * @param data - campos a actualizar
  */
 export async function updateLeadsProperty(
   leadsPropertyId: string,
-  data: { scheduled_visit_date?: string | null }
+  data: LeadsPropertyUpdate
 ): Promise<boolean> {
   try {
     const response = await fetch(`/api/leads-properties/${encodeURIComponent(leadsPropertyId)}`, {
@@ -118,6 +135,63 @@ export async function updateLeadsProperty(
   } catch (error) {
     console.error("Error updating leads_properties:", error);
     return false;
+  }
+}
+
+export interface TransitionResult {
+  success: boolean;
+  requiresConfirmation?: {
+    fromPhase: string;
+    toPhase: string;
+    propertyAddress: string;
+  };
+  data?: unknown;
+}
+
+/**
+ * Transición de estado de una MTP (usa el Algoritmo Maestro).
+ * Si requiresConfirmation, mostrar modal y volver a llamar con confirmed: true.
+ */
+export async function transitionLeadsProperty(
+  leadId: string,
+  lpId: string,
+  params: {
+    newStatus?: string;
+    action: "advance" | "undo" | "revive";
+    updates?: Record<string, unknown>;
+    confirmed?: boolean;
+  }
+): Promise<TransitionResult> {
+  try {
+    const res = await fetch(
+      `/api/leads/${encodeURIComponent(leadId)}/properties/${encodeURIComponent(lpId)}/transition`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          newStatus: params.newStatus,
+          action: params.action,
+          updates: params.updates ?? {},
+          confirmed: params.confirmed ?? false,
+        }),
+      }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if (data.requiresConfirmation) {
+      return {
+        success: false,
+        requiresConfirmation: {
+          fromPhase: data.fromPhase,
+          toPhase: data.toPhase,
+          propertyAddress: data.propertyAddress,
+        },
+      };
+    }
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("Error in transitionLeadsProperty:", error);
+    throw error;
   }
 }
 

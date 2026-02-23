@@ -70,11 +70,23 @@ El error 400 probablemente se debe a:
 
 ## 📊 Mapeo de Fases
 
-Las fases del Kanban de Leads se mapean así:
+### Kanban de Interesados (pipeline principal)
+
+Las fases del Kanban de Interesados se mapean así en `current_phase`:
+- `"Interesado Cualificado"` → `current_phase = 'Interesado Cualificado'`
+- `"Visita Agendada"` → `current_phase = 'Visita Agendada'`
+- `"Recogiendo Información"` → `current_phase = 'Recogiendo Información'`
+- `"Calificación en Curso"` → `current_phase = 'Calificación en Curso'`
+- `"Interesado Presentado"` → `current_phase = 'Interesado Presentado'`
+- `"Interesado Aceptado"` → `current_phase = 'Interesado Aceptado'`
+- `"Interesado Perdido"` → `current_phase = 'Interesado Perdido'` *(fase terminal, tarjetas desactivadas)*
+- `"Interesado Rechazado"` → `current_phase = 'Interesado Rechazado'` *(fase terminal, tarjetas desactivadas)*
+
+### PublishedTasks (vista alternativa)
+
 - `"Sin Contactar"` → `current_phase = 'Sin Contactar'`
 - `"Agendados"` → `current_phase = 'Agendados'`
 - `"Visita Hecha / Pendiente de Doc."` → `current_phase = 'Visita Hecha / Pendiente de Doc.'`
-- `"Inquilino Aceptado"` → `current_phase = 'Inquilino Aceptado'`
 - `"Descartados"` → `current_phase = 'Descartados'`
 
 ## 🔄 Siguiente Paso

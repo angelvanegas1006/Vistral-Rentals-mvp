@@ -55,6 +55,22 @@ sudo npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 - `src/components/rentals/rentals-lead-card.tsx` - Ajustes menores para compatibilidad
 - `package.json` - Dependencias añadidas
 
+### 📋 Fases del Kanban de Interesados
+
+Las columnas del Kanban de Interesados (en orden) son:
+
+**Flujo principal:**
+1. Interesado Cualificado
+2. Visita Agendada
+3. Recogiendo Información
+4. Calificación en Curso
+5. Interesado Presentado
+6. Interesado Aceptado
+
+**Fases terminales** (tarjetas desactivadas, diferenciadas visualmente):
+7. Interesado Perdido
+8. Interesado Rechazado
+
 ### 📝 Notas
 
 - Si la actualización en Supabase falla, se revierte el cambio en la UI
