@@ -16,7 +16,7 @@ export const LEAD_PHASE_NAMES = {
 } as const;
 
 export const MTP_STATUS_IDS = [
-  "perfil_cualificado",
+  "interesado_cualificado",
   "visita_agendada",
   "pendiente_de_evaluacion",
   "esperando_decision",
@@ -26,13 +26,13 @@ export const MTP_STATUS_IDS = [
   "interesado_aceptado",
   "en_espera",
   "descartada",
-  "alquilada",
+  "no_disponible",
 ] as const;
 
 export type MtpStatusId = (typeof MTP_STATUS_IDS)[number];
 
 export const MTP_STATUS_TITLES: Record<MtpStatusId, string> = {
-  perfil_cualificado: "Perfil Cualificado",
+  interesado_cualificado: "Interesado Cualificado",
   visita_agendada: "Visita Agendada",
   pendiente_de_evaluacion: "Pendiente de Evaluación",
   esperando_decision: "Esperando Decisión",
@@ -42,12 +42,12 @@ export const MTP_STATUS_TITLES: Record<MtpStatusId, string> = {
   interesado_aceptado: "Interesado Aceptado",
   en_espera: "En Espera",
   descartada: "Descartada",
-  alquilada: "Alquilada",
+  no_disponible: "No Disponible",
 };
 
 /** Rango numérico para calcular el estado más avanzado (mayor = más avanzado) */
 export const MTP_STATUS_RANK: Record<MtpStatusId, number> = {
-  perfil_cualificado: 1,
+  interesado_cualificado: 1,
   visita_agendada: 2,
   pendiente_de_evaluacion: 3,
   esperando_decision: 4,
@@ -57,14 +57,14 @@ export const MTP_STATUS_RANK: Record<MtpStatusId, number> = {
   interesado_aceptado: 8,
   en_espera: 0,
   descartada: 0,
-  alquilada: 0,
+  no_disponible: 0,
 };
 
 /** MTP activas: contribuyen al cálculo de fase del Lead. Excluye estados de salida. */
 export const MTP_EXIT_STATUS_IDS: MtpStatusId[] = [
   "en_espera",
   "descartada",
-  "alquilada",
+  "no_disponible",
 ];
 
 export function isMtpActive(status: string): boolean {
@@ -78,7 +78,7 @@ export function isMtpActive(status: string): boolean {
 export type LeadPhaseId = keyof typeof LEAD_PHASE_NAMES;
 
 export const MTP_STATUS_TO_LEAD_PHASE: Record<MtpStatusId, LeadPhaseId | null> = {
-  perfil_cualificado: "interesado-cualificado",
+  interesado_cualificado: "interesado-cualificado",
   visita_agendada: "visita-agendada",
   pendiente_de_evaluacion: "visita-agendada",
   esperando_decision: "visita-agendada",
@@ -88,7 +88,7 @@ export const MTP_STATUS_TO_LEAD_PHASE: Record<MtpStatusId, LeadPhaseId | null> =
   interesado_aceptado: "inquilino-aceptado",
   en_espera: null,
   descartada: null,
-  alquilada: null,
+  no_disponible: null,
 };
 
 export function mtpStatusToLeadPhase(mtpStatus: string): string | null {
@@ -103,6 +103,7 @@ export function getLeadPhaseFromMtpStatuses(statuses: string[]): string {
 
   let maxRank = 0;
   let bestPhaseId: LeadPhaseId = "interesado-cualificado";
+
 
   for (const s of active) {
     const rank = MTP_STATUS_RANK[s as MtpStatusId] ?? 0;

@@ -37,7 +37,8 @@ Para que la máquina de estados y los modales inteligentes funcionen, la mini ta
 
 *(Nota: Cada cambio de estado aquí dispara el algoritmo de verificación de Fase del Interesado).*
 
-### Estado 1: Perfil Cualificado
+### Estado 1: Interesado Cualificado
+* **ID interno DB:** `interesado_cualificado`
 * **Descripción:** El lead es válido y está interesado en una propiedad.
 * **Campos UI (Happy Path):** Selector de Fecha y Hora (Date/Time Picker).
 * **Trigger:** PM hace clic en `[✅ Agendar Visita]`.
@@ -85,15 +86,25 @@ Para que la máquina de estados y los modales inteligentes funcionen, la mini ta
 ### Estado 8: Interesado Aceptado
 * **Descripción:** Estado final de éxito. Interesado validado al 100%.
 * **Fin del flujo.**
+* **Automatización Cascada (Aceptación):**
+  * **MTPs del mismo lead:** El resto de MTPs activas de este Interesado pasan al estado `Descartada` (ya que va a alquilar la propiedad para la que fue aceptado). Se guarda `previous_status` y `exit_reason = 'interesado_aceptado_otra'`.
+  * **MTPs de otros leads para la misma propiedad:** Todas las MTPs de OTROS Interesados que apunten a esta misma propiedad pasan al estado `No Disponible`. Se guarda `previous_status` y `exit_reason = 'propiedad_no_disponible'`.
 
 ---
 
 ## 3. Estados de Salida / Secundarios (Destinos del Modal)
 
 Estos estados no tienen Happy Path, son destinos de las excepciones a nivel de propiedad:
-* **En Espera:** Mini tarjeta propiedad pausada. Puede ser revivida.
-* **Descartada:** Rechazada por incompatibilidad (precio, zona, etc.). Puede ser revivida.
-* **Alquilada:** La propiedad fue alquilada a OTRA persona. (Automatización de Cascada Negativa).
+* **En Espera:** (`en_espera`) Mini tarjeta propiedad pausada. Puede ser revivida.
+* **Descartada:** (`descartada`) Rechazada por incompatibilidad (precio, zona, etc.) o porque el Interesado fue aceptado para otra propiedad. Puede ser revivida.
+* **No Disponible:** (`no_disponible`) La propiedad fue alquilada a OTRA persona o dejó de estar disponible. NO puede ser revivida (la propiedad ya no está en el mercado).
+
+### Ubicación del Archivo de Propiedades
+
+Las MTPs en estados de salida (`En Espera`, `Descartada`, `No Disponible`) se muestran en una sección llamada **"Archivo de Propiedades"**.
+
+* **Fases 1-2 (Tab Espacio de trabajo):** El Archivo aparece debajo de las Propiedades Activas y encima del Buscador de Propiedades en Cartera.
+* **Fase 3+ (Tab Gestión de Propiedades):** Misma disposición que en Fases 1-2 (debajo de Propiedades Activas/En Espera, encima del Buscador). La distribución de este tab replica la del Tab Espacio de trabajo de las Fases 1-2.
 
 ---
 
@@ -101,39 +112,82 @@ Estos estados no tienen Happy Path, son destinos de las excepciones a nivel de p
 
 En lugar de botones manuales, el sistema evalúa constantemente el "Rango Máximo" de las MTPs activas. Si el Rango Máximo cambia, se dispara el **Modal de Confirmación de Transición** (ver Sección 6).
 
-### Fase 1: Interesado Cualificado -> Visita Agendada
+### 4.1. Distribución de Tabs por Fase
+
+#### Fases 1-2: Interesado Cualificado / Visita Agendada (2 Tabs)
+
+**Tab 1: Espacio de trabajo**
+1. **Widget de Progreso General.** La única tarea para avanzar de fase es tener una MTP en el estado que provoca el cambio:
+   * *Fase 1 (Interesado Cualificado):* Tarea = tener una MTP en estado `Visita Agendada`.
+   * *Fase 2 (Visita Agendada):* Tarea = tener una MTP en estado `Recogiendo Información`.
+2. **Propiedades en gestión:** Grid/Lista de todas las MTPs activas con sus estados y campos de trabajo.
+3. **Archivo de Propiedades:** MTPs en estados de salida (`En Espera`, `Descartada`, `No Disponible`). Debajo de Propiedades en gestión.
+4. **Otras Propiedades en Cartera:** Buscador para añadir nuevas propiedades. Debajo del Archivo.
+
+**Tab 2: Interesado `(⚠️ Componente ya implementado)`**
+Display de la información personal/contacto del Interesado. *Reutilizar componente existente.*
+
+#### Fases 3+: Recogiendo Información / Calificación en Curso / Interesado Presentado (3 Tabs)
+
+**Tab 1: Espacio de trabajo (Foco en Cierre)**
+Componentes comunes (presentes en todas las fases 3+):
+1. **Widget de Progreso General.** Las tareas dependen de la fase específica.
+2. **Propiedad Seleccionada:** Hueco reservado para la MTP más avanzada (la que determina la fase actual).
+   * *Selector:* Solo en Fase "Recogiendo Información" puede haber varias MTPs en ese estado avanzado. El PM elige cuál colocar como seleccionada. En fases posteriores (Calificación en Curso, Interesado Presentado), solo puede haber una MTP en el estado activo más avanzado (el resto está en `En Espera` por cascada), así que se muestra automáticamente sin selector.
+
+Componentes específicos por fase (debajo de los comunes):
+* *Fase Recogiendo Información:* Secciones de Información Personal del Interesado e Información Laboral y Financiera del Interesado `(⚠️ Componentes ya implementados)`.
+* *Fase Calificación en Curso:* La MTP seleccionada muestra la pregunta "¿Finaer acepta?" con opciones Sí/No(Rechazo).
+* *Fase Interesado Presentado:* La MTP seleccionada muestra "¿El propietario acepta?" con opciones Sí/No(Rechazo).
+
+**Tab 2: Gestión de Propiedades**
+Misma distribución que el Tab Espacio de trabajo de las Fases 1-2, **sin el Widget de Progreso General**:
+1. **Propiedades en gestión:** Grid de las MTPs activas (las que no están en la Propiedad Seleccionada del Tab 1).
+2. **Archivo de Propiedades:** MTPs en estados de salida.
+3. **Otras Propiedades en Cartera:** Buscador para añadir nuevas propiedades.
+
+**Tab 3: Interesado `(⚠️ Componente ya implementado)`**
+Display de la información del interesado. *Reutilizar componente existente.*
+
+#### Fase Final: Interesado Aceptado (2 Tabs — Layout Especial)
+
+**Tab 1: Registro de Gestión**
+Sustituye al espacio de trabajo. Muestra un histórico/timeline de solo lectura con toda la gestión realizada sobre las propiedades del Interesado.
+
+**Tab 2: Interesado `(⚠️ Componente ya implementado)`**
+Display de los datos personales y de contacto del interesado.
+
+### 4.2. Transiciones entre Fases
+
+#### Fase 1 -> Fase 2: Interesado Cualificado -> Visita Agendada
 * **Condición:** Al menos una MTP pasa a `Visita Agendada`.
 * **Efecto:** Modal de Transición -> Mueve Lead a Fase Visita Agendada.
-* **Distribución de UI de la Tarjeta (2 Tabs):**
-  * **Tab 1: Espacio de trabajo:** Widget de Progreso General. Grid/Lista de las Propiedades en Gestión (mini tarjetas) mostrando sus estados y campos de trabajo. Sección con buscador de propiedades en cartera (para añadir nuevas).
-  * **Tab 2: Interesado `(⚠️ Componente ya implementado en código)`:** Display de la información personal/contacto del Interesado. *Nota para IA: Reutilizar componente existente, NO reescribir.*
 
-### Fase 2: Visita Agendada -> Recogiendo Información
+#### Fase 2 -> Fase 3: Visita Agendada -> Recogiendo Información
 * **Condición:** Al menos una MTP pasa a `Recogiendo Información`.
 * **Efecto:** Modal de Transición -> Mueve Lead a Fase Recogiendo Info.
-* **Distribución de UI de la Tarjeta (3 Tabs):**
-  * **Tab 1: Espacio de trabajo (Foco en Cierre):** Widget de Progreso General. **Selector de Propiedad Principal:** Si hay múltiples mini tarjetas en este estado, el PM selecciona con cuál va a iniciar el proceso. Solo se muestra la mini tarjeta seleccionada. Campos de Información Personal y Laboral `(⚠️ Componentes ya implementados en código)`. *Nota para IA: Importar/reutilizar los campos existentes.* Formulario Finaer: Checkbox de confirmación de solicitud a Finaer + Input para el `ID de la solicitud`. *Acción y Efecto Cascada:* Al enviar la solicitud, la mini tarjeta seleccionada avanza a `Calificación en Curso`. Automáticamente, **el resto de mini tarjetas de este lead pasan al estado `En Espera`**.
-  * **Tab 2: Gestión de Propiedades (Nueva pestaña):** Absorbe la vista antigua del espacio de trabajo: Grid de las propiedades en gestión (ahora en espera) y buscador de cartera.
-  * **Tab 3: Interesado `(⚠️ Componente ya implementado)`:** Display de la información del interesado.
 
-### Fase 3: Recogiendo Información -> Calificación en Curso
+#### Fase 3 -> Fase 4: Recogiendo Información -> Calificación en Curso
 * **Condición:** Una MTP pasa a `Calificación en Curso`.
 * **Efecto:** Modal de Transición -> Mueve Lead a Fase Calificación.
-* **Distribución de UI de la Tarjeta (3 Tabs):** Misma disposición que la fase anterior.
-* **Lógica del Espacio de Trabajo:** Widget de Progreso. Mini tarjeta propiedad seleccionada en proceso de scoring. **Pregunta UI:** *¿Finaer acepta al Interesado?* **SÍ:** Se muestran los campos para confirmar la presentación al Propietario. Al confirmar, la mini tarjeta pasa a `Interesado Presentado`. **NO (Rechazo):** Se muestran inputs para "Motivos" y "Comentarios". Opciones del PM: **Opción A (Descarte Total):** La tarjeta del Interesado pasa a la fase `Interesado Rechazado` (Fin del flujo). **Opción B (Revivir/Reciclar):** Se lee el campo `previous_status` de las mini tarjetas que están `En Espera`. *Regla 1:* Si el estado previo era `Interesado` o `Visita Agendada`, la mini tarjeta revive en la fase inicial `Interesado` (Nota para BD: limpiar el campo `visit_date`). *Regla 2:* Si el estado previo era más avanzado (ej. `Pendiente de Evaluación`), revive exactamente en ese estado. El estado más avanzado de las mini tarjetas revividas definirá la nueva fase de la tarjeta del Interesado.
+* **Efecto Cascada:** El resto de MTPs activas de este lead pasan a `En Espera` (solo puede haber una propiedad en calificación).
+* **Lógica del Espacio de Trabajo:** Pregunta UI: *¿Finaer acepta al Interesado?*
+  * **SÍ:** MTP pasa a `Interesado Presentado`. `finaer_status = 'approved'`.
+  * **NO (Rechazo):** Inputs para "Motivos" y "Comentarios". Opciones del PM:
+    * **Opción A (Descarte Total):** Lead pasa a fase `Interesado Rechazado` (Fin del flujo).
+    * **Opción B (Revivir/Reciclar):** Se lee `previous_status` de las MTPs `En Espera`. *Regla 1:* Si era `Interesado Cualificado` o `Visita Agendada` -> revive en `Interesado Cualificado` (limpia `visit_date`). *Regla 2:* Si era más avanzado -> revive en ese estado exacto. El max rank de las revividas determina la nueva fase del Lead.
 
-### Fase 4: Calificación en Curso -> Interesado Presentado
+#### Fase 4 -> Fase 5: Calificación en Curso -> Interesado Presentado
 * **Condición:** Una MTP pasa a `Interesado Presentado`.
 * **Efecto:** Modal de Transición -> Mueve Lead a Fase Presentado.
-* **Distribución de UI de la Tarjeta (3 Tabs):** Misma disposición (Espacio de trabajo, Gestión de Propiedades, Interesado).
-* **Lógica del Espacio de Trabajo:** Widget de Progreso. Mini tarjeta propiedad seleccionada para presentación. **Pregunta UI:** *¿El propietario acepta al Interesado?* **SÍ:** La mini tarjeta cambia al estado `Interesado Aceptado`. **NO (Rechazo):** Trato idéntico al rechazo de Finaer (Descarte Total o Revivir/Reciclar mini tarjetas previas).
+* **Lógica del Espacio de Trabajo:** Pregunta UI: *¿El propietario acepta al Interesado?*
+  * **SÍ:** MTP pasa a `Interesado Aceptado`. `owner_status = 'approved'`.
+  * **NO (Rechazo):** Trato idéntico al rechazo de Finaer (Descarte Total o Revivir/Reciclar).
 
-### Fase 5: Interesado Presentado -> Interesado Aceptado
+#### Fase 5 -> Fase Final: Interesado Presentado -> Interesado Aceptado
 * **Condición:** Una MTP pasa a `Interesado Aceptado`.
 * **Efecto:** Modal de Transición -> Mueve Lead a Fase Aceptado.
-* **Distribución de UI de la Tarjeta (Cambio Radical a 2 Tabs):**
-  * **Tab 1: Registro de Gestión:** Sustituye al espacio de trabajo. Muestra un histórico/timeline de solo lectura con toda la gestión realizada de las propiedades.
-  * **Tab 2: Interesado `(⚠️ Componente ya implementado)`:** Display de los datos personales y de contacto del interesado.
+* **Cascada de Aceptación:** (ver Estado 8 en Sección 2).
 
 ---
 
@@ -156,11 +210,11 @@ Estas acciones también utilizan la lógica de automatización global y el **Mod
 * **Ejecución (Post-Confirmación):** Actualiza `current_status` al valor de `previous_status`. Limpia el campo `previous_status`. Si hubo cambio de fase global, actualiza la UI del Interesado inmediatamente.
 
 ### 5.2. Botón Recuperar (Revive)
-* **Ubicación:** Sección "Archivo de Propiedades" (Tab Gestión). Título: "Archivo de Propiedades (Descartadas / En Espera / Alquiladas)". Item de Lista: Tarjeta compacta con estado de salida y botón **`[♻️ Recuperar]`**.
+* **Ubicación:** Sección "Archivo de Propiedades" (ver Sección 3). Título: "Archivo de Propiedades (Descartadas / En Espera / No Disponibles)". Item de Lista: Tarjeta compacta con estado de salida y botón **`[♻️ Recuperar]`** (excepto para `No Disponible`, que no es recuperable).
 * **Lógica:**
     1. PM pulsa `[♻️ Recuperar]`.
     2. Sistema calcula estado destino (aplica regla de caducidad si es visita antigua):
-       * *Regla Caducidad:* Si (`previous_status` == 'Visita Agendada' AND `visit_date` < HOY) -> Destino = **Perfil Cualificado**.
+       * *Regla Caducidad:* Si (`previous_status` == 'Visita Agendada' AND `visit_date` < HOY) -> Destino = **Interesado Cualificado**.
        * *Regla Normal:* Destino = `previous_status`.
     3. Sistema calcula: ¿Este nuevo estado es superior a la fase actual del Lead?
     4. **SÍ es superior:** Muestra **Modal de Confirmación de Transición (Hacia adelante)**.

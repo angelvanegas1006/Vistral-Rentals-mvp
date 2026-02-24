@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getLeadPhaseFromMtpStatuses } from "@/lib/leads/mtp-status";
+
+export const dynamic = "force-dynamic";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -37,27 +40,60 @@ export async function GET(
     });
 
     // Auto-advance: Visita Agendada -> Pendiente de Evaluación cuando visit_date <= now
-    const now = new Date().toISOString();
-    const { data: toAdvance } = await supabase
+    const { data: allVisitaAgendada, error: advanceQueryError } = await supabase
       .from("leads_properties")
-      .select("id, current_status, visit_date, scheduled_visit_date")
+      .select("id, visit_date")
       .eq("leads_unique_id", leadId)
       .eq("current_status", "visita_agendada");
 
-    if (toAdvance?.length) {
+    if (advanceQueryError) {
+      console.error(`[auto-advance lead=${leadId}] query error:`, advanceQueryError);
+    }
+
+    const nowMs = Date.now();
+    const toAdvance = (allVisitaAgendada ?? []).filter((lp) => {
+      const raw = lp.visit_date as string | null;
+      if (!raw) return false;
+      const ms = new Date(raw).getTime();
+      return !Number.isNaN(ms) && ms <= nowMs;
+    });
+
+    let didAutoAdvance = false;
+    if (toAdvance.length) {
+      console.log(`[auto-advance lead=${leadId}] Found ${toAdvance.length} MTPs to advance (total visita_agendada: ${allVisitaAgendada?.length ?? 0})`);
       for (const lp of toAdvance) {
-        const visitDate = (lp.visit_date ?? lp.scheduled_visit_date) as string | null;
-        const visitDateTime = visitDate?.includes("T") ? visitDate : `${visitDate}T00:00:00.000Z`;
-        if (visitDate && visitDateTime <= now) {
-          await supabase
-            .from("leads_properties")
-            .update({
-              current_status: "pendiente_de_evaluacion",
-              previous_status: "visita_agendada",
-            })
-            .eq("id", lp.id);
+        const { error: updateErr } = await supabase
+          .from("leads_properties")
+          .update({
+            current_status: "pendiente_de_evaluacion",
+            previous_status: "visita_agendada",
+          })
+          .eq("id", lp.id);
+
+        if (updateErr) {
+          console.error(`[auto-advance] MTP ${lp.id} update failed:`, updateErr);
+        } else {
+          didAutoAdvance = true;
+          console.log(`[auto-advance] MTP ${lp.id} → pendiente_de_evaluacion`);
         }
       }
+    }
+
+    if (didAutoAdvance) {
+      const { data: allMtps } = await supabase
+        .from("leads_properties")
+        .select("current_status")
+        .eq("leads_unique_id", leadId);
+
+      const statuses = (allMtps || []).map((m) => m.current_status as string).filter(Boolean);
+      const newPhase = getLeadPhaseFromMtpStatuses(statuses);
+
+      await supabase
+        .from("leads")
+        .update({ current_phase: newPhase })
+        .eq("leads_unique_id", leadId);
+
+      console.log(`[auto-advance lead=${leadId}] phase → ${newPhase}`);
     }
 
     const { data: leadProps, error: lpError } = await supabase
@@ -92,7 +128,7 @@ export async function GET(
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
 
-    return NextResponse.json({ items });
+    return NextResponse.json({ items, didAutoAdvance });
   } catch (error: unknown) {
     console.error("Error fetching lead properties:", error);
     const message = error instanceof Error ? error.message : "Error al cargar";
@@ -159,7 +195,7 @@ export async function POST(
       .insert({
         leads_unique_id: leadId,
         properties_unique_id: properties_unique_id,
-        current_status: "perfil_cualificado",
+        current_status: "interesado_cualificado",
       })
       .select()
       .single();

@@ -18,8 +18,33 @@ import {
 import { PropertySummaryTab } from "@/components/rentals/property-summary-tab";
 import { ExternalLink, ChevronDown, MoreVertical, Eye, History, Calendar, Pause, Trash2, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MTP_STATUS_TITLES } from "@/lib/leads/mtp-status";
+import { MTP_STATUS_TITLES, type MtpStatusId } from "@/lib/leads/mtp-status";
 import type { Database } from "@/lib/supabase/types";
+
+const MTP_STATUS_BADGE_CLASSES: Record<MtpStatusId, string> = {
+  interesado_cualificado:
+    "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  visita_agendada:
+    "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-300",
+  pendiente_de_evaluacion:
+    "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300",
+  esperando_decision:
+    "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
+  recogiendo_informacion:
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  calificacion_en_curso:
+    "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300",
+  interesado_presentado:
+    "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-300",
+  interesado_aceptado:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  en_espera:
+    "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
+  descartada:
+    "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+  no_disponible:
+    "border-gray-200 bg-gray-100 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400",
+};
 
 type LeadsPropertyRow = Database["public"]["Tables"]["leads_properties"]["Row"];
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
@@ -66,7 +91,7 @@ export function LeadPropertyCard({
   const infoLine2 = [areaCluster, price, bedrooms].filter(Boolean).join(" · ");
   const currentPhase = property.current_stage || property.current_phase || "Publicado";
 
-  const status = leadsProperty.current_status ?? "perfil_cualificado";
+  const status = leadsProperty.current_status ?? "interesado_cualificado";
   const statusLabel = MTP_STATUS_TITLES[status as keyof typeof MTP_STATUS_TITLES] ?? status;
   const showReagendar =
     (status === "visita_agendada" || status === "pendiente_de_evaluacion") &&
@@ -108,10 +133,18 @@ export function LeadPropertyCard({
             )}
           </div>
 
-          {/* 1.3 Status Badge */}
-          <span className="rounded-md border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] px-2 py-1 text-xs font-medium text-foreground">
-            {statusLabel}
-          </span>
+          {/* 1.3 Status Badge (centered between info and kebab) */}
+          <div className="flex-1 flex items-center justify-center">
+            <span
+              className={cn(
+                "rounded-md border px-2 py-1 text-xs font-medium text-center whitespace-nowrap",
+                MTP_STATUS_BADGE_CLASSES[status as MtpStatusId] ??
+                  "border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] text-foreground"
+              )}
+            >
+              {statusLabel}
+            </span>
+          </div>
 
           {/* 1.4 Kebab Menu */}
           <DropdownMenu>

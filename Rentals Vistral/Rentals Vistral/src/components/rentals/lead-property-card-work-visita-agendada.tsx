@@ -16,7 +16,7 @@ export interface LeadPropertyCardWorkVisitaAgendadaProps {
 export function LeadPropertyCardWorkVisitaAgendada({
   leadsProperty,
 }: LeadPropertyCardWorkVisitaAgendadaProps) {
-  const visitDate = leadsProperty.visit_date ?? leadsProperty.scheduled_visit_date;
+  const visitDate = leadsProperty.visit_date;
   const formatted = visitDate
     ? format(new Date(visitDate), "EEEE d 'de' MMMM, HH:mm", { locale: es })
     : "—";

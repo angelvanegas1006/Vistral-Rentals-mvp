@@ -6,6 +6,7 @@ import { NavbarL2 } from "@/components/layout/navbar-l2";
 import { PropertyTabs } from "@/components/layout/property-tabs";
 import { LeadTasksTab } from "@/components/rentals/lead-tasks-tab";
 import { LeadSummaryTab } from "@/components/rentals/lead-summary-tab";
+import { LeadGestionRegistroTab } from "@/components/rentals/lead-gestion-registro-tab";
 import { LeadRightSidebar } from "@/components/rentals/lead-right-sidebar";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ export default function LeadDetailPage() {
     "Perfil cualificado": "Interesado Cualificado",
     "Interesado cualificado": "Interesado Cualificado",
     "Visita agendada": "Visita Agendada",
+    "Recogiendo información": "Recogiendo Información",
     "Calificación en curso": "Calificación en Curso",
     "Interesado presentado": "Interesado Presentado",
     "Interesado aceptado": "Interesado Aceptado",
@@ -68,11 +70,31 @@ export default function LeadDetailPage() {
       }
     : null;
 
-  // La fase del Interesado se mueve automáticamente según el estado de las MTPs (no hay botón manual)
-  const tabs = [
-    { id: "tasks", label: "Espacio de trabajo", badge: undefined },
-    { id: "summary", label: "Interesado", badge: undefined },
-  ];
+  const PHASES_1_2 = ["Interesado Cualificado", "Visita Agendada"];
+  const PHASE_ACEPTADO = "Interesado Aceptado";
+
+  const tabs = (() => {
+    if (currentPhase === PHASE_ACEPTADO) {
+      return [
+        { id: "registro", label: "Registro de Gestión", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
+    if (PHASES_1_2.includes(currentPhase)) {
+      return [
+        { id: "tasks", label: "Espacio de trabajo", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
+    return [
+      { id: "tasks", label: "Espacio de trabajo", badge: undefined },
+      { id: "management", label: "Gestión de Propiedades", badge: undefined },
+      { id: "summary", label: "Interesado", badge: undefined },
+    ];
+  })();
+
+  const validTabIds = tabs.map((t) => t.id);
+  const effectiveTab = validTabIds.includes(activeTab) ? activeTab : validTabIds[0];
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -146,7 +168,7 @@ export default function LeadDetailPage() {
             <div className="mb-8">
               <PropertyTabs
                 tabs={tabs}
-                activeTab={activeTab}
+                activeTab={effectiveTab}
                 onTabChange={handleTabChange}
               />
             </div>
@@ -159,8 +181,11 @@ export default function LeadDetailPage() {
                   className="pb-24"
                   onScroll={handleScroll}
                 >
-                  {activeTab === "tasks" && <LeadTasksTab lead={lead} onLeadRefetch={refetchLead} />}
-                  {activeTab === "summary" && <LeadSummaryTab lead={lead} />}
+                  {(effectiveTab === "tasks" || effectiveTab === "management") && (
+                    <LeadTasksTab lead={lead} onLeadRefetch={refetchLead} activeView={effectiveTab as "tasks" | "management"} />
+                  )}
+                  {effectiveTab === "registro" && <LeadGestionRegistroTab lead={lead} />}
+                  {effectiveTab === "summary" && <LeadSummaryTab lead={lead} />}
                 </div>
               </div>
 

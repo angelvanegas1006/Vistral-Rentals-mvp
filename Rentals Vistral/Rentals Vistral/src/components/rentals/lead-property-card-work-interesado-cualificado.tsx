@@ -10,7 +10,7 @@ import type { Database } from "@/lib/supabase/types";
 
 type LeadsPropertyRow = Database["public"]["Tables"]["leads_properties"]["Row"];
 
-export interface LeadPropertyCardWorkPerfilCualificadoProps {
+export interface LeadPropertyCardWorkInteresadoCualificadoProps {
   leadsProperty: LeadsPropertyRow;
   onUpdated?: () => void;
   onTransition?: (
@@ -22,15 +22,15 @@ export interface LeadPropertyCardWorkPerfilCualificadoProps {
 }
 
 /**
- * Sección de trabajo para "Perfil Cualificado".
+ * Sección de trabajo para "Interesado Cualificado".
  * Date/Time picker + botón Agendar Visita -> transición a Visita Agendada.
  */
-export function LeadPropertyCardWorkPerfilCualificado({
+export function LeadPropertyCardWorkInteresadoCualificado({
   leadsProperty,
   onUpdated,
   onTransition,
-}: LeadPropertyCardWorkPerfilCualificadoProps) {
-  const visitDate = leadsProperty.visit_date ?? leadsProperty.scheduled_visit_date;
+}: LeadPropertyCardWorkInteresadoCualificadoProps) {
+  const visitDate = leadsProperty.visit_date;
   const dateValue = visitDate
     ? (typeof visitDate === "string" ? visitDate : visitDate).slice(0, 16)
     : "";
@@ -46,18 +46,26 @@ export function LeadPropertyCardWorkPerfilCualificado({
       toast.error("Selecciona una fecha de visita");
       return;
     }
-    const visitDateTime = `${dateInput}T${timeInput}:00.000Z`;
+
+    // Build a proper ISO string that preserves local time intent
+    const localDate = new Date(`${dateInput}T${timeInput}:00`);
+    const visitDateTime = localDate.toISOString();
+
+    // If the visit is already in the past, go straight to pendiente_de_evaluacion
+    const isPast = localDate.getTime() <= Date.now();
+    const targetStatus = isPast ? "pendiente_de_evaluacion" : "visita_agendada";
+
     setSaving(true);
     try {
       if (onTransition) {
         const result = await onTransition(
           leadsProperty.id,
-          "visita_agendada",
+          targetStatus,
           "advance",
           { visit_date: visitDateTime }
         );
         if (result?.completed) {
-          toast.success("Visita agendada");
+          toast.success(isPast ? "Visita registrada (ya pasada)" : "Visita agendada");
           onUpdated?.();
         }
       } else {
@@ -66,14 +74,14 @@ export function LeadPropertyCardWorkPerfilCualificado({
           leadsProperty.id,
           {
             action: "advance",
-            newStatus: "visita_agendada",
+            newStatus: targetStatus,
             updates: { visit_date: visitDateTime },
           }
         );
         if (result.requiresConfirmation) {
           toast.info("Confirma el cambio de fase en el modal");
         } else if (result.success) {
-          toast.success("Visita agendada");
+          toast.success(isPast ? "Visita registrada (ya pasada)" : "Visita agendada");
           onUpdated?.();
         }
       }
@@ -92,8 +100,8 @@ export function LeadPropertyCardWorkPerfilCualificado({
   ]);
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-2">
+    <div className="flex items-end gap-3 flex-wrap">
+      <div className="space-y-1">
         <Label htmlFor={`visit-date-${leadsProperty.id}`} className="text-sm font-medium">
           Fecha de visita
         </Label>
@@ -103,10 +111,10 @@ export function LeadPropertyCardWorkPerfilCualificado({
           value={dateInput}
           onChange={(e) => setDateInput(e.target.value)}
           disabled={saving}
-          className="max-w-[200px]"
+          className="w-[160px]"
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`visit-time-${leadsProperty.id}`} className="text-sm font-medium">
           Hora
         </Label>
@@ -116,7 +124,7 @@ export function LeadPropertyCardWorkPerfilCualificado({
           value={timeInput}
           onChange={(e) => setTimeInput(e.target.value)}
           disabled={saving}
-          className="max-w-[120px]"
+          className="w-[120px]"
         />
       </div>
       <Button

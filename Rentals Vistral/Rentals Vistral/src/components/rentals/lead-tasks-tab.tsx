@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { Button } from "@/components/ui/button";
 import { ProgressOverviewWidget } from "@/components/specs-card/ProgressOverviewWidget";
 import {
   LeadPersonalInfoSection,
@@ -20,12 +21,13 @@ import { MtpModalDescarte } from "@/components/rentals/mtp-modal-descarte";
 import { MtpModalPausa } from "@/components/rentals/mtp-modal-pausa";
 import { MtpModalReagendar } from "@/components/rentals/mtp-modal-reagendar";
 import { MtpModalRegistroActividad } from "@/components/rentals/mtp-modal-registro-actividad";
-import { updateLeadsProperty, transitionLeadsProperty } from "@/services/leads-sync";
+import { updateLeadsProperty } from "@/services/leads-sync";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
-import { MTP_EXIT_STATUS_IDS } from "@/lib/leads/mtp-status";
+import { MTP_EXIT_STATUS_IDS, MTP_STATUS_RANK } from "@/lib/leads/mtp-status";
+import type { MtpStatusId } from "@/lib/leads/mtp-status";
 
+const PHASES_1_2 = ["Interesado Cualificado", "Visita Agendada"];
 const PHASE_RECOGIENDO = "Recogiendo Información";
-const PHASE_INTERESADO_CUALIFICADO = "Interesado Cualificado";
 
 const LEAD_PHASE3_SECTIONS = [
   {
@@ -85,11 +87,11 @@ interface Lead {
 interface LeadTasksTabProps {
   lead: Lead;
   onLeadRefetch?: () => void | Promise<void>;
+  activeView?: "tasks" | "management";
 }
 
 // ---------- Helpers ----------
 
-/** Build the formData record that ProgressOverviewWidget expects, from live field values. */
 function buildFormDataFromLive(d: LeadPersonalInfoLiveData): Record<string, unknown> {
   return {
     "personal-info.nationality": d.nationality || "",
@@ -104,7 +106,6 @@ function buildFormDataFromLive(d: LeadPersonalInfoLiveData): Record<string, unkn
   };
 }
 
-/** Build formData for employment-financial section from lead. */
 function buildFormDataFromEmploymentLead(lead: Lead): Record<string, unknown> {
   const laboral = lead.laboral_financial_docs as { obligatory?: Record<string, string> } | null | undefined;
   const obligatory = laboral?.obligatory || {};
@@ -115,7 +116,6 @@ function buildFormDataFromEmploymentLead(lead: Lead): Record<string, unknown> {
   };
 }
 
-/** Build initial formData from the (stale) lead prop — used before the first onFieldsChange fires. */
 function buildFormDataFromLead(lead: Lead): Record<string, unknown> {
   const petInfo = lead.petInfo as { has_pets?: boolean; details?: string; notes?: string } | null | undefined;
   const hasPets =
@@ -139,7 +139,6 @@ function buildFormDataFromLead(lead: Lead): Record<string, unknown> {
   };
 }
 
-/** Check if the personal-info section is fully complete (same logic as ProgressOverviewWidget). */
 function isSectionComplete(fd: Record<string, unknown>): boolean {
   const has = (v: unknown) =>
     v !== undefined && v !== null && v !== "" && String(v).trim() !== "";
@@ -154,13 +153,11 @@ function isSectionComplete(fd: Record<string, unknown>): boolean {
   const hasPets = fd["personal-info.has_pets"];
   if (hasPets !== "yes" && hasPets !== "no") return false;
 
-  // children_count required when family_profile === "Con hijos"
   if (fd["personal-info.family_profile"] === "Con hijos") {
     const cc = fd["personal-info.children_count"];
     if (cc === undefined || cc === null || String(cc).trim() === "") return false;
   }
 
-  // pet_details required when has_pets === "yes"
   if (hasPets === "yes") {
     if (!has(fd["personal-info.pet_details"])) return false;
   }
@@ -168,7 +165,6 @@ function isSectionComplete(fd: Record<string, unknown>): boolean {
   return true;
 }
 
-/** Check if employment-financial section is complete. */
 function isEmploymentFinancialComplete(fd: Record<string, unknown>): boolean {
   return isEmploymentFinancialSectionComplete({
     employment_status: fd["employment-financial.employment_status"] as string | null | undefined,
@@ -179,14 +175,20 @@ function isEmploymentFinancialComplete(fd: Record<string, unknown>): boolean {
   });
 }
 
+function getMtpRank(status: string): number {
+  return MTP_STATUS_RANK[status as MtpStatusId] ?? 0;
+}
+
 function ArchivedPropertyItem({
   leadsProperty,
   propertyAddress,
   onRevive,
+  canRevive = true,
 }: {
   leadsProperty: { id: string; current_status?: string | null };
   propertyAddress: string;
   onRevive: () => Promise<void>;
+  canRevive?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const status = leadsProperty.current_status ?? "";
@@ -195,8 +197,8 @@ function ArchivedPropertyItem({
       ? "En Espera"
       : status === "descartada"
         ? "Descartada"
-        : status === "alquilada"
-          ? "Alquilada"
+        : status === "no_disponible"
+          ? "No Disponible"
           : status;
 
   return (
@@ -205,31 +207,33 @@ function ArchivedPropertyItem({
         <p className="font-medium text-sm">{propertyAddress}</p>
         <p className="text-xs text-muted-foreground">{statusLabel}</p>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={async () => {
-          setLoading(true);
-          await onRevive();
-          setLoading(false);
-        }}
-        disabled={loading}
-      >
-        Recuperar
-      </Button>
+      {canRevive && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            setLoading(true);
+            await onRevive();
+            setLoading(false);
+          }}
+          disabled={loading}
+        >
+          Recuperar
+        </Button>
+      )}
     </div>
   );
 }
 
 // ---------- Component ----------
 
-/** Espacio de trabajo del interesado: progreso + secciones por fase. */
-export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
+export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: LeadTasksTabProps) {
+  const isPhase1or2 = PHASES_1_2.includes(lead.currentPhase);
   const isRecogiendoInformacion = lead.currentPhase === PHASE_RECOGIENDO;
-  const isInteresadoCualificado = lead.currentPhase === PHASE_INTERESADO_CUALIFICADO;
 
   const { items: leadPropertyItems, loading: leadPropertiesLoading, refetch: refetchLeadProperties } = useLeadProperties(
-    lead.leadsUniqueId
+    lead.leadsUniqueId,
+    onLeadRefetch
   );
 
   const { transition, pendingConfirmation, confirmTransition, cancelTransition } = useMtpTransition({
@@ -254,11 +258,32 @@ export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
   const [modalRegistro, setModalRegistro] = useState<{ leadsProperty: typeof leadPropertyItems[0]["leadsProperty"]; address: string } | null>(null);
 
   const activeItems = leadPropertyItems.filter(
-    (i) => !MTP_EXIT_STATUS_IDS.includes((i.leadsProperty.current_status ?? "perfil_cualificado") as "en_espera" | "descartada" | "alquilada")
+    (i) => !MTP_EXIT_STATUS_IDS.includes((i.leadsProperty.current_status ?? "interesado_cualificado") as "en_espera" | "descartada" | "no_disponible")
   );
   const archivedItems = leadPropertyItems.filter((i) =>
-    MTP_EXIT_STATUS_IDS.includes((i.leadsProperty.current_status ?? "") as "en_espera" | "descartada" | "alquilada")
+    MTP_EXIT_STATUS_IDS.includes((i.leadsProperty.current_status ?? "") as "en_espera" | "descartada" | "no_disponible")
   );
+
+  // For phases 3+: identify the primary (highest-ranked) MTP
+  const { primaryItem, secondaryActiveItems } = useMemo(() => {
+    if (isPhase1or2 || activeItems.length === 0) {
+      return { primaryItem: null, secondaryActiveItems: activeItems };
+    }
+
+    let best = activeItems[0];
+    let bestRank = getMtpRank(best.leadsProperty.current_status ?? "");
+
+    for (let i = 1; i < activeItems.length; i++) {
+      const rank = getMtpRank(activeItems[i].leadsProperty.current_status ?? "");
+      if (rank > bestRank) {
+        bestRank = rank;
+        best = activeItems[i];
+      }
+    }
+
+    const others = activeItems.filter((item) => item.leadsProperty.id !== best.leadsProperty.id);
+    return { primaryItem: best, secondaryActiveItems: others };
+  }, [isPhase1or2, activeItems]);
 
   // --- Live formData state for the progress widget ---
   const [liveFormData, setLiveFormData] = useState<Record<string, unknown>>(
@@ -280,124 +305,239 @@ export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
     }));
   }, []);
 
-  return (
+  // ---------- Shared renders ----------
+
+  const renderPropertyCard = useCallback(
+    (item: typeof leadPropertyItems[0]) => (
+      <LeadPropertyCard
+        key={item.leadsProperty.id}
+        leadsProperty={item.leadsProperty}
+        property={item.property}
+        workSection={
+          <LeadPropertyCardWorkSection
+            leadsProperty={item.leadsProperty}
+            onUpdated={refetchLeadProperties}
+            onTransition={handleTransition}
+          />
+        }
+        onUndo={async () => {
+          await handleTransition(item.leadsProperty.id, "", "undo", {});
+        }}
+        onReagendar={() =>
+          setModalReagendar({
+            lpId: item.leadsProperty.id,
+            address: item.property.address || "Propiedad",
+            visitDate: item.leadsProperty.visit_date,
+          })
+        }
+        onPausar={() =>
+          setModalPausa({
+            lpId: item.leadsProperty.id,
+            address: item.property.address || "Propiedad",
+          })
+        }
+        onDescartar={() =>
+          setModalDescarte({
+            lpId: item.leadsProperty.id,
+            address: item.property.address || "Propiedad",
+          })
+        }
+        onRegistroActividad={() =>
+          setModalRegistro({
+            leadsProperty: item.leadsProperty,
+            address: item.property.address || "Propiedad",
+          })
+        }
+      />
+    ),
+    [refetchLeadProperties, handleTransition]
+  );
+
+  const renderPropertiesSection = useCallback(
+    (items: typeof activeItems, title: string) => (
+      <div className="rounded-[var(--vistral-radius-xl)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card p-5 md:p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-foreground">{title}</h3>
+          {!leadPropertiesLoading && (
+            <span className="text-xs text-muted-foreground bg-[var(--vistral-gray-100)] dark:bg-[var(--vistral-gray-700)] px-2 py-0.5 rounded-full">
+              {items.length}
+            </span>
+          )}
+        </div>
+        {leadPropertiesLoading ? (
+          <div className="flex justify-center py-8">
+            <RentalsHomeLoader />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              No hay propiedades en gestión.
+            </p>
+          </div>
+        ) : (
+          items.map(renderPropertyCard)
+        )}
+      </div>
+    ),
+    [leadPropertiesLoading, renderPropertyCard]
+  );
+
+  const renderArchive = useCallback(
+    () =>
+      archivedItems.length > 0 ? (
+        <div className="rounded-[var(--vistral-radius-xl)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card p-5 md:p-6 space-y-4">
+          <h3 className="text-base font-semibold text-foreground">
+            Archivo de Propiedades (Descartadas / En Espera / No Disponibles)
+          </h3>
+          <div className="space-y-2">
+            {archivedItems.map(({ leadsProperty, property }) => (
+              <ArchivedPropertyItem
+                key={leadsProperty.id}
+                leadsProperty={leadsProperty}
+                propertyAddress={property.address || "Propiedad"}
+                canRevive={leadsProperty.current_status !== "no_disponible"}
+                onRevive={async () => {
+                  const result = await transition(
+                    leadsProperty.id,
+                    "",
+                    "revive",
+                    {}
+                  );
+                  if (result?.completed) {
+                    await refetchLeadProperties();
+                    await onLeadRefetch?.();
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null,
+    [archivedItems, transition, refetchLeadProperties, onLeadRefetch]
+  );
+
+  const renderCartera = useCallback(
+    () => (
+      <OtrasPropiedadesCartera
+        leadsUniqueId={lead.leadsUniqueId}
+        leadPropertyItems={leadPropertyItems}
+        onPropertyAdded={refetchLeadProperties}
+      />
+    ),
+    [lead.leadsUniqueId, leadPropertyItems, refetchLeadProperties]
+  );
+
+  // ---------- View: Phases 1-2 workspace (or management for phases 3+) ----------
+
+  const renderPropertyManagementView = useCallback(
+    (items: typeof activeItems, showProgress: boolean) => (
+      <div className="space-y-4 md:space-y-6">
+        {showProgress && (
+          <ProgressOverviewWidget sections={[]} formData={{}} />
+        )}
+        <div className="space-y-8">
+          {renderPropertiesSection(items, "Propiedades en gestión")}
+          {renderArchive()}
+          {renderCartera()}
+        </div>
+      </div>
+    ),
+    [renderPropertiesSection, renderArchive, renderCartera]
+  );
+
+  // ---------- View: Phases 3+ workspace ----------
+
+  const renderPhase3PlusWorkspace = useCallback(() => (
     <div className="space-y-4 md:space-y-6">
       <ProgressOverviewWidget
         sections={isRecogiendoInformacion ? LEAD_PHASE3_SECTIONS : []}
         formData={isRecogiendoInformacion ? mergedFormData : {}}
       />
 
-      {/* Propiedades en gestión (todas las fases) */}
-      <div className="space-y-8">
-        <div className="rounded-[var(--vistral-radius-xl)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card p-5 md:p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-foreground">
-              Propiedades en gestión
-            </h3>
-            {!leadPropertiesLoading && (
-              <span className="text-xs text-muted-foreground bg-[var(--vistral-gray-100)] dark:bg-[var(--vistral-gray-700)] px-2 py-0.5 rounded-full">
-                {activeItems.length}
-              </span>
-            )}
-          </div>
-
-          {leadPropertiesLoading ? (
-            <div className="flex justify-center py-8">
-              <RentalsHomeLoader />
-            </div>
-          ) : activeItems.length === 0 ? (
-            <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                No hay propiedades en gestión. Añade propiedades desde la
-                sección <strong>Otras Propiedades en Cartera</strong> de abajo.
-              </p>
-            </div>
-          ) : (
-            activeItems.map(({ leadsProperty, property }) => (
-              <LeadPropertyCard
-                key={leadsProperty.id}
-                leadsProperty={leadsProperty}
-                property={property}
-                workSection={
-                  <LeadPropertyCardWorkSection
-                    leadsProperty={leadsProperty}
-                    onUpdated={refetchLeadProperties}
-                    onTransition={handleTransition}
-                  />
-                }
-                onUndo={async () => {
-                  await handleTransition(leadsProperty.id, "", "undo", {});
-                }}
-                onReagendar={() =>
-                  setModalReagendar({
-                    lpId: leadsProperty.id,
-                    address: property.address || "Propiedad",
-                    visitDate: leadsProperty.visit_date ?? leadsProperty.scheduled_visit_date,
-                  })
-                }
-                onPausar={() =>
-                  setModalPausa({
-                    lpId: leadsProperty.id,
-                    address: property.address || "Propiedad",
-                  })
-                }
-                onDescartar={() =>
-                  setModalDescarte({
-                    lpId: leadsProperty.id,
-                    address: property.address || "Propiedad",
-                  })
-                }
-                onRegistroActividad={() =>
-                  setModalRegistro({
-                    leadsProperty,
-                    address: property.address || "Propiedad",
-                  })
-                }
-              />
-            ))
-          )}
+      {/* Propiedad Seleccionada (la MTP más avanzada) */}
+      {primaryItem && (
+        <div className="space-y-2">
+          <h3 className="text-base font-semibold text-foreground">
+            Propiedad Seleccionada
+          </h3>
+          {renderPropertyCard(primaryItem)}
         </div>
+      )}
 
-        {/* Archivo de Propiedades (En Espera / Descartadas / Alquiladas) */}
-        {archivedItems.length > 0 && (
-          <div className="rounded-[var(--vistral-radius-xl)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card p-5 md:p-6 space-y-4">
-            <h3 className="text-base font-semibold text-foreground">
-              Archivo de Propiedades (Descartadas / En Espera / Alquiladas)
-            </h3>
-            <div className="space-y-2">
-              {archivedItems.map(({ leadsProperty, property }) => (
-                <ArchivedPropertyItem
-                  key={leadsProperty.id}
-                  leadsProperty={leadsProperty}
-                  propertyAddress={property.address || "Propiedad"}
-                  onRevive={async () => {
-                    const result = await transition(
-                      leadsProperty.id,
-                      "",
-                      "revive",
-                      {}
-                    );
-                    if (result?.completed) {
-                      await refetchLeadProperties();
-                      await onLeadRefetch?.();
-                    }
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+      {!primaryItem && !leadPropertiesLoading && (
+        <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            No hay propiedad seleccionada.
+          </p>
+        </div>
+      )}
 
-        {isInteresadoCualificado && (
-          <OtrasPropiedadesCartera
-            leadsUniqueId={lead.leadsUniqueId}
-            leadPropertyItems={leadPropertyItems}
-            onPropertyAdded={refetchLeadProperties}
+      {leadPropertiesLoading && (
+        <div className="flex justify-center py-8">
+          <RentalsHomeLoader />
+        </div>
+      )}
+
+      {/* Phase-specific sections */}
+      {isRecogiendoInformacion && (
+        <>
+          <LeadPersonalInfoSection
+            lead={{
+              id: lead.id,
+              leadsUniqueId: lead.leadsUniqueId,
+              nationality: lead.nationality,
+              identityDocType: lead.identityDocType,
+              identityDocNumber: lead.identityDocNumber,
+              identityDocUrl: lead.identityDocUrl,
+              dateOfBirth: lead.dateOfBirth,
+              age: lead.age,
+              familyProfile: lead.familyProfile,
+              childrenCount: lead.childrenCount,
+              petInfo: lead.petInfo,
+            }}
+            onFieldsChange={handleFieldsChange}
+            isComplete={isPersonalComplete}
           />
-        )}
-      </div>
+          <LeadEmploymentFinancialSection
+            lead={{
+              id: lead.id,
+              leadsUniqueId: lead.leadsUniqueId,
+              employment_status: lead.employment_status,
+              job_title: lead.job_title,
+              employment_contract_type: lead.employment_contract_type,
+              laboral_financial_docs: lead.laboral_financial_docs,
+            }}
+            isComplete={isEmploymentComplete}
+            onRefetch={onLeadRefetch}
+          />
+        </>
+      )}
+    </div>
+  ), [
+    isRecogiendoInformacion, mergedFormData, primaryItem,
+    leadPropertiesLoading, renderPropertyCard, lead,
+    handleFieldsChange, isPersonalComplete, isEmploymentComplete, onLeadRefetch,
+  ]);
 
-      {/* Modal de Confirmación de Transición */}
+  // ---------- Main render ----------
+
+  const mainContent = (() => {
+    if (isPhase1or2) {
+      return renderPropertyManagementView(activeItems, true);
+    }
+
+    if (activeView === "management") {
+      return renderPropertyManagementView(secondaryActiveItems, false);
+    }
+
+    return renderPhase3PlusWorkspace();
+  })();
+
+  return (
+    <>
+      {mainContent}
+
+      {/* Modals — always rendered regardless of active view */}
       {pendingConfirmation && (
         <TransitionConfirmationModal
           open={!!pendingConfirmation}
@@ -411,7 +551,6 @@ export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
         />
       )}
 
-      {/* Modales de acciones */}
       {modalDescarte && (
         <MtpModalDescarte
           open={!!modalDescarte}
@@ -450,7 +589,7 @@ export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
           onOpenChange={(open) => !open && setModalReagendar(null)}
           propertyAddress={modalReagendar.address}
           currentVisitDate={modalReagendar.visitDate}
-          onConfirm={async (newVisitDate, justification) => {
+          onConfirm={async (newVisitDate) => {
             await updateLeadsProperty(modalReagendar.lpId, {
               visit_date: newVisitDate,
               current_status: "visita_agendada",
@@ -468,40 +607,6 @@ export function LeadTasksTab({ lead, onLeadRefetch }: LeadTasksTabProps) {
           propertyAddress={modalRegistro.address}
         />
       )}
-
-      {isRecogiendoInformacion && (
-        <>
-          <LeadPersonalInfoSection
-            lead={{
-              id: lead.id,
-              leadsUniqueId: lead.leadsUniqueId,
-              nationality: lead.nationality,
-              identityDocType: lead.identityDocType,
-              identityDocNumber: lead.identityDocNumber,
-              identityDocUrl: lead.identityDocUrl,
-              dateOfBirth: lead.dateOfBirth,
-              age: lead.age,
-              familyProfile: lead.familyProfile,
-              childrenCount: lead.childrenCount,
-              petInfo: lead.petInfo,
-            }}
-            onFieldsChange={handleFieldsChange}
-            isComplete={isPersonalComplete}
-          />
-          <LeadEmploymentFinancialSection
-            lead={{
-              id: lead.id,
-              leadsUniqueId: lead.leadsUniqueId,
-              employment_status: lead.employment_status,
-              job_title: lead.job_title,
-              employment_contract_type: lead.employment_contract_type,
-              laboral_financial_docs: lead.laboral_financial_docs,
-            }}
-            isComplete={isEmploymentComplete}
-            onRefetch={onLeadRefetch}
-          />
-        </>
-      )}
-    </div>
+    </>
   );
 }

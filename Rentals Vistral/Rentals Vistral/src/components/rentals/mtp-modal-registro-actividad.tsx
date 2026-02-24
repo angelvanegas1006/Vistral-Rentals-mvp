@@ -44,7 +44,7 @@ export function MtpModalRegistroActividad({
 
     list.push({
       id: "perfil",
-      label: MTP_STATUS_TITLES.perfil_cualificado,
+      label: MTP_STATUS_TITLES.interesado_cualificado,
       timestamp: lp.created_at ?? null,
       data: {},
     });
@@ -118,7 +118,7 @@ export function MtpModalRegistroActividad({
       });
     }
 
-    const exitStatuses = ["en_espera", "descartada", "alquilada"];
+    const exitStatuses = ["en_espera", "descartada", "no_disponible"];
     if (lp.current_status && exitStatuses.includes(lp.current_status)) {
       list.push({
         id: "exit",

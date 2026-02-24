@@ -79,14 +79,20 @@ export async function POST(
 
     // 2. Calcular newStatus simulado
     let simulatedStatus = newStatus;
-    if (action === "undo") {
-      simulatedStatus = currentMtp.previous_status ?? currentMtp.current_status ?? "perfil_cualificado";
+    if (action === "advance" && newStatus === "visita_agendada" && updates.visit_date) {
+      // If the visit date is already in the past, skip to pendiente_de_evaluacion
+      const visitMs = new Date(updates.visit_date as string).getTime();
+      if (!Number.isNaN(visitMs) && visitMs <= Date.now()) {
+        simulatedStatus = "pendiente_de_evaluacion";
+      }
+    } else if (action === "undo") {
+      simulatedStatus = currentMtp.previous_status ?? currentMtp.current_status ?? "interesado_cualificado";
     } else if (action === "revive") {
-      const prev = currentMtp.previous_status ?? "perfil_cualificado";
+      const prev = currentMtp.previous_status ?? "interesado_cualificado";
       const visitDate = currentMtp.visit_date as string | null | undefined;
       const now = new Date();
       if (prev === "visita_agendada" && visitDate && new Date(visitDate) < now) {
-        simulatedStatus = "perfil_cualificado";
+        simulatedStatus = "interesado_cualificado";
       } else {
         simulatedStatus = prev;
       }
@@ -172,14 +178,14 @@ export async function POST(
 
     if (action === "advance" && newStatus) {
       updatePayload.previous_status = currentMtp.current_status;
-      updatePayload.current_status = newStatus;
+      updatePayload.current_status = simulatedStatus;
     } else if (action === "undo") {
       updatePayload.current_status = simulatedStatus;
       updatePayload.previous_status = null;
     } else if (action === "revive") {
       updatePayload.current_status = simulatedStatus;
       updatePayload.previous_status = null;
-      if (simulatedStatus === "perfil_cualificado") {
+      if (simulatedStatus === "interesado_cualificado") {
         updatePayload.visit_date = null;
       }
     }
@@ -202,7 +208,7 @@ export async function POST(
         .eq("leads_unique_id", leadId)
         .neq("id", lpId)
         .in("current_status", [
-          "perfil_cualificado",
+          "interesado_cualificado",
           "visita_agendada",
           "pendiente_de_evaluacion",
           "esperando_decision",
@@ -214,7 +220,7 @@ export async function POST(
           .from("leads_properties")
           .update({
             current_status: "en_espera",
-            previous_status: m.current_status ?? "perfil_cualificado",
+            previous_status: m.current_status ?? "interesado_cualificado",
           })
           .eq("id", m.id);
       }

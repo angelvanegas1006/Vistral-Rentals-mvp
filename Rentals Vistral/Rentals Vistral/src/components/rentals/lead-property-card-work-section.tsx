@@ -1,6 +1,6 @@
 "use client";
 
-import { LeadPropertyCardWorkPerfilCualificado } from "./lead-property-card-work-perfil-cualificado";
+import { LeadPropertyCardWorkInteresadoCualificado } from "./lead-property-card-work-interesado-cualificado";
 import { LeadPropertyCardWorkVisitaAgendada } from "./lead-property-card-work-visita-agendada";
 import { LeadPropertyCardWorkPendienteEvaluacion } from "./lead-property-card-work-pendiente-evaluacion";
 import { LeadPropertyCardWorkEsperandoDecision } from "./lead-property-card-work-esperando-decision";
@@ -32,12 +32,12 @@ export function LeadPropertyCardWorkSection({
   onUpdated,
   onTransition,
 }: LeadPropertyCardWorkSectionProps) {
-  const status = leadsProperty.current_status ?? "perfil_cualificado";
+  const status = leadsProperty.current_status ?? "interesado_cualificado";
 
   switch (status) {
-    case "perfil_cualificado":
+    case "interesado_cualificado":
       return (
-        <LeadPropertyCardWorkPerfilCualificado
+        <LeadPropertyCardWorkInteresadoCualificado
           leadsProperty={leadsProperty}
           onUpdated={onUpdated}
           onTransition={onTransition}

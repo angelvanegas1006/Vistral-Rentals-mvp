@@ -82,7 +82,7 @@ La prop `workSection` es un slot. Puedes pasar diferentes componentes según la 
   leadsProperty={lp}
   property={prop}
   workSection={
-    <LeadPropertyCardWorkPerfilCualificado
+    <LeadPropertyCardWorkInteresadoCualificado
       leadsProperty={lp}
       onUpdated={refetch}
     />
@@ -116,7 +116,7 @@ El archivo `src/components/rentals/lead-tasks-tab.tsx` usa `useLeadProperties(le
 - **Hooks:** `useLeadProperties` (`src/hooks/use-lead-properties.ts`) — usa API, no Supabase en cliente
 - **API:** `GET /api/leads/[leadId]/properties` (leadId = leads_unique_id)
 - **Servicios:** `updateLeadsProperty` (`src/services/leads-sync.ts`)
-- **Componentes:** `PropertySummaryTab` (modal "Ver más detalles"), `LeadPropertyCardWorkPerfilCualificado`
+- **Componentes:** `PropertySummaryTab` (modal "Ver más detalles"), `LeadPropertyCardWorkInteresadoCualificado`
 - **API:** `PATCH /api/leads-properties/[id]`
 
 ## Migración
@@ -133,7 +133,7 @@ ADD COLUMN IF NOT EXISTS scheduled_visit_date DATE;
 
 - `src/app/api/leads/[leadId]/properties/route.ts` - API GET para obtener leads_properties + properties
 - `src/components/rentals/lead-property-card.tsx` - Componente principal
-- `src/components/rentals/lead-property-card-work-perfil-cualificado.tsx` - Sección de trabajo para Interesado Cualificado
+- `src/components/rentals/lead-property-card-work-interesado-cualificado.tsx` - Sección de trabajo para Interesado Cualificado
 - `src/components/rentals/lead-tasks-tab.tsx` - Integración
 - `src/hooks/use-lead-properties.ts` - Hook de datos
 - `src/services/leads-sync.ts` - Servicio de actualización
