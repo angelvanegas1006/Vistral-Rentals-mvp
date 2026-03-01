@@ -4,6 +4,13 @@ import {
   getLeadPhaseFromMtpStatuses,
   isMtpActive,
 } from "@/lib/leads/mtp-status";
+import {
+  insertLeadEvent,
+  getMtpStatusTitle,
+  isMtpExitStatus,
+  isPhaseBackward,
+  getPropertyAddress,
+} from "@/lib/leads/lead-events";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -20,7 +27,7 @@ type LeadsPropertyRow = {
 /**
  * POST /api/leads/[leadId]/properties/[lpId]/transition
  * Algoritmo Maestro: simula cambio de estado, calcula si cambia fase del Lead.
- * Body: { newStatus, action: 'advance'|'undo'|'revive', confirmed?: boolean, updates?: Record }
+ * Body: { newStatus, action: 'advance'|'undo'|'revive'|'revert', confirmed?: boolean, updates?: Record }
  * Si confirmed=true o no requiere confirmación, ejecuta el cambio.
  */
 export async function POST(
@@ -51,7 +58,7 @@ export async function POST(
       updates = {},
     }: {
       newStatus?: string;
-      action: "advance" | "undo" | "revive";
+      action: "advance" | "undo" | "revive" | "revert";
       confirmed?: boolean;
       updates?: Record<string, unknown>;
     } = body;
@@ -95,6 +102,14 @@ export async function POST(
         simulatedStatus = "interesado_cualificado";
       } else {
         simulatedStatus = prev;
+      }
+    } else if (action === "revert") {
+      simulatedStatus = newStatus;
+      if (!simulatedStatus) {
+        return NextResponse.json(
+          { error: "newStatus is required for revert action" },
+          { status: 400 }
+        );
       }
     }
 
@@ -188,6 +203,9 @@ export async function POST(
       if (simulatedStatus === "interesado_cualificado") {
         updatePayload.visit_date = null;
       }
+    } else if (action === "revert") {
+      updatePayload.previous_status = currentMtp.current_status;
+      updatePayload.current_status = simulatedStatus;
     }
 
     const { data: updatedMtp, error: updateError } = await supabase
@@ -199,12 +217,52 @@ export async function POST(
 
     if (updateError) throw updateError;
 
+    // --- Emit lead event ---
+    const finalStatus = (updatePayload.current_status as string) ?? simulatedStatus;
+    const address = await getPropertyAddress(supabase, currentMtp.properties_unique_id);
+    const statusTitle = getMtpStatusTitle(finalStatus);
+
+    if (isMtpExitStatus(finalStatus)) {
+      const exitReason = (updates.exit_reason as string) || "";
+      await insertLeadEvent(supabase, {
+        leads_unique_id: leadId,
+        properties_unique_id: currentMtp.properties_unique_id,
+        event_type: "MTP_ARCHIVED",
+        title: `Propiedad Archivada: ${address}`,
+        description: `Estado: ${statusTitle}.${exitReason ? ` Motivo: ${exitReason}.` : ""}`,
+        new_status: finalStatus,
+      });
+    } else if (phaseChanged) {
+      const backward = isPhaseBackward(normalizedLeadPhase, calculatedPhase);
+      await insertLeadEvent(supabase, {
+        leads_unique_id: leadId,
+        properties_unique_id: currentMtp.properties_unique_id,
+        event_type: backward ? "PHASE_CHANGE_BACKWARD" : "PHASE_CHANGE",
+        title: backward
+          ? `Retroceso a: ${calculatedPhase}`
+          : `Movimiento a: ${calculatedPhase}`,
+        description: backward
+          ? `El interesado retrocede a ${calculatedPhase} porque la propiedad ${address} ha pasado al estado ${statusTitle}.`
+          : `El interesado ha cambiado de fase porque la propiedad ${address} ha pasado al estado ${statusTitle}.`,
+        new_status: finalStatus,
+      });
+    } else {
+      await insertLeadEvent(supabase, {
+        leads_unique_id: leadId,
+        properties_unique_id: currentMtp.properties_unique_id,
+        event_type: "MTP_UPDATE",
+        title: `Actualización en ${address}`,
+        description: `El estado de la propiedad ha cambiado a: ${statusTitle}.`,
+        new_status: finalStatus,
+      });
+    }
+
     // Cascada: al pasar a calificacion_en_curso, el resto de MTPs de este lead pasan a en_espera
     const targetStatus = (updatePayload.current_status as string) ?? newStatus;
     if (targetStatus === "calificacion_en_curso") {
       const { data: others } = await supabase
         .from("leads_properties")
-        .select("id, current_status")
+        .select("id, current_status, properties_unique_id")
         .eq("leads_unique_id", leadId)
         .neq("id", lpId)
         .in("current_status", [
@@ -223,6 +281,16 @@ export async function POST(
             previous_status: m.current_status ?? "interesado_cualificado",
           })
           .eq("id", m.id);
+
+        const cascadedAddress = await getPropertyAddress(supabase, m.properties_unique_id);
+        await insertLeadEvent(supabase, {
+          leads_unique_id: leadId,
+          properties_unique_id: m.properties_unique_id,
+          event_type: "MTP_ARCHIVED",
+          title: `Propiedad Archivada: ${cascadedAddress}`,
+          description: `Estado: En Espera. Causa: otra propiedad entró en Calificación en Curso.`,
+          new_status: "en_espera",
+        });
       }
     }
 

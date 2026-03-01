@@ -1,16 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { NavbarL2 } from "@/components/layout/navbar-l2";
 import { PropertyTabs } from "@/components/layout/property-tabs";
 import { LeadTasksTab } from "@/components/rentals/lead-tasks-tab";
 import { LeadSummaryTab } from "@/components/rentals/lead-summary-tab";
 import { LeadGestionRegistroTab } from "@/components/rentals/lead-gestion-registro-tab";
+import { LeadResolutionTab } from "@/components/rentals/lead-resolution-tab";
+import { LeadClosureModal, type LeadClosureType } from "@/components/rentals/lead-closure-modal";
 import { LeadRightSidebar } from "@/components/rentals/lead-right-sidebar";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { Button } from "@/components/ui/button";
 import { useLead } from "@/hooks/use-lead";
+import { TrendingDown, Ban } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -21,6 +25,41 @@ export default function LeadDetailPage() {
   const [showFooter, setShowFooter] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const eventsRefetchRef = useRef<(() => Promise<void> | void) | null>(null);
+  const [closureModalOpen, setClosureModalOpen] = useState(false);
+  const [closureType, setClosureType] = useState<LeadClosureType>("perdido");
+
+  const handleLeadRefetch = useCallback(async () => {
+    await refetchLead();
+    await eventsRefetchRef.current?.();
+  }, [refetchLead]);
+
+  const handleOpenClosureModal = useCallback((type: LeadClosureType) => {
+    setClosureType(type);
+    setClosureModalOpen(true);
+  }, []);
+
+  const handleCloseLead = useCallback(async (exitReason: string, exitComments: string) => {
+    const res = await fetch(`/api/leads/${leadRow?.leads_unique_id}/close`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        closure_type: closureType,
+        exit_reason: exitReason,
+        exit_comments: exitComments || undefined,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error ?? "Error al cerrar el interesado");
+    }
+    toast.success(
+      closureType === "perdido"
+        ? "Interesado marcado como Perdido"
+        : "Interesado marcado como Rechazado"
+    );
+    await handleLeadRefetch();
+  }, [leadRow?.leads_unique_id, closureType, handleLeadRefetch]);
 
   const rawPhase = leadRow?.current_phase ?? "Interesado Cualificado";
   const phaseMap: Record<string, string> = {
@@ -67,28 +106,36 @@ export default function LeadDetailPage() {
         familyProfile: leadRow.family_profile ?? undefined,
         childrenCount: leadRow.children_count ?? undefined,
         petInfo: leadRow.pet_info ?? undefined,
+        exitReason: leadRow.exit_reason ?? null,
+        exitComments: leadRow.exit_comments ?? null,
+        exitedAt: leadRow.exited_at ?? null,
       }
     : null;
 
   const PHASES_1_2 = ["Interesado Cualificado", "Visita Agendada"];
   const PHASE_ACEPTADO = "Interesado Aceptado";
+  const TERMINAL_PHASES = ["Interesado Perdido", "Interesado Rechazado"];
+  const isTerminal = TERMINAL_PHASES.includes(currentPhase);
+  const canClose = !isTerminal && currentPhase !== PHASE_ACEPTADO;
 
   const tabs = (() => {
+    if (isTerminal) {
+      return [
+        { id: "resolucion", label: "Resolución", badge: undefined },
+        { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
     if (currentPhase === PHASE_ACEPTADO) {
       return [
         { id: "registro", label: "Registro de Gestión", badge: undefined },
         { id: "summary", label: "Interesado", badge: undefined },
       ];
     }
-    if (PHASES_1_2.includes(currentPhase)) {
-      return [
-        { id: "tasks", label: "Espacio de trabajo", badge: undefined },
-        { id: "summary", label: "Interesado", badge: undefined },
-      ];
-    }
     return [
       { id: "tasks", label: "Espacio de trabajo", badge: undefined },
-      { id: "management", label: "Gestión de Propiedades", badge: undefined },
+      { id: "cartera", label: "Cartera de Propiedades", badge: undefined },
+      { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
       { id: "summary", label: "Interesado", badge: undefined },
     ];
   })();
@@ -145,6 +192,28 @@ export default function LeadDetailPage() {
         <NavbarL2
           title="Detalles del interesado"
           backHref="/rentals/leads"
+          rightContent={canClose ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-amber-700 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-900/20"
+                onClick={() => handleOpenClosureModal("perdido")}
+              >
+                <TrendingDown className="h-4 w-4 mr-1.5" />
+                Interesado Perdido
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-700 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/20"
+                onClick={() => handleOpenClosureModal("rechazado")}
+              >
+                <Ban className="h-4 w-4 mr-1.5" />
+                Interesado Rechazado
+              </Button>
+            </div>
+          ) : undefined}
         />
 
         {/* Contenido principal - misma estructura que propiedad */}
@@ -158,7 +227,13 @@ export default function LeadDetailPage() {
               <div className="flex flex-wrap items-center gap-3 text-sm text-[#6B7280] dark:text-[#9CA3AF]">
                 <span>ID Interesado: {lead.leadsUniqueId}</span>
                 <span className="text-[#E5E7EB] dark:text-[#374151]">|</span>
-                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs font-semibold uppercase">
+                <span className={`px-2 py-1 rounded text-xs font-semibold uppercase ${
+                  currentPhase === "Interesado Perdido"
+                    ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+                    : currentPhase === "Interesado Rechazado"
+                      ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                      : "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                }`}>
                   {lead.currentPhase}
                 </span>
               </div>
@@ -181,8 +256,16 @@ export default function LeadDetailPage() {
                   className="pb-24"
                   onScroll={handleScroll}
                 >
-                  {(effectiveTab === "tasks" || effectiveTab === "management") && (
-                    <LeadTasksTab lead={lead} onLeadRefetch={refetchLead} activeView={effectiveTab as "tasks" | "management"} />
+                  {(effectiveTab === "tasks" || effectiveTab === "cartera" || effectiveTab === "archivo") && (
+                    <LeadTasksTab lead={lead} onLeadRefetch={handleLeadRefetch} activeView={effectiveTab as "tasks" | "cartera" | "archivo"} />
+                  )}
+                  {effectiveTab === "resolucion" && (
+                    <LeadResolutionTab
+                      currentPhase={lead.currentPhase}
+                      exitReason={lead.exitReason}
+                      exitComments={lead.exitComments}
+                      exitedAt={lead.exitedAt}
+                    />
                   )}
                   {effectiveTab === "registro" && <LeadGestionRegistroTab lead={lead} />}
                   {effectiveTab === "summary" && <LeadSummaryTab lead={lead} />}
@@ -190,12 +273,19 @@ export default function LeadDetailPage() {
               </div>
 
               <div className="lg:col-span-1 space-y-8 relative">
-                <LeadRightSidebar />
+                <LeadRightSidebar leadId={lead.leadsUniqueId} refetchRef={eventsRefetchRef} />
               </div>
         </div>
         </div>
         </div>
       </div>
+
+      <LeadClosureModal
+        type={closureType}
+        open={closureModalOpen}
+        onOpenChange={setClosureModalOpen}
+        onConfirm={handleCloseLead}
+      />
     </div>
   );
 }

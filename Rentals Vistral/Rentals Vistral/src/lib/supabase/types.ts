@@ -389,6 +389,10 @@ export interface Database {
           family_profile: "Soltero" | "Pareja" | "Con hijos" | null;
           children_count: number | null;
           pet_info: Record<string, unknown> | null;
+          /** Cierre global del lead (Perdido/Rechazado) */
+          exit_reason: string | null;
+          exit_comments: string | null;
+          exited_at: string | null;
           needs_update: boolean;
           created_at: string;
           updated_at: string;
@@ -440,6 +444,22 @@ export interface Database {
           exit_comments?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["leads_properties"]["Insert"]>;
+      };
+      lead_events: {
+        Row: {
+          id: string;
+          leads_unique_id: string;
+          properties_unique_id: string | null;
+          event_type: "PROPERTY_ADDED" | "MTP_UPDATE" | "PHASE_CHANGE" | "PHASE_CHANGE_BACKWARD" | "MTP_ARCHIVED";
+          title: string;
+          description: string;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["lead_events"]["Row"], "id" | "created_at"> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["lead_events"]["Insert"]>;
       };
     };
     Views: {

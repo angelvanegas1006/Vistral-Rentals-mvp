@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getLeadPhaseFromMtpStatuses } from "@/lib/leads/mtp-status";
+import { insertLeadEvent, getPropertyAddress } from "@/lib/leads/lead-events";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export async function POST() {
 
     const { data: allVisitaAgendada, error: qErr } = await supabase
       .from("leads_properties")
-      .select("id, leads_unique_id, visit_date")
+      .select("id, leads_unique_id, visit_date, properties_unique_id")
       .eq("current_status", "visita_agendada");
 
     if (qErr) {
@@ -46,6 +47,7 @@ export async function POST() {
     console.log(`[auto-advance] visita_agendada total: ${allVisitaAgendada?.length ?? 0}, past: ${toAdvance.length} (now=${nowIso})`);
 
     const affectedLeadIds = new Set<string>();
+    const advancedByLead = new Map<string, string[]>();
     let advancedCount = 0;
 
     for (const lp of toAdvance ?? []) {
@@ -62,11 +64,21 @@ export async function POST() {
       } else {
         advancedCount++;
         affectedLeadIds.add(lp.leads_unique_id);
+        const list = advancedByLead.get(lp.leads_unique_id) ?? [];
+        list.push(lp.properties_unique_id);
+        advancedByLead.set(lp.leads_unique_id, list);
         console.log(`[auto-advance] MTP ${lp.id} → pendiente_de_evaluacion (visit_date: ${lp.visit_date})`);
       }
     }
 
     for (const leadId of affectedLeadIds) {
+      const { data: leadRow } = await supabase
+        .from("leads")
+        .select("current_phase")
+        .eq("leads_unique_id", leadId)
+        .single();
+      const oldPhase = (leadRow?.current_phase as string) || "";
+
       const { data: allMtps } = await supabase
         .from("leads_properties")
         .select("current_status")
@@ -74,11 +86,36 @@ export async function POST() {
 
       const statuses = (allMtps || []).map((m) => m.current_status as string).filter(Boolean);
       const newPhase = getLeadPhaseFromMtpStatuses(statuses);
+      const phaseChanged = newPhase !== oldPhase;
 
       await supabase
         .from("leads")
         .update({ current_phase: newPhase })
         .eq("leads_unique_id", leadId);
+
+      const propIds = advancedByLead.get(leadId) ?? [];
+      for (const propId of propIds) {
+        const addr = await getPropertyAddress(supabase, propId);
+        if (phaseChanged) {
+          await insertLeadEvent(supabase, {
+            leads_unique_id: leadId,
+            properties_unique_id: propId,
+            event_type: "PHASE_CHANGE",
+            title: `Movimiento a: ${newPhase}`,
+            description: `El interesado ha cambiado de fase porque la propiedad ${addr} ha pasado al estado Pendiente de Evaluación.`,
+            new_status: "pendiente_de_evaluacion",
+          });
+        } else {
+          await insertLeadEvent(supabase, {
+            leads_unique_id: leadId,
+            properties_unique_id: propId,
+            event_type: "MTP_UPDATE",
+            title: `Actualización en ${addr}`,
+            description: `El estado de la propiedad ha cambiado a: Pendiente de Evaluación.`,
+            new_status: "pendiente_de_evaluacion",
+          });
+        }
+      }
 
       console.log(`[auto-advance] Lead ${leadId} phase → ${newPhase}`);
     }

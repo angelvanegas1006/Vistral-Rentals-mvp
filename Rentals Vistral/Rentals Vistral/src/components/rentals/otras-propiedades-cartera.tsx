@@ -23,6 +23,7 @@ import {
   SlidersHorizontal,
   ChevronDown,
   RotateCcw,
+  Sparkles,
   X,
   MapPin,
 } from "lucide-react";
@@ -40,32 +41,31 @@ interface SmartDefaults {
   areaCluster?: string;
 }
 
-/** Compute smart default filters from the lead's existing associated properties. */
+/**
+ * Compute smart default filters from the lead's FIRST associated property
+ * (ordered by leads_properties.created_at ASC).
+ */
 function computeSmartDefaults(
   leadPropertyItems: LeadPropertyItem[]
 ): SmartDefaults {
   if (leadPropertyItems.length === 0) return {};
 
-  const properties = leadPropertyItems.map((item) => item.property);
+  const sorted = [...leadPropertyItems].sort(
+    (a, b) =>
+      new Date(a.leadsProperty.created_at).getTime() -
+      new Date(b.leadsProperty.created_at).getTime()
+  );
 
-  // City = first associated property's city
-  const firstProperty = properties[0];
-  const city = firstProperty?.city ?? undefined;
+  const firstProperty = sorted[0].property;
 
-  // Max price = most expensive associated property's announcement_price + 10%
-  const prices = properties
-    .map((p) => p.announcement_price)
-    .filter((p): p is number => p != null && p > 0);
-  const maxOriginalPrice = prices.length > 0 ? Math.max(...prices) : undefined;
-  const maxPrice = maxOriginalPrice
-    ? Math.ceil(maxOriginalPrice * 1.1)
-    : undefined;
-
-  // Min bedrooms = first associated property's bedrooms
-  const minBedrooms = firstProperty?.bedrooms ?? undefined;
-
-  // Zone = first associated property's area_cluster
-  const areaCluster = firstProperty?.area_cluster ?? undefined;
+  const city = firstProperty.city ?? undefined;
+  const rawPrice = firstProperty.announcement_price;
+  const maxPrice =
+    rawPrice != null && rawPrice > 0
+      ? Math.ceil(rawPrice * 1.1)
+      : undefined;
+  const minBedrooms = firstProperty.bedrooms ?? undefined;
+  const areaCluster = firstProperty.area_cluster ?? undefined;
 
   return {
     city: city ?? undefined,
@@ -106,24 +106,27 @@ export function OtrasPropiedadesCartera({
 
   const saved = useRef(loadSaved());
 
-  // Filter state — restore from session or fall back to smart defaults
+  // Filter state — restore from session or start empty (use "Sugeridos" button to apply smart defaults)
   const [search, setSearch] = useState<string>(
     (saved.current?.search as string) ?? ""
   );
   const [city, setCity] = useState<string>(
-    (saved.current?.city as string) ?? defaults.city ?? ""
+    (saved.current?.city as string) ?? ""
+  );
+  const [minPrice, setMinPrice] = useState<string>(
+    (saved.current?.minPrice as string) ?? ""
   );
   const [maxPrice, setMaxPrice] = useState<string>(
-    (saved.current?.maxPrice as string) ??
-      (defaults.maxPrice != null ? String(defaults.maxPrice) : "")
+    (saved.current?.maxPrice as string) ?? ""
   );
   const [minBedrooms, setMinBedrooms] = useState<string>(
-    (saved.current?.minBedrooms as string) ??
-      (defaults.minBedrooms != null ? String(defaults.minBedrooms) : "")
+    (saved.current?.minBedrooms as string) ?? ""
+  );
+  const [maxBedrooms, setMaxBedrooms] = useState<string>(
+    (saved.current?.maxBedrooms as string) ?? ""
   );
   const [areaClusters, setAreaClusters] = useState<string[]>(
-    (saved.current?.areaClusters as string[]) ??
-      (defaults.areaCluster ? [defaults.areaCluster] : [])
+    (saved.current?.areaClusters as string[]) ?? []
   );
   const [rentalType, setRentalType] = useState<string>(
     (saved.current?.rentalType as string) ?? ""
@@ -131,11 +134,23 @@ export function OtrasPropiedadesCartera({
   const [minSqm, setMinSqm] = useState<string>(
     (saved.current?.minSqm as string) ?? ""
   );
+  const [maxSqm, setMaxSqm] = useState<string>(
+    (saved.current?.maxSqm as string) ?? ""
+  );
   const [minBathrooms, setMinBathrooms] = useState<string>(
     (saved.current?.minBathrooms as string) ?? ""
   );
-  const [sectionOpen, setSectionOpen] = useState(
-    (saved.current?.sectionOpen as boolean) ?? false
+  const [maxBathrooms, setMaxBathrooms] = useState<string>(
+    (saved.current?.maxBathrooms as string) ?? ""
+  );
+  const [hasElevator, setHasElevator] = useState<boolean>(
+    (saved.current?.hasElevator as boolean) ?? false
+  );
+  const [hasGarage, setHasGarage] = useState<boolean>(
+    (saved.current?.hasGarage as boolean) ?? false
+  );
+  const [hasTerrace, setHasTerrace] = useState<boolean>(
+    (saved.current?.hasTerrace as boolean) ?? false
   );
   const [zonesDropdownOpen, setZonesDropdownOpen] = useState(false);
   const zonesRef = useRef<HTMLDivElement>(null);
@@ -152,13 +167,19 @@ export function OtrasPropiedadesCartera({
         JSON.stringify({
           search,
           city,
+          minPrice,
           maxPrice,
           minBedrooms,
+          maxBedrooms,
           areaClusters,
           rentalType,
           minSqm,
+          maxSqm,
           minBathrooms,
-          sectionOpen,
+          maxBathrooms,
+          hasElevator,
+          hasGarage,
+          hasTerrace,
           filtersOpen,
         })
       );
@@ -169,13 +190,19 @@ export function OtrasPropiedadesCartera({
     storageKey,
     search,
     city,
+    minPrice,
     maxPrice,
     minBedrooms,
+    maxBedrooms,
     areaClusters,
     rentalType,
     minSqm,
+    maxSqm,
     minBathrooms,
-    sectionOpen,
+    maxBathrooms,
+    hasElevator,
+    hasGarage,
+    hasTerrace,
     filtersOpen,
   ]);
 
@@ -189,23 +216,37 @@ export function OtrasPropiedadesCartera({
   const filters: PublishedPropertiesFilters = useMemo(
     () => ({
       city: city || undefined,
+      minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-      minBedrooms: minBedrooms ? parseInt(minBedrooms, 10) : undefined,
+      minBedrooms: minBedrooms !== "" ? parseInt(minBedrooms, 10) : undefined,
+      maxBedrooms: maxBedrooms !== "" ? parseInt(maxBedrooms, 10) : undefined,
       areaClusters: areaClusters.length > 0 ? areaClusters : undefined,
       rentalType: rentalType || undefined,
       minSqm: minSqm ? parseInt(minSqm, 10) : undefined,
+      maxSqm: maxSqm ? parseInt(maxSqm, 10) : undefined,
       minBathrooms: minBathrooms ? parseInt(minBathrooms, 10) : undefined,
+      maxBathrooms: maxBathrooms ? parseInt(maxBathrooms, 10) : undefined,
+      hasElevator: hasElevator || undefined,
+      hasGarage: hasGarage || undefined,
+      hasTerrace: hasTerrace || undefined,
       search: search || undefined,
       excludeIds,
     }),
     [
       city,
+      minPrice,
       maxPrice,
       minBedrooms,
+      maxBedrooms,
       areaClusters,
       rentalType,
       minSqm,
+      maxSqm,
       minBathrooms,
+      maxBathrooms,
+      hasElevator,
+      hasGarage,
+      hasTerrace,
       search,
       excludeIds,
     ]
@@ -257,36 +298,52 @@ export function OtrasPropiedadesCartera({
     []
   );
 
-  // Reset filters
+  const hasLinkedProperties = leadPropertyItems.length > 0;
+
   const handleResetFilters = () => {
     setSearch("");
+    setCity("");
+    setMinPrice("");
+    setMaxPrice("");
+    setMinBedrooms("");
+    setMaxBedrooms("");
+    setAreaClusters([]);
+    setRentalType("");
+    setMinSqm("");
+    setMaxSqm("");
+    setMinBathrooms("");
+    setMaxBathrooms("");
+    setHasElevator(false);
+    setHasGarage(false);
+    setHasTerrace(false);
+  };
+
+  const handleSuggestedFilters = () => {
+    if (!hasLinkedProperties) return;
+    handleResetFilters();
     setCity(defaults.city ?? "");
     setMaxPrice(defaults.maxPrice != null ? String(defaults.maxPrice) : "");
     setMinBedrooms(
       defaults.minBedrooms != null ? String(defaults.minBedrooms) : ""
     );
     setAreaClusters(defaults.areaCluster ? [defaults.areaCluster] : []);
-    setRentalType("");
-    setMinSqm("");
-    setMinBathrooms("");
   };
 
-  // Count active (non-default) filters
   const activeFilterCount = [
-    city && city !== (defaults.city ?? ""),
-    maxPrice &&
-      maxPrice !== (defaults.maxPrice != null ? String(defaults.maxPrice) : ""),
-    minBedrooms &&
-      minBedrooms !==
-        (defaults.minBedrooms != null ? String(defaults.minBedrooms) : ""),
-    areaClusters.length > 0 &&
-      !(
-        areaClusters.length === 1 &&
-        areaClusters[0] === (defaults.areaCluster ?? "")
-      ),
+    city,
+    minPrice,
+    maxPrice,
+    minBedrooms,
+    maxBedrooms,
+    areaClusters.length > 0,
     rentalType,
     minSqm,
+    maxSqm,
     minBathrooms,
+    maxBathrooms,
+    hasElevator,
+    hasGarage,
+    hasTerrace,
     search,
   ].filter(Boolean).length;
 
@@ -345,35 +402,15 @@ export function OtrasPropiedadesCartera({
 
   return (
     <div className="rounded-[var(--vistral-radius-xl)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card overflow-hidden">
-      {/* Section header — clickable to collapse/expand */}
-      <button
-        type="button"
-        onClick={() => setSectionOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between p-5 md:p-6 cursor-pointer hover:bg-[var(--vistral-gray-50)] dark:hover:bg-[var(--vistral-gray-900)]/50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <h3 className="text-base font-semibold text-foreground">
-            Otras Propiedades en Cartera
-          </h3>
-          <span className="text-xs text-muted-foreground bg-[var(--vistral-gray-100)] dark:bg-[var(--vistral-gray-700)] px-2 py-0.5 rounded-full">
-            {loading ? "..." : properties.length}
-          </span>
-        </div>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform duration-200",
-            sectionOpen ? "rotate-180" : "rotate-0"
-          )}
-        />
-      </button>
-
-      {/* Collapsible content */}
-      {sectionOpen && (
-      <div className="px-5 md:px-6 pb-5 md:pb-6 space-y-4">
-      <p className="text-xs text-muted-foreground">
-        Propiedades en fase Publicado que podrían interesar a este inquilino.
-      </p>
-
+      <div className="p-5 md:p-6 space-y-4">
+      <div className="flex items-center gap-3">
+        <h3 className="text-base font-semibold text-foreground">
+          Cartera de Propiedades
+        </h3>
+        <span className="text-xs text-muted-foreground bg-[var(--vistral-gray-100)] dark:bg-[var(--vistral-gray-700)] px-2 py-0.5 rounded-full">
+          {loading ? "..." : properties.length}
+        </span>
+      </div>
       {/* Search bar */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -409,242 +446,324 @@ export function OtrasPropiedadesCartera({
       {/* Filters panel */}
       {filtersOpen && (
         <div className="rounded-[var(--vistral-radius-lg)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {/* City */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
-                Ciudad
-              </Label>
-              <Select
-                value={city || "__all__"}
-                onValueChange={handleCityChange}
-              >
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todas las ciudades</SelectItem>
-                  {cityOptions.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Zone (multi-select) */}
-            <div className="space-y-1.5 col-span-2" ref={zonesRef}>
-              <Label className="text-xs font-medium text-muted-foreground">
-                Zonas
-              </Label>
-
-              {/* Trigger — mirrors SelectTrigger pattern */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setZonesDropdownOpen((p) => !p)}
-                  className={cn(
-                    "flex h-8 w-full items-center justify-between rounded-md border bg-background px-3 text-xs md:text-xs transition-colors",
-                    "border-[var(--vistral-gray-300)] dark:border-[var(--vistral-gray-700)]",
-                    zonesDropdownOpen
-                      ? "ring-2 ring-[var(--vistral-blue-500)] border-[var(--vistral-blue-500)]"
-                      : "hover:border-[var(--vistral-gray-400)]"
-                  )}
+          <div className="space-y-3">
+            {/* Row 1: Ciudad + Zonas */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Ciudad
+                </Label>
+                <Select
+                  value={city || "__all__"}
+                  onValueChange={handleCityChange}
                 >
-                  <span
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todas las ciudades</SelectItem>
+                    {cityOptions.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2" ref={zonesRef}>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Zonas
+                </Label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setZonesDropdownOpen((p) => !p)}
                     className={cn(
-                      "truncate",
-                      areaClusters.length === 0 || allZonesSelected
-                        ? "text-muted-foreground"
-                        : "text-foreground"
+                      "flex h-8 w-full items-center justify-between rounded-md border bg-background px-3 text-xs md:text-xs transition-colors",
+                      "border-[var(--vistral-gray-300)] dark:border-[var(--vistral-gray-700)]",
+                      zonesDropdownOpen
+                        ? "ring-2 ring-[var(--vistral-blue-500)] border-[var(--vistral-blue-500)]"
+                        : "hover:border-[var(--vistral-gray-400)]"
                     )}
                   >
-                    {zonesTriggerLabel}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 flex-shrink-0 opacity-50 transition-transform duration-150",
-                      zonesDropdownOpen && "rotate-180"
-                    )}
-                  />
-                </button>
+                    <span
+                      className={cn(
+                        "truncate",
+                        areaClusters.length === 0 || allZonesSelected
+                          ? "text-muted-foreground"
+                          : "text-foreground"
+                      )}
+                    >
+                      {zonesTriggerLabel}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 flex-shrink-0 opacity-50 transition-transform duration-150",
+                        zonesDropdownOpen && "rotate-180"
+                      )}
+                    />
+                  </button>
 
-                {/* Dropdown — mirrors SelectContent pattern */}
-                {zonesDropdownOpen && (
-                  <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md">
-                    {areaClusterOptions.length === 0 ? (
-                      <p className="px-3 py-3 text-xs text-muted-foreground text-center">
-                        No hay zonas disponibles
-                      </p>
-                    ) : (
-                      <div className="max-h-48 overflow-y-auto p-1 space-y-0.5">
-                        {/* Select / deselect all */}
-                        <label
-                          className={cn(
-                            "flex items-center gap-2 px-2 py-1.5 rounded-sm cursor-pointer text-xs font-medium transition-colors",
-                            areaClusters.length === areaClusterOptions.length
-                              ? "bg-accent text-accent-foreground"
-                              : "hover:bg-accent hover:text-accent-foreground"
-                          )}
-                        >
-                          <Checkbox
-                            checked={
+                  {zonesDropdownOpen && (
+                    <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md">
+                      {areaClusterOptions.length === 0 ? (
+                        <p className="px-3 py-3 text-xs text-muted-foreground text-center">
+                          No hay zonas disponibles
+                        </p>
+                      ) : (
+                        <div className="max-h-48 overflow-y-auto p-1 space-y-0.5">
+                          <label
+                            className={cn(
+                              "flex items-center gap-2 px-2 py-1.5 rounded-sm cursor-pointer text-xs font-medium transition-colors",
                               areaClusters.length === areaClusterOptions.length
-                                ? true
-                                : areaClusters.length > 0
-                                  ? "indeterminate"
-                                  : false
-                            }
-                            onCheckedChange={(checked) => {
-                              setAreaClusters(checked ? [...areaClusterOptions] : []);
-                            }}
-                          />
-                          <span>Todas las zonas</span>
-                        </label>
+                                ? "bg-accent text-accent-foreground"
+                                : "hover:bg-accent hover:text-accent-foreground"
+                            )}
+                          >
+                            <Checkbox
+                              checked={
+                                areaClusters.length === areaClusterOptions.length
+                                  ? true
+                                  : areaClusters.length > 0
+                                    ? "indeterminate"
+                                    : false
+                              }
+                              onCheckedChange={(checked) => {
+                                setAreaClusters(checked ? [...areaClusterOptions] : []);
+                              }}
+                            />
+                            <span>Todas las zonas</span>
+                          </label>
 
-                        <div className="-mx-1 my-1 h-px bg-muted" />
+                          <div className="-mx-1 my-1 h-px bg-muted" />
 
-                        {areaClusterOptions.map((zone) => {
-                          const checked = areaClusters.includes(zone);
-                          return (
-                            <label
-                              key={zone}
-                              className={cn(
-                                "flex items-center gap-2 px-2 py-1.5 rounded-sm cursor-pointer text-xs transition-colors",
-                                checked
-                                  ? "bg-accent text-accent-foreground"
-                                  : "hover:bg-accent hover:text-accent-foreground"
-                              )}
-                            >
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={() => toggleZone(zone)}
-                              />
-                              <MapPin className="h-3 w-3 flex-shrink-0 opacity-40" />
-                              <span className="truncate">{zone}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
+                          {areaClusterOptions.map((zone) => {
+                            const checked = areaClusters.includes(zone);
+                            return (
+                              <label
+                                key={zone}
+                                className={cn(
+                                  "flex items-center gap-2 px-2 py-1.5 rounded-sm cursor-pointer text-xs transition-colors",
+                                  checked
+                                    ? "bg-accent text-accent-foreground"
+                                    : "hover:bg-accent hover:text-accent-foreground"
+                                )}
+                              >
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={() => toggleZone(zone)}
+                                />
+                                <MapPin className="h-3 w-3 flex-shrink-0 opacity-40" />
+                                <span className="truncate">{zone}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {areaClusters.length > 0 && !allZonesSelected && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {areaClusters.map((zone) => (
+                      <span
+                        key={zone}
+                        className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-[11px] font-medium bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-950)] text-[var(--vistral-blue-600)] dark:text-[var(--vistral-blue-300)] border border-[var(--vistral-blue-200)] dark:border-[var(--vistral-blue-800)]"
+                      >
+                        {zone}
+                        <button
+                          type="button"
+                          onClick={() => toggleZone(zone)}
+                          className="rounded-full p-0.5 hover:bg-[var(--vistral-blue-100)] dark:hover:bg-[var(--vistral-blue-900)] transition-colors cursor-pointer"
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Selected zones chips — using Badge-like design system tokens */}
-              {areaClusters.length > 0 && !allZonesSelected && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {areaClusters.map((zone) => (
-                    <span
-                      key={zone}
-                      className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-[11px] font-medium bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-950)] text-[var(--vistral-blue-600)] dark:text-[var(--vistral-blue-300)] border border-[var(--vistral-blue-200)] dark:border-[var(--vistral-blue-800)]"
-                    >
-                      {zone}
-                      <button
-                        type="button"
-                        onClick={() => toggleZone(zone)}
-                        className="rounded-full p-0.5 hover:bg-[var(--vistral-blue-100)] dark:hover:bg-[var(--vistral-blue-900)] transition-colors cursor-pointer"
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </button>
-                    </span>
-                  ))}
+            {/* Row 2: Precio + Tipo de alquiler + Tamaño */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Precio (€/mes)
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mín"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    className="h-8 text-xs md:text-xs"
+                    min={0}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máx"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    className="h-8 text-xs md:text-xs"
+                    min={0}
+                  />
                 </div>
-              )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Tipo de alquiler
+                </Label>
+                <Select
+                  value={rentalType || "__all__"}
+                  onValueChange={(v) => setRentalType(v === "__all__" ? "" : v)}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todos los tipos</SelectItem>
+                    {rentalTypeOptions.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Tamaño (m²)
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mín"
+                    value={minSqm}
+                    onChange={(e) => setMinSqm(e.target.value)}
+                    className="h-8 text-xs md:text-xs"
+                    min={0}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máx"
+                    value={maxSqm}
+                    onChange={(e) => setMaxSqm(e.target.value)}
+                    className="h-8 text-xs md:text-xs"
+                    min={0}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Max price */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
-                Precio máximo (€/mes)
-              </Label>
-              <Input
-                type="number"
-                placeholder="Sin límite"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="h-8 text-xs md:text-xs"
-                min={0}
-              />
+            {/* Row 3: Habitaciones + Baños */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Habitaciones
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mín"
+                    value={minBedrooms}
+                    onChange={(e) => setMinBedrooms(e.target.value)}
+                    className="h-8 text-xs md:text-xs"
+                    min={0}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máx"
+                    value={maxBedrooms}
+                    onChange={(e) => setMaxBedrooms(e.target.value)}
+                    className="h-8 text-xs md:text-xs"
+                    min={0}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Baños
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mín"
+                    value={minBathrooms}
+                    onChange={(e) => setMinBathrooms(e.target.value)}
+                    className="h-8 text-xs md:text-xs"
+                    min={0}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máx"
+                    value={maxBathrooms}
+                    onChange={(e) => setMaxBathrooms(e.target.value)}
+                    className="h-8 text-xs md:text-xs"
+                    min={0}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Min bedrooms */}
+            {/* Row 4: Características */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">
-                Habitaciones mínimas
+                Características
               </Label>
-              <Input
-                type="number"
-                placeholder="Cualquiera"
-                value={minBedrooms}
-                onChange={(e) => setMinBedrooms(e.target.value)}
-                className="h-8 text-xs md:text-xs"
-                min={0}
-              />
-            </div>
-
-            {/* Rental type */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
-                Tipo de alquiler
-              </Label>
-              <Select
-                value={rentalType || "__all__"}
-                onValueChange={(v) => setRentalType(v === "__all__" ? "" : v)}
-              >
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todos los tipos</SelectItem>
-                  {rentalTypeOptions.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Min sqm */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
-                m² mínimos
-              </Label>
-              <Input
-                type="number"
-                placeholder="Cualquiera"
-                value={minSqm}
-                onChange={(e) => setMinSqm(e.target.value)}
-                className="h-8 text-xs md:text-xs"
-                min={0}
-              />
-            </div>
-
-            {/* Min bathrooms */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
-                Baños mínimos
-              </Label>
-              <Input
-                type="number"
-                placeholder="Cualquiera"
-                value={minBathrooms}
-                onChange={(e) => setMinBathrooms(e.target.value)}
-                className="h-8 text-xs md:text-xs"
-                min={0}
-              />
+              <div className="flex flex-wrap gap-x-5 gap-y-2">
+                <label className="flex items-center gap-2 cursor-pointer text-xs">
+                  <Checkbox
+                    checked={hasElevator}
+                    onCheckedChange={(checked) =>
+                      setHasElevator(checked === true)
+                    }
+                  />
+                  <span>Ascensor</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-xs">
+                  <Checkbox
+                    checked={hasGarage}
+                    onCheckedChange={(checked) =>
+                      setHasGarage(checked === true)
+                    }
+                  />
+                  <span>Garaje</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-xs">
+                  <Checkbox
+                    checked={hasTerrace}
+                    onCheckedChange={(checked) =>
+                      setHasTerrace(checked === true)
+                    }
+                  />
+                  <span>Terraza</span>
+                </label>
+              </div>
             </div>
           </div>
 
-          {/* Smart defaults info + reset */}
-          <div className="flex items-center justify-between pt-1 border-t border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)]">
-            <p className="text-[11px] text-muted-foreground">
-              {defaults.city
-                ? `Sugerido: ${defaults.city}, ≤${defaults.maxPrice ?? "?"} €/mes, ≥${defaults.minBedrooms ?? "?"} hab., zona ${defaults.areaCluster ?? "N/A"}`
-                : "Sin propiedades asociadas — mostrando todas las publicadas"}
-            </p>
+          <div className="flex items-center justify-end gap-2 pt-1 border-t border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)]">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 text-xs",
+                hasLinkedProperties
+                  ? "text-[var(--vistral-blue-600)] dark:text-[var(--vistral-blue-400)] hover:text-[var(--vistral-blue-700)] dark:hover:text-[var(--vistral-blue-300)]"
+                  : "text-muted-foreground/50 cursor-not-allowed"
+              )}
+              onClick={handleSuggestedFilters}
+              disabled={!hasLinkedProperties}
+            >
+              <Sparkles className="h-3 w-3 mr-1" />
+              Sugeridos
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -693,7 +812,6 @@ export function OtrasPropiedadesCartera({
         </div>
       )}
       </div>
-      )}
     </div>
   );
 }

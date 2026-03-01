@@ -18,9 +18,9 @@ import { useLeadProperties } from "@/hooks/use-lead-properties";
 import { useMtpTransition } from "@/hooks/use-mtp-transition";
 import { TransitionConfirmationModal } from "@/components/rentals/transition-confirmation-modal";
 import { MtpModalDescarte } from "@/components/rentals/mtp-modal-descarte";
-import { MtpModalPausa } from "@/components/rentals/mtp-modal-pausa";
 import { MtpModalReagendar } from "@/components/rentals/mtp-modal-reagendar";
 import { MtpModalRegistroActividad } from "@/components/rentals/mtp-modal-registro-actividad";
+import { LeadPropertyCardWorkArchived } from "@/components/rentals/lead-property-card-work-archived";
 import { updateLeadsProperty } from "@/services/leads-sync";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { MTP_EXIT_STATUS_IDS, MTP_STATUS_RANK } from "@/lib/leads/mtp-status";
@@ -87,7 +87,7 @@ interface Lead {
 interface LeadTasksTabProps {
   lead: Lead;
   onLeadRefetch?: () => void | Promise<void>;
-  activeView?: "tasks" | "management";
+  activeView?: "tasks" | "cartera" | "archivo";
 }
 
 // ---------- Helpers ----------
@@ -179,52 +179,6 @@ function getMtpRank(status: string): number {
   return MTP_STATUS_RANK[status as MtpStatusId] ?? 0;
 }
 
-function ArchivedPropertyItem({
-  leadsProperty,
-  propertyAddress,
-  onRevive,
-  canRevive = true,
-}: {
-  leadsProperty: { id: string; current_status?: string | null };
-  propertyAddress: string;
-  onRevive: () => Promise<void>;
-  canRevive?: boolean;
-}) {
-  const [loading, setLoading] = useState(false);
-  const status = leadsProperty.current_status ?? "";
-  const statusLabel =
-    status === "en_espera"
-      ? "En Espera"
-      : status === "descartada"
-        ? "Descartada"
-        : status === "no_disponible"
-          ? "No Disponible"
-          : status;
-
-  return (
-    <div className="flex items-center justify-between rounded-lg border p-3">
-      <div>
-        <p className="font-medium text-sm">{propertyAddress}</p>
-        <p className="text-xs text-muted-foreground">{statusLabel}</p>
-      </div>
-      {canRevive && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={async () => {
-            setLoading(true);
-            await onRevive();
-            setLoading(false);
-          }}
-          disabled={loading}
-        >
-          Recuperar
-        </Button>
-      )}
-    </div>
-  );
-}
-
 // ---------- Component ----------
 
 export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: LeadTasksTabProps) {
@@ -253,15 +207,14 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
   );
 
   const [modalDescarte, setModalDescarte] = useState<{ lpId: string; address: string } | null>(null);
-  const [modalPausa, setModalPausa] = useState<{ lpId: string; address: string } | null>(null);
   const [modalReagendar, setModalReagendar] = useState<{ lpId: string; address: string; visitDate?: string | null } | null>(null);
   const [modalRegistro, setModalRegistro] = useState<{ leadsProperty: typeof leadPropertyItems[0]["leadsProperty"]; address: string } | null>(null);
 
   const activeItems = leadPropertyItems.filter(
-    (i) => !MTP_EXIT_STATUS_IDS.includes((i.leadsProperty.current_status ?? "interesado_cualificado") as "en_espera" | "descartada" | "no_disponible")
+    (i) => !MTP_EXIT_STATUS_IDS.includes((i.leadsProperty.current_status ?? "interesado_cualificado") as MtpStatusId)
   );
   const archivedItems = leadPropertyItems.filter((i) =>
-    MTP_EXIT_STATUS_IDS.includes((i.leadsProperty.current_status ?? "") as "en_espera" | "descartada" | "no_disponible")
+    MTP_EXIT_STATUS_IDS.includes((i.leadsProperty.current_status ?? "") as MtpStatusId)
   );
 
   // For phases 3+: identify the primary (highest-ranked) MTP
@@ -320,20 +273,11 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
             onTransition={handleTransition}
           />
         }
-        onUndo={async () => {
-          await handleTransition(item.leadsProperty.id, "", "undo", {});
-        }}
         onReagendar={() =>
           setModalReagendar({
             lpId: item.leadsProperty.id,
             address: item.property.address || "Propiedad",
             visitDate: item.leadsProperty.visit_date,
-          })
-        }
-        onPausar={() =>
-          setModalPausa({
-            lpId: item.leadsProperty.id,
-            address: item.property.address || "Propiedad",
           })
         }
         onDescartar={() =>
@@ -389,27 +333,47 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
           <h3 className="text-base font-semibold text-foreground">
             Archivo de Propiedades (Descartadas / En Espera / No Disponibles)
           </h3>
-          <div className="space-y-2">
-            {archivedItems.map(({ leadsProperty, property }) => (
-              <ArchivedPropertyItem
+          <div className="space-y-3">
+            {archivedItems.map(({ leadsProperty, property }) => {
+              const st = leadsProperty.current_status ?? "";
+              const canRecover = st !== "no_disponible" && st !== "interesado_perdido" && st !== "interesado_rechazado";
+              return (
+              <LeadPropertyCard
                 key={leadsProperty.id}
                 leadsProperty={leadsProperty}
-                propertyAddress={property.address || "Propiedad"}
-                canRevive={leadsProperty.current_status !== "no_disponible"}
-                onRevive={async () => {
-                  const result = await transition(
-                    leadsProperty.id,
-                    "",
-                    "revive",
-                    {}
-                  );
-                  if (result?.completed) {
-                    await refetchLeadProperties();
-                    await onLeadRefetch?.();
-                  }
-                }}
+                property={property}
+                workSection={
+                  <LeadPropertyCardWorkArchived
+                    currentStatus={st}
+                    exitReason={leadsProperty.exit_reason}
+                    exitComments={leadsProperty.exit_comments}
+                  />
+                }
+                onRegistroActividad={() =>
+                  setModalRegistro({
+                    leadsProperty,
+                    address: property.address || "Propiedad",
+                  })
+                }
+                onRecuperar={
+                  canRecover
+                    ? async () => {
+                        const result = await transition(
+                          leadsProperty.id,
+                          "",
+                          "revive",
+                          {}
+                        );
+                        if (result?.completed) {
+                          await refetchLeadProperties();
+                          await onLeadRefetch?.();
+                        }
+                      }
+                    : undefined
+                }
               />
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : null,
@@ -427,7 +391,97 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
     [lead.leadsUniqueId, leadPropertyItems, refetchLeadProperties]
   );
 
-  // ---------- View: Phases 1-2 workspace (or management for phases 3+) ----------
+  // ---------- View: Cartera de Propiedades tab ----------
+
+  const renderCarteraView = useCallback(
+    () => (
+      <div className="space-y-4 md:space-y-6">
+        {renderCartera()}
+      </div>
+    ),
+    [renderCartera]
+  );
+
+  // ---------- View: Archivo de Propiedades tab ----------
+
+  const renderArchivoView = useCallback(
+    () => (
+      <div className="space-y-4 md:space-y-6">
+        <div className="rounded-[var(--vistral-radius-xl)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card p-5 md:p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold text-foreground">
+              Archivo de Propiedades
+            </h3>
+            {!leadPropertiesLoading && (
+              <span className="text-xs text-muted-foreground bg-[var(--vistral-gray-100)] dark:bg-[var(--vistral-gray-700)] px-2 py-0.5 rounded-full">
+                {archivedItems.length}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Las viviendas descartadas, en espera o que ya no estén disponibles para este cliente aparecerán aquí.
+          </p>
+          {leadPropertiesLoading ? (
+            <div className="flex justify-center py-8">
+              <RentalsHomeLoader />
+            </div>
+          ) : archivedItems.length === 0 ? (
+            <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                No hay propiedades archivadas.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {archivedItems.map(({ leadsProperty, property }) => {
+                const st = leadsProperty.current_status ?? "";
+                const canRecover = st !== "no_disponible" && st !== "interesado_perdido" && st !== "interesado_rechazado";
+                return (
+                <LeadPropertyCard
+                  key={leadsProperty.id}
+                  leadsProperty={leadsProperty}
+                  property={property}
+                  workSection={
+                    <LeadPropertyCardWorkArchived
+                      currentStatus={st}
+                      exitReason={leadsProperty.exit_reason}
+                      exitComments={leadsProperty.exit_comments}
+                    />
+                  }
+                  onRegistroActividad={() =>
+                    setModalRegistro({
+                      leadsProperty,
+                      address: property.address || "Propiedad",
+                    })
+                  }
+                  onRecuperar={
+                    canRecover
+                      ? async () => {
+                          const result = await transition(
+                            leadsProperty.id,
+                            "",
+                            "revive",
+                            {}
+                          );
+                          if (result?.completed) {
+                            await refetchLeadProperties();
+                            await onLeadRefetch?.();
+                          }
+                        }
+                      : undefined
+                  }
+                />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    ),
+    [archivedItems, leadPropertiesLoading, transition, refetchLeadProperties, onLeadRefetch]
+  );
+
+  // ---------- View: Phases 1-2 workspace ----------
 
   const renderPropertyManagementView = useCallback(
     (items: typeof activeItems, showProgress: boolean) => (
@@ -437,12 +491,10 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
         )}
         <div className="space-y-8">
           {renderPropertiesSection(items, "Propiedades en gestión")}
-          {renderArchive()}
-          {renderCartera()}
         </div>
       </div>
     ),
-    [renderPropertiesSection, renderArchive, renderCartera]
+    [renderPropertiesSection]
   );
 
   // ---------- View: Phases 3+ workspace ----------
@@ -522,12 +574,16 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
   // ---------- Main render ----------
 
   const mainContent = (() => {
-    if (isPhase1or2) {
-      return renderPropertyManagementView(activeItems, true);
+    if (activeView === "cartera") {
+      return renderCarteraView();
     }
 
-    if (activeView === "management") {
-      return renderPropertyManagementView(secondaryActiveItems, false);
+    if (activeView === "archivo") {
+      return renderArchivoView();
+    }
+
+    if (isPhase1or2) {
+      return renderPropertyManagementView(activeItems, true);
     }
 
     return renderPhase3PlusWorkspace();
@@ -567,22 +623,6 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
           }}
         />
       )}
-      {modalPausa && (
-        <MtpModalPausa
-          open={!!modalPausa}
-          onOpenChange={(open) => !open && setModalPausa(null)}
-          propertyAddress={modalPausa.address}
-          onConfirm={async (exitReason, exitComments) => {
-            await transition(modalPausa.lpId, "en_espera", "advance", {
-              exit_reason: exitReason,
-              exit_comments: exitComments,
-            });
-            setModalPausa(null);
-            await refetchLeadProperties();
-            await onLeadRefetch?.();
-          }}
-        />
-      )}
       {modalReagendar && (
         <MtpModalReagendar
           open={!!modalReagendar}
@@ -605,6 +645,10 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
           onOpenChange={(open) => !open && setModalRegistro(null)}
           leadsProperty={modalRegistro.leadsProperty}
           propertyAddress={modalRegistro.address}
+          onRevert={async (targetStatus) => {
+            await handleTransition(modalRegistro.leadsProperty.id, targetStatus, "revert", {});
+            setModalRegistro(null);
+          }}
         />
       )}
     </>

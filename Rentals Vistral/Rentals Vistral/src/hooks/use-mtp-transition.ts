@@ -9,7 +9,7 @@ export interface PendingTransition {
   propertyAddress: string;
   direction: "forward" | "backward";
   newStatus: string;
-  action: "advance" | "undo" | "revive";
+  action: "advance" | "undo" | "revive" | "revert";
   updates: Record<string, unknown>;
 }
 
@@ -31,7 +31,7 @@ export function useMtpTransition({
     async (
       lpId: string,
       newStatus: string,
-      action: "advance" | "undo" | "revive",
+      action: "advance" | "undo" | "revive" | "revert",
       updates: Record<string, unknown>,
       confirmed = false
     ) => {
@@ -64,7 +64,7 @@ export function useMtpTransition({
             fromPhase: data.fromPhase,
             toPhase: data.toPhase,
             propertyAddress: data.propertyAddress,
-            direction: action === "undo" ? "backward" : "forward",
+            direction: action === "undo" || action === "revert" ? "backward" : "forward",
             newStatus,
             action,
             updates,

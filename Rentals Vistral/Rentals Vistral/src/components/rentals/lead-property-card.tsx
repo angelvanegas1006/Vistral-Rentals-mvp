@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PropertySummaryTab } from "@/components/rentals/property-summary-tab";
-import { ExternalLink, ChevronDown, MoreVertical, Eye, History, Calendar, Pause, Trash2, Undo2 } from "lucide-react";
+import { ChevronDown, MoreVertical, Eye, History, Calendar, Trash2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MTP_STATUS_TITLES, type MtpStatusId } from "@/lib/leads/mtp-status";
 import type { Database } from "@/lib/supabase/types";
@@ -44,6 +44,10 @@ const MTP_STATUS_BADGE_CLASSES: Record<MtpStatusId, string> = {
     "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
   no_disponible:
     "border-gray-200 bg-gray-100 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  interesado_perdido:
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  interesado_rechazado:
+    "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
 };
 
 type LeadsPropertyRow = Database["public"]["Tables"]["leads_properties"]["Row"];
@@ -56,12 +60,21 @@ export interface LeadPropertyCardProps {
   property: PropertyRow;
   workSection: React.ReactNode;
   className?: string;
-  onUndo?: () => void;
   onReagendar?: () => void;
-  onPausar?: () => void;
   onDescartar?: () => void;
   onRegistroActividad?: () => void;
+  onRecuperar?: () => void;
 }
+
+const MTP_NO_ACTION_STATUSES = new Set([
+  "visita_agendada",
+  "interesado_aceptado",
+  "en_espera",
+  "descartada",
+  "no_disponible",
+  "interesado_perdido",
+  "interesado_rechazado",
+]);
 
 function getFirstImage(property: PropertyRow): string {
   const pics = property.pics_urls;
@@ -75,14 +88,14 @@ export function LeadPropertyCard({
   property,
   workSection,
   className,
-  onUndo,
   onReagendar,
-  onPausar,
   onDescartar,
   onRegistroActividad,
+  onRecuperar,
 }: LeadPropertyCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [workOpen, setWorkOpen] = useState(true);
+  const status = leadsProperty.current_status ?? "interesado_cualificado";
+  const [workOpen, setWorkOpen] = useState(() => !MTP_NO_ACTION_STATUSES.has(status));
   const imageUrl = getFirstImage(property);
   const address = property.address || "Dirección no disponible";
   const areaCluster = property.area_cluster || "";
@@ -91,7 +104,6 @@ export function LeadPropertyCard({
   const infoLine2 = [areaCluster, price, bedrooms].filter(Boolean).join(" · ");
   const currentPhase = property.current_stage || property.current_phase || "Publicado";
 
-  const status = leadsProperty.current_status ?? "interesado_cualificado";
   const statusLabel = MTP_STATUS_TITLES[status as keyof typeof MTP_STATUS_TITLES] ?? status;
   const showReagendar =
     (status === "visita_agendada" || status === "pendiente_de_evaluacion") &&
@@ -158,7 +170,7 @@ export function LeadPropertyCard({
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" side="bottom" sideOffset={4}>
               <DropdownMenuItem onClick={() => setModalOpen(true)}>
                 <Eye className="mr-2 h-4 w-4" />
                 Ver detalles de propiedad
@@ -166,19 +178,19 @@ export function LeadPropertyCard({
               {onRegistroActividad && (
                 <DropdownMenuItem onClick={onRegistroActividad}>
                   <History className="mr-2 h-4 w-4" />
-                  Registro de Actividad
+                  Historial y Correcciones
+                </DropdownMenuItem>
+              )}
+              {onRecuperar && (
+                <DropdownMenuItem onClick={onRecuperar}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Recuperar
                 </DropdownMenuItem>
               )}
               {showReagendar && (
                 <DropdownMenuItem onClick={onReagendar}>
                   <Calendar className="mr-2 h-4 w-4" />
                   Reagendar Visita
-                </DropdownMenuItem>
-              )}
-              {onPausar && (
-                <DropdownMenuItem onClick={onPausar}>
-                  <Pause className="mr-2 h-4 w-4" />
-                  Pausar (Poner en Espera)
                 </DropdownMenuItem>
               )}
               {onDescartar && (
@@ -191,22 +203,6 @@ export function LeadPropertyCard({
           </DropdownMenu>
         </div>
 
-        {/* Banner Undo: Anterior: [Estado] */}
-        {leadsProperty.previous_status && onUndo && (
-          <div className="flex items-center justify-between gap-2 px-4 md:px-5 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/50 dark:border-amber-800/50">
-            <span className="text-sm text-amber-800 dark:text-amber-200">
-              Anterior:{" "}
-              <strong>
-                {MTP_STATUS_TITLES[leadsProperty.previous_status as keyof typeof MTP_STATUS_TITLES] ?? leadsProperty.previous_status}
-              </strong>
-            </span>
-            <Button variant="ghost" size="sm" onClick={onUndo} className="text-amber-800 dark:text-amber-200">
-              <Undo2 className="mr-1 h-4 w-4" />
-              Deshacer
-            </Button>
-          </div>
-        )}
-
         {/* Toggle de sección de trabajo */}
         <button
           type="button"
@@ -214,7 +210,7 @@ export function LeadPropertyCard({
           className="w-full flex items-center px-4 md:px-5 py-2.5 text-sm font-medium text-muted-foreground hover:bg-[var(--vistral-gray-50)] dark:hover:bg-[var(--vistral-gray-900)] transition-colors cursor-pointer"
           aria-expanded={workOpen}
         >
-          {!workOpen && <span className="flex-1 text-center">Ver campos</span>}
+          {!workOpen && <span className="flex-1 text-center">{MTP_NO_ACTION_STATUSES.has(status) ? "Ver motivos" : "Ver campos"}</span>}
           {workOpen && <span className="flex-1" />}
           <ChevronDown
             className={cn(
@@ -246,6 +242,7 @@ export function LeadPropertyCard({
               propertyId={property.property_unique_id}
               currentPhase={currentPhase}
               property={property}
+              showInterestedSummary
             />
           </div>
         </DialogContent>

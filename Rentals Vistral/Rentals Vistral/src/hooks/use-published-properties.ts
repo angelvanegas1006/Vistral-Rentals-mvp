@@ -7,12 +7,19 @@ type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 
 export interface PublishedPropertiesFilters {
   city?: string;
+  minPrice?: number;
   maxPrice?: number;
   minBedrooms?: number;
+  maxBedrooms?: number;
   areaClusters?: string[];
   rentalType?: string;
   minSqm?: number;
+  maxSqm?: number;
   minBathrooms?: number;
+  maxBathrooms?: number;
+  hasElevator?: boolean;
+  hasGarage?: boolean;
+  hasTerrace?: boolean;
   search?: string;
   excludeIds?: string[];
 }
@@ -49,12 +56,19 @@ export function usePublishedProperties(
   // Serialize filters to a stable key for dependency tracking
   const filtersKey = JSON.stringify({
     city: filters.city,
+    minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
     minBedrooms: filters.minBedrooms,
+    maxBedrooms: filters.maxBedrooms,
     areaClusters: filters.areaClusters?.sort().join(",") ?? "",
     rentalType: filters.rentalType,
     minSqm: filters.minSqm,
+    maxSqm: filters.maxSqm,
     minBathrooms: filters.minBathrooms,
+    maxBathrooms: filters.maxBathrooms,
+    hasElevator: filters.hasElevator,
+    hasGarage: filters.hasGarage,
+    hasTerrace: filters.hasTerrace,
     search: filters.search,
     excludeIds: filters.excludeIds?.sort().join(",") ?? "",
   });
@@ -83,11 +97,17 @@ export function usePublishedProperties(
       if (parsed.city) {
         params.set("city", parsed.city);
       }
+      if (parsed.minPrice != null && parsed.minPrice > 0) {
+        params.set("min_price", String(parsed.minPrice));
+      }
       if (parsed.maxPrice != null && parsed.maxPrice > 0) {
         params.set("max_price", String(parsed.maxPrice));
       }
-      if (parsed.minBedrooms != null && parsed.minBedrooms > 0) {
+      if (parsed.minBedrooms != null && parsed.minBedrooms >= 0) {
         params.set("min_bedrooms", String(parsed.minBedrooms));
+      }
+      if (parsed.maxBedrooms != null && parsed.maxBedrooms >= 0) {
+        params.set("max_bedrooms", String(parsed.maxBedrooms));
       }
       if (parsed.areaClusters) {
         params.set("area_clusters", parsed.areaClusters);
@@ -98,8 +118,23 @@ export function usePublishedProperties(
       if (parsed.minSqm != null && parsed.minSqm > 0) {
         params.set("min_sqm", String(parsed.minSqm));
       }
+      if (parsed.maxSqm != null && parsed.maxSqm > 0) {
+        params.set("max_sqm", String(parsed.maxSqm));
+      }
       if (parsed.minBathrooms != null && parsed.minBathrooms > 0) {
         params.set("min_bathrooms", String(parsed.minBathrooms));
+      }
+      if (parsed.maxBathrooms != null && parsed.maxBathrooms > 0) {
+        params.set("max_bathrooms", String(parsed.maxBathrooms));
+      }
+      if (parsed.hasElevator) {
+        params.set("has_elevator", "true");
+      }
+      if (parsed.hasGarage) {
+        params.set("has_garage", "true");
+      }
+      if (parsed.hasTerrace) {
+        params.set("has_terrace", "true");
       }
       if (parsed.excludeIds) {
         params.set("exclude_ids", parsed.excludeIds);

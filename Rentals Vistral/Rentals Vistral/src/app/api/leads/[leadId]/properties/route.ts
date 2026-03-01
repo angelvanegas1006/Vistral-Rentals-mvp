@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getLeadPhaseFromMtpStatuses } from "@/lib/leads/mtp-status";
+import { insertLeadEvent, getPropertyAddress } from "@/lib/leads/lead-events";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export async function GET(
     // Auto-advance: Visita Agendada -> Pendiente de Evaluación cuando visit_date <= now
     const { data: allVisitaAgendada, error: advanceQueryError } = await supabase
       .from("leads_properties")
-      .select("id, visit_date")
+      .select("id, visit_date, properties_unique_id")
       .eq("leads_unique_id", leadId)
       .eq("current_status", "visita_agendada");
 
@@ -59,6 +60,7 @@ export async function GET(
     });
 
     let didAutoAdvance = false;
+    const autoAdvancedPropIds: string[] = [];
     if (toAdvance.length) {
       console.log(`[auto-advance lead=${leadId}] Found ${toAdvance.length} MTPs to advance (total visita_agendada: ${allVisitaAgendada?.length ?? 0})`);
       for (const lp of toAdvance) {
@@ -74,12 +76,20 @@ export async function GET(
           console.error(`[auto-advance] MTP ${lp.id} update failed:`, updateErr);
         } else {
           didAutoAdvance = true;
+          autoAdvancedPropIds.push(lp.properties_unique_id);
           console.log(`[auto-advance] MTP ${lp.id} → pendiente_de_evaluacion`);
         }
       }
     }
 
     if (didAutoAdvance) {
+      const { data: leadRow } = await supabase
+        .from("leads")
+        .select("current_phase")
+        .eq("leads_unique_id", leadId)
+        .single();
+      const oldPhase = (leadRow?.current_phase as string) || "";
+
       const { data: allMtps } = await supabase
         .from("leads_properties")
         .select("current_status")
@@ -87,11 +97,35 @@ export async function GET(
 
       const statuses = (allMtps || []).map((m) => m.current_status as string).filter(Boolean);
       const newPhase = getLeadPhaseFromMtpStatuses(statuses);
+      const phaseChanged = newPhase !== oldPhase;
 
       await supabase
         .from("leads")
         .update({ current_phase: newPhase })
         .eq("leads_unique_id", leadId);
+
+      for (const propId of autoAdvancedPropIds) {
+        const addr = await getPropertyAddress(supabase, propId);
+        if (phaseChanged) {
+          await insertLeadEvent(supabase, {
+            leads_unique_id: leadId,
+            properties_unique_id: propId,
+            event_type: "PHASE_CHANGE",
+            title: `Movimiento a: ${newPhase}`,
+            description: `El interesado ha cambiado de fase porque la propiedad ${addr} ha pasado al estado Pendiente de Evaluación.`,
+            new_status: "pendiente_de_evaluacion",
+          });
+        } else {
+          await insertLeadEvent(supabase, {
+            leads_unique_id: leadId,
+            properties_unique_id: propId,
+            event_type: "MTP_UPDATE",
+            title: `Actualización en ${addr}`,
+            description: `El estado de la propiedad ha cambiado a: Pendiente de Evaluación.`,
+            new_status: "pendiente_de_evaluacion",
+          });
+        }
+      }
 
       console.log(`[auto-advance lead=${leadId}] phase → ${newPhase}`);
     }
@@ -201,6 +235,16 @@ export async function POST(
       .single();
 
     if (error) throw error;
+
+    const address = await getPropertyAddress(supabase, properties_unique_id);
+    await insertLeadEvent(supabase, {
+      leads_unique_id: leadId,
+      properties_unique_id: properties_unique_id,
+      event_type: "PROPERTY_ADDED",
+      title: "Nueva propiedad en gestión",
+      description: `Se ha vinculado la propiedad ${address} a este interesado.`,
+      new_status: "interesado_cualificado",
+    });
 
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error: unknown) {

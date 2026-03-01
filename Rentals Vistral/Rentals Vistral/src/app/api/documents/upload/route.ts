@@ -377,8 +377,8 @@ export async function POST(request: NextRequest) {
         .eq("property_unique_id", propertyId)
         .single();
 
-      const currentArray = Array.isArray(currentProperty?.[fieldName])
-        ? currentProperty[fieldName]
+      const currentArray = Array.isArray((currentProperty as Record<string, unknown>)?.[fieldName])
+        ? (currentProperty as Record<string, unknown>)[fieldName]
         : [];
 
       const newDocument = {
@@ -407,8 +407,8 @@ export async function POST(request: NextRequest) {
         .eq("property_unique_id", propertyId)
         .single();
 
-      const currentArray = Array.isArray(currentProperty?.[fieldName])
-        ? currentProperty[fieldName]
+      const currentArray = Array.isArray((currentProperty as Record<string, unknown>)?.[fieldName])
+        ? (currentProperty as Record<string, unknown>)[fieldName]
         : [];
 
       // If oldValue is provided (editing existing file), replace it in the array

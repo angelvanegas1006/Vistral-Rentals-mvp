@@ -27,6 +27,8 @@ export const MTP_STATUS_IDS = [
   "en_espera",
   "descartada",
   "no_disponible",
+  "interesado_perdido",
+  "interesado_rechazado",
 ] as const;
 
 export type MtpStatusId = (typeof MTP_STATUS_IDS)[number];
@@ -43,6 +45,8 @@ export const MTP_STATUS_TITLES: Record<MtpStatusId, string> = {
   en_espera: "En Espera",
   descartada: "Descartada",
   no_disponible: "No Disponible",
+  interesado_perdido: "Interesado Perdido",
+  interesado_rechazado: "Interesado Rechazado",
 };
 
 /** Rango numérico para calcular el estado más avanzado (mayor = más avanzado) */
@@ -58,6 +62,8 @@ export const MTP_STATUS_RANK: Record<MtpStatusId, number> = {
   en_espera: 0,
   descartada: 0,
   no_disponible: 0,
+  interesado_perdido: 0,
+  interesado_rechazado: 0,
 };
 
 /** MTP activas: contribuyen al cálculo de fase del Lead. Excluye estados de salida. */
@@ -65,6 +71,8 @@ export const MTP_EXIT_STATUS_IDS: MtpStatusId[] = [
   "en_espera",
   "descartada",
   "no_disponible",
+  "interesado_perdido",
+  "interesado_rechazado",
 ];
 
 export function isMtpActive(status: string): boolean {
@@ -89,6 +97,8 @@ export const MTP_STATUS_TO_LEAD_PHASE: Record<MtpStatusId, LeadPhaseId | null> =
   en_espera: null,
   descartada: null,
   no_disponible: null,
+  interesado_perdido: "interesado-perdido",
+  interesado_rechazado: "interesado-rechazado",
 };
 
 export function mtpStatusToLeadPhase(mtpStatus: string): string | null {

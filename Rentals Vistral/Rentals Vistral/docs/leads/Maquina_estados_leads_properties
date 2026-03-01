@@ -28,8 +28,8 @@ Para que la máquina de estados y los modales inteligentes funcionen, la mini ta
 * `finaer_rejection_reason` (Text) -> Comentarios si Finaer rechaza.
 * `owner_status` (String: 'pending', 'approved', 'rejected')
 * `owner_rejection_reason` (Text) -> Comentarios si el Propietario rechaza.
-* `exit_reason` (String) -> Motivo de descarte, pausa o pérdida.
-* `exit_comments` (Text) -> Detalles extra escritos por el PM al descartar/pausar.
+* `exit_reason` (String) -> Motivo de descarte, pausa automática o pérdida.
+* `exit_comments` (Text) -> Detalles extra escritos por el PM al descartar, o generados automáticamente por el sistema.
 
 ---
 
@@ -67,7 +67,7 @@ Para que la máquina de estados y los modales inteligentes funcionen, la mini ta
 * **Campos UI (Happy Path):** Botón `[✅ Enviar a Finaer]`.
 * **Trigger:** PM hace clic en `[✅ Enviar a Finaer]`.
 * **DB:** Guarda `sent_to_finaer_at`, estado pasa a **Calificación en Curso**.
-* **Automatización:** El resto de MTPs de este lead pasan a `En Espera`.
+* **Automatización:** El resto de MTPs de este lead pasan a `En Espera`. Se guarda `previous_status` y `exit_reason = 'propiedad_en_calificacion'`.
 
 ### Estado 6: Calificación en Curso
 * **Descripción:** Finaer evalúa el riesgo financiero del interesado.
@@ -95,16 +95,42 @@ Para que la máquina de estados y los modales inteligentes funcionen, la mini ta
 ## 3. Estados de Salida / Secundarios (Destinos del Modal)
 
 Estos estados no tienen Happy Path, son destinos de las excepciones a nivel de propiedad:
-* **En Espera:** (`en_espera`) Mini tarjeta propiedad pausada. Puede ser revivida.
+* **En Espera:** (`en_espera`) Mini tarjeta propiedad pausada **automáticamente** por el sistema cuando el Interesado decide alquilar otra propiedad (cascada al pasar a Calificación en Curso). **No existe opción manual para pausar.** Puede ser revivida.
 * **Descartada:** (`descartada`) Rechazada por incompatibilidad (precio, zona, etc.) o porque el Interesado fue aceptado para otra propiedad. Puede ser revivida.
 * **No Disponible:** (`no_disponible`) La propiedad fue alquilada a OTRA persona o dejó de estar disponible. NO puede ser revivida (la propiedad ya no está en el mercado).
 
-### Ubicación del Archivo de Propiedades
+### Ubicación y Presentación del Archivo de Propiedades
 
-Las MTPs en estados de salida (`En Espera`, `Descartada`, `No Disponible`) se muestran en una sección llamada **"Archivo de Propiedades"**.
+Las MTPs en estados de salida (`En Espera`, `Descartada`, `No Disponible`) se muestran en un **tab dedicado** llamado **"Archivo de Propiedades"**.
 
-* **Fases 1-2 (Tab Espacio de trabajo):** El Archivo aparece debajo de las Propiedades Activas y encima del Buscador de Propiedades en Cartera.
-* **Fase 3+ (Tab Gestión de Propiedades):** Misma disposición que en Fases 1-2 (debajo de Propiedades Activas/En Espera, encima del Buscador). La distribución de este tab replica la del Tab Espacio de trabajo de las Fases 1-2.
+* **Subtítulo del tab:** "Las viviendas descartadas, en espera o que ya no estén disponibles para este cliente aparecerán aquí."
+* **Formato de visualización:** Las propiedades archivadas se muestran como **MTPs completas** (misma tarjeta `LeadPropertyCard` que las activas), con:
+  * **Header:** Foto, dirección, precio, Status Badge del estado de salida (En Espera / Descartada / No Disponible), y Kebab Menu.
+  * **Sección de trabajo (colapsada por defecto):** Muestra el **Motivo** y **Comentarios** del archivado con diseño visual por estado (fondo coloreado según el tipo de salida). Toggle colapsado muestra "Ver motivos".
+  * **Kebab Menu:** Ver detalles, Registro de Actividad, y Recuperar (solo para En Espera y Descartada).
+
+### Mapeo de Motivos Mostrados en la Sección de Trabajo
+
+Los motivos almacenados como `exit_reason` se traducen a etiquetas legibles:
+
+#### Motivos de Descarte (coinciden con las opciones del Modal de Descarte):
+| `exit_reason` (DB) | Etiqueta UI |
+|---|---|
+| `precio` | Precio no adecuado |
+| `zona` | Zona no deseada |
+| `caracteristicas` | Características no adecuadas |
+| `otro` | Otro motivo |
+| `interesado_aceptado_otra` | Interesado aceptado para otra propiedad |
+
+#### Motivo de En Espera (automático — no existe modal manual):
+| `exit_reason` (DB) | Etiqueta UI | Comentarios por defecto |
+|---|---|---|
+| `propiedad_en_calificacion` | Otra propiedad en calificación | "Esta propiedad ha sido puesta en espera automáticamente porque el interesado ha decidido alquilar otra vivienda." |
+
+#### Motivo de No Disponible:
+| `exit_reason` (DB) | Etiqueta UI | Comentarios por defecto |
+|---|---|---|
+| `propiedad_no_disponible` | Propiedad No Disponible | "Esta propiedad ha sido archivada porque el propietario ha aceptado a otro candidato para esta vivienda." |
 
 ---
 
@@ -191,26 +217,16 @@ Display de los datos personales y de contacto del interesado.
 
 ---
 
-## 5. Gestión de Retroceso y Reactivación (Undo/Revive)
+## 5. Gestión de Retroceso y Reactivación (Revert/Revive)
 
-Estas acciones también utilizan la lógica de automatización global y el **Modal de Confirmación de Transición**.
+La funcionalidad de retroceso (antes "Deshacer") se gestiona desde el modal **"Historial y Correcciones"** accesible desde el Kebab Menu de la MTP (ver `docs/leads/Historial_y_Correciones.md`). Permite revertir a cualquier estado pasado, no solo al inmediatamente anterior.
 
-### 5.1. Botón Deshacer (Undo)
-* **Ubicación:** Banner bajo el header "Anterior: [Estado]".
-* **UI: Banner de Resumen:**
-  * **Visibilidad:** Visible solo si `previous_status` IS NOT NULL.
-  * **Ubicación:** Debajo del Header.
-  * **Diseño:** Fondo de alerta suave (Gris/Amarillo pálido).
-  * **Contenido:** Etiqueta: "Anterior: **[Nombre Estado Previo]**". Data Snapshot: Resumen del dato clave de ese estado (Fecha, Feedback, etc.). **Botón de Acción:** **`[↩️ Deshacer]`**.
-* **Lógica:**
-    1. PM pulsa `[↩️ Deshacer]`.
-    2. Sistema calcula: ¿Al revertir esta MTP, cambia la fase del Lead?
-    3. **SÍ cambia:** Muestra **Modal de Confirmación de Transición (Hacia atrás)**.
-    4. **NO cambia:** Ejecuta el cambio inmediatamente (esta MTP no es la única que mantiene al Interesado en su fase actual).
-* **Ejecución (Post-Confirmación):** Actualiza `current_status` al valor de `previous_status`. Limpia el campo `previous_status`. Si hubo cambio de fase global, actualiza la UI del Interesado inmediatamente.
+La reactivación de MTPs archivadas utiliza la opción "Recuperar" del Kebab Menu.
 
-### 5.2. Botón Recuperar (Revive)
-* **Ubicación:** Sección "Archivo de Propiedades" (ver Sección 3). Título: "Archivo de Propiedades (Descartadas / En Espera / No Disponibles)". Item de Lista: Tarjeta compacta con estado de salida y botón **`[♻️ Recuperar]`** (excepto para `No Disponible`, que no es recuperable).
+Ambas acciones utilizan la lógica de automatización global y el **Modal de Confirmación de Transición** cuando el cambio afecta a la fase global del Interesado.
+
+### 5.1. Recuperar (Revive)
+* **Ubicación:** Opción **`[♻️ Recuperar]`** dentro del **Kebab Menu** de la MTP archivada en el tab "Archivo de Propiedades". Solo visible para estados `En Espera` y `Descartada` (no para `No Disponible`, que no es recuperable).
 * **Lógica:**
     1. PM pulsa `[♻️ Recuperar]`.
     2. Sistema calcula estado destino (aplica regla de caducidad si es visita antigua):
@@ -225,7 +241,7 @@ Estas acciones también utilizan la lógica de automatización global y el **Mod
 
 ## 6. Componente Global: Modal de Confirmación de Transición
 
-Este modal es el **único mecanismo** para mover al Interesado entre columnas. Se dispara automáticamente ante cualquier cambio de estado (Avance normal, Deshacer o Revivir) que implique un cambio de Fase Global.
+Este modal es el **único mecanismo** para mover al Interesado entre columnas. Se dispara automáticamente ante cualquier cambio de estado (Avance normal, Revertir o Recuperar) que implique un cambio de Fase Global.
 
 ### Diseño Visual
 * **Título:** "Actualización de Fase del Interesado"
@@ -244,7 +260,7 @@ Este modal es el **único mecanismo** para mover al Interesado entre columnas. S
 
 ## 7. Algoritmo Maestro (Para Cursor)
 
-`Observer: On MTP State Change (New, Update, Undo, Revive)`
+`Observer: On MTP State Change (New, Update, Revert, Revive)`
 
 1. **Simulación:** Calcular cuál sería el `current_status` de la MTP.
 2. **Cálculo Global:** Obtener todas las MTPs activas del Lead + la simulada.
@@ -259,7 +275,7 @@ Este modal es el **único mecanismo** para mover al Interesado entre columnas. S
 5. **Else (No hay cambio de fase):**
     * Ejecutar cambio en MTP directamente.
 
-### Trigger adicional (Backend Logic) para consistencia tras Undo/Revive
+### Trigger adicional (Backend Logic) para consistencia tras Revert/Revive
 
 `Trigger: After MTP Update (Undo or Revive)`
 1. Obtener todas las MTPs activas del `lead_id`.
@@ -284,6 +300,12 @@ Esta especificación define la estructura visual, el menú de acciones y la visu
 
 ### 1.2. Body (Sección de Trabajo)
 * **Comportamiento:** Muestra los inputs/acciones dinámicos correspondientes al `current_status` actual (según definición de Fase 1).
+* **Colapsable:** La sección de trabajo es colapsable/expandible. El estado inicial depende de si el estado actual requiere acción del PM:
+  * **Desplegada por defecto (requiere acción):** `Interesado Cualificado`, `Pendiente de Evaluación`, `Esperando Decisión`, `Recogiendo Información`, `Calificación en Curso`, `Interesado Presentado`.
+  * **Colapsada por defecto (solo informativa):** `Visita Agendada`, `Interesado Aceptado`, `En Espera`, `Descartada`, `No Disponible`.
+* **Texto del toggle colapsado:**
+  * Estados activos: "Ver campos".
+  * Estados de salida (archivados): "Ver motivos".
 
 ---
 
@@ -291,48 +313,45 @@ Esta especificación define la estructura visual, el menú de acciones y la visu
 
 Al hacer clic en el icono `⋮`, se despliega un menú flotante (`Dropdown Menu`) con las siguientes opciones:
 
-### Opciones del Menú:
+### Opciones del Menú (MTPs Activas):
 1.  **👁️ Ver detalles de propiedad** `(⚠️ Ya diseñado e implementado)`
     * **Acción:** Abre el Modal de Detalles Completo existente.
     * **Nota Técnica:** Reutilizar el componente `PropertyDetailsModal` (o nombre equivalente en el código actual). NO crear uno nuevo.
-2.  **📋 Registro de Actividad** (NUEVO)
-    * **Acción:** Abre el Modal de Línea de Tiempo (ver sección 3.4).
-    * **Objetivo:** Consultar el histórico de estados y los datos recogidos en cada paso.
+2.  **📋 Historial y Correcciones**
+    * **Acción:** Abre el Modal de Historial y Correcciones (ver `docs/leads/Historial_y_Correciones.md`).
+    * **Objetivo:** Consultar el histórico de estados, los datos recogidos en cada paso, y revertir a cualquier estado pasado.
 3.  **📅 Reagendar Visita**
     * **Condición:** Solo visible en fases `Visita Agendada` y `Pendiente Evaluación`.
     * **Acción:** Abre Modal de Reagendar.
-4.  **⏸️ Pausar (Poner en Espera)**
-    * **Acción:** Abre Modal de Pausa.
-5.  **🗑️ Descartar Propiedad**
+4.  **🗑️ Descartar Propiedad**
     * **Acción:** Abre Modal de Descarte (Estilo destructivo/rojo).
+
+### Opciones del Menú (MTPs Archivadas — En Espera / Descartada / No Disponible):
+1.  **👁️ Ver detalles de propiedad** — Igual que en MTPs activas.
+2.  **📋 Historial y Correcciones** — Igual que en MTPs activas.
+3.  **♻️ Recuperar**
+    * **Condición:** Solo visible en estados `En Espera` y `Descartada`. **NO aparece** en `No Disponible` (la propiedad ya no está en el mercado).
+    * **Acción:** Ejecuta la lógica de Recuperar/Revivir (ver Sección 5.1).
 
 ---
 
 ## 3. Definición de Modales (Acciones y Visualización)
 
 ### 3.1. Modal de Descarte
-* **Campos:** Motivo (Select) + Comentarios (Textarea).
-* **Acción:** Cambia estado a `Descartada`.
+* **Campos:** Motivo (Select) + Comentarios (Textarea, opcional).
+* **Opciones del Select Motivo:**
+  * `precio` — "Precio no adecuado"
+  * `zona` — "Zona no deseada"
+  * `caracteristicas` — "Características no adecuadas"
+  * `otro` — "Otro motivo"
+* **Acción:** Cambia estado a `Descartada`. Guarda `exit_reason` y `exit_comments`.
 
-### 3.2. Modal de Pausa
-* **Campos:** Motivo (Select) + Comentarios (Textarea).
-* **Acción:** Cambia estado a `En Espera`.
-
-### 3.3. Modal de Reagendar
+### 3.2. Modal de Reagendar
 * **Campos:** Justificación (Select+Text) -> Nueva Fecha (Datepicker).
 * **Acción:** Actualiza `visit_date` y devuelve estado a `Visita Agendada`.
 
-### 3.4. Modal de Registro de Actividad (NUEVO)
-Este modal es **exclusivamente de lectura**. Muestra la trazabilidad de la gestión.
+### 3.3. Modal de Historial y Correcciones
 
-* **Título:** "Registro de Actividad - [Dirección Propiedad]"
-* **Diseño Visual:** Timeline Vertical (Stepper).
-* **Orden:** Cronológico inverso (Lo más reciente arriba).
+Especificación completa en: **`docs/leads/Historial_y_Correciones.md`**
 
-#### Estructura del Item de Actividad (Cada paso del Timeline):
-1.  **Cabecera del Item:**
-    * **Nombre del Estado:** (ej. "Pendiente de Evaluación").
-    * **Fecha y Hora:** Timestamp del cambio (`updated_at`).
-    * **Indicador Visual:** Icono del estado.
-2.  **Cuerpo del Item (Contenido Desplegable):**
-    * Muestra los datos específicos guardados en esa fase (ej. Feedback de visita, ID de Finaer, Motivos de Pausa, etc.).
+Este modal muestra un timeline vertical con todos los estados de la MTP (pasados, actual y futuros) y permite revertir a cualquier estado anterior. Sustituye al antiguo banner "Anterior: [Estado] | Deshacer".

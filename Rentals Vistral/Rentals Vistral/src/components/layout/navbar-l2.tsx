@@ -19,6 +19,8 @@ interface NavbarL2Props {
   blockedMessage?: string;
   onSubmitComments?: () => void | Promise<void>;
   canSubmitComments?: boolean;
+  /** Arbitrary content rendered on the right side of the header */
+  rightContent?: React.ReactNode;
 }
 
 export function NavbarL2({
@@ -34,6 +36,7 @@ export function NavbarL2({
   blockedMessage = "Avance bloqueado",
   onSubmitComments,
   canSubmitComments = true,
+  rightContent,
 }: NavbarL2Props) {
   const router = useRouter();
 
@@ -73,6 +76,7 @@ export function NavbarL2({
         </div>
 
         {/* Right: Action Buttons */}
+        {rightContent}
         {(onSave || onNextPhase || onSubmitComments) && (
           <div className="flex items-center gap-3">
             {onSave && (

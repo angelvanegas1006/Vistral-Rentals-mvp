@@ -293,7 +293,6 @@ export function RentalsLeadsKanbanBoard({
                       lead={lead}
                       onClick={() => handleCardClick(lead.id)}
                       searchQuery={searchQuery}
-                      disabled={isTerminalPhase}
                     />
                   ))
                 )}
