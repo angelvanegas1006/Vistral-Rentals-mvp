@@ -22,6 +22,9 @@ export interface LeadPropertyCardWorkSectionProps {
     action: "advance" | "undo" | "revive",
     updates: Record<string, unknown>
   ) => Promise<{ completed: boolean } | void>;
+  onReagendar?: () => void;
+  onCancelarVisita?: () => void;
+  onDescartar?: () => void;
 }
 
 /**
@@ -31,6 +34,9 @@ export function LeadPropertyCardWorkSection({
   leadsProperty,
   onUpdated,
   onTransition,
+  onReagendar,
+  onCancelarVisita,
+  onDescartar,
 }: LeadPropertyCardWorkSectionProps) {
   const status = leadsProperty.current_status ?? "interesado_cualificado";
 
@@ -45,7 +51,11 @@ export function LeadPropertyCardWorkSection({
       );
     case "visita_agendada":
       return (
-        <LeadPropertyCardWorkVisitaAgendada leadsProperty={leadsProperty} />
+        <LeadPropertyCardWorkVisitaAgendada
+          leadsProperty={leadsProperty}
+          onReagendar={onReagendar}
+          onCancelarVisita={onCancelarVisita}
+        />
       );
     case "pendiente_de_evaluacion":
       return (
@@ -53,6 +63,8 @@ export function LeadPropertyCardWorkSection({
           leadsProperty={leadsProperty}
           onUpdated={onUpdated}
           onTransition={onTransition}
+          onReagendar={onReagendar}
+          onCancelarVisita={onCancelarVisita}
         />
       );
     case "esperando_decision":
@@ -61,6 +73,7 @@ export function LeadPropertyCardWorkSection({
           leadsProperty={leadsProperty}
           onUpdated={onUpdated}
           onTransition={onTransition}
+          onDescartar={onDescartar}
         />
       );
     case "recogiendo_informacion":

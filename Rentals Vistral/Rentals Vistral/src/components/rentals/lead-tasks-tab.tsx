@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Search, UserX } from "lucide-react";
 import { ProgressOverviewWidget } from "@/components/specs-card/ProgressOverviewWidget";
 import {
   LeadPersonalInfoSection,
@@ -19,6 +20,7 @@ import { useMtpTransition } from "@/hooks/use-mtp-transition";
 import { TransitionConfirmationModal } from "@/components/rentals/transition-confirmation-modal";
 import { MtpModalDescarte } from "@/components/rentals/mtp-modal-descarte";
 import { MtpModalReagendar } from "@/components/rentals/mtp-modal-reagendar";
+import { MtpModalCancelarVisita } from "@/components/rentals/mtp-modal-cancelar-visita";
 import { MtpModalRegistroActividad } from "@/components/rentals/mtp-modal-registro-actividad";
 import { LeadPropertyCardWorkArchived } from "@/components/rentals/lead-property-card-work-archived";
 import { updateLeadsProperty } from "@/services/leads-sync";
@@ -28,6 +30,15 @@ import type { MtpStatusId } from "@/lib/leads/mtp-status";
 
 const PHASES_1_2 = ["Interesado Cualificado", "Visita Agendada"];
 const PHASE_RECOGIENDO = "Recogiendo Información";
+
+const LEAD_PHASE1_SECTIONS = [
+  {
+    id: "mtp-visit-scheduled",
+    title: "Visita agendada para una propiedad",
+    required: true,
+    fields: [{ id: "has_visit_scheduled", required: true }],
+  },
+];
 
 const LEAD_PHASE3_SECTIONS = [
   {
@@ -87,7 +98,9 @@ interface Lead {
 interface LeadTasksTabProps {
   lead: Lead;
   onLeadRefetch?: () => void | Promise<void>;
-  activeView?: "tasks" | "cartera" | "archivo";
+  activeView?: "tasks" | "gestion" | "cartera" | "archivo";
+  onTabChange?: (tab: string) => void;
+  onOpenClosureModal?: (type: "perdido" | "rechazado") => void;
 }
 
 // ---------- Helpers ----------
@@ -181,7 +194,7 @@ function getMtpRank(status: string): number {
 
 // ---------- Component ----------
 
-export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: LeadTasksTabProps) {
+export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabChange, onOpenClosureModal }: LeadTasksTabProps) {
   const isPhase1or2 = PHASES_1_2.includes(lead.currentPhase);
   const isRecogiendoInformacion = lead.currentPhase === PHASE_RECOGIENDO;
 
@@ -207,7 +220,8 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
   );
 
   const [modalDescarte, setModalDescarte] = useState<{ lpId: string; address: string } | null>(null);
-  const [modalReagendar, setModalReagendar] = useState<{ lpId: string; address: string; visitDate?: string | null } | null>(null);
+  const [modalReagendar, setModalReagendar] = useState<{ lpId: string; address: string; visitDate?: string | null; fromStatus?: string } | null>(null);
+  const [modalCancelarVisita, setModalCancelarVisita] = useState<{ lpId: string; address: string } | null>(null);
   const [modalRegistro, setModalRegistro] = useState<{ leadsProperty: typeof leadPropertyItems[0]["leadsProperty"]; address: string } | null>(null);
 
   const activeItems = leadPropertyItems.filter(
@@ -248,6 +262,17 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
     ...buildFormDataFromEmploymentLead(lead),
   };
 
+  const hasVisitScheduled = useMemo(() => {
+    const VISIT_MIN_RANK = MTP_STATUS_RANK.visita_agendada;
+    return activeItems.some(
+      (i) => getMtpRank(i.leadsProperty.current_status ?? "") >= VISIT_MIN_RANK
+    );
+  }, [activeItems]);
+
+  const phase1FormData = useMemo<Record<string, unknown>>(() => ({
+    "mtp-visit-scheduled.has_visit_scheduled": hasVisitScheduled ? "yes" : undefined,
+  }), [hasVisitScheduled]);
+
   const isPersonalComplete = isSectionComplete(liveFormData);
   const isEmploymentComplete = isEmploymentFinancialComplete(mergedFormData);
 
@@ -271,14 +296,27 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
             leadsProperty={item.leadsProperty}
             onUpdated={refetchLeadProperties}
             onTransition={handleTransition}
+            onReagendar={() =>
+              setModalReagendar({
+                lpId: item.leadsProperty.id,
+                address: item.property.address || "Propiedad",
+                visitDate: item.leadsProperty.visit_date,
+                fromStatus: item.leadsProperty.current_status ?? undefined,
+              })
+            }
+            onCancelarVisita={() =>
+              setModalCancelarVisita({
+                lpId: item.leadsProperty.id,
+                address: item.property.address || "Propiedad",
+              })
+            }
+            onDescartar={() =>
+              setModalDescarte({
+                lpId: item.leadsProperty.id,
+                address: item.property.address || "Propiedad",
+              })
+            }
           />
-        }
-        onReagendar={() =>
-          setModalReagendar({
-            lpId: item.leadsProperty.id,
-            address: item.property.address || "Propiedad",
-            visitDate: item.leadsProperty.visit_date,
-          })
         }
         onDescartar={() =>
           setModalDescarte({
@@ -297,6 +335,48 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
     [refetchLeadProperties, handleTransition]
   );
 
+  const renderEmptyStateIC = useCallback(
+    () => (
+      <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-6 text-center space-y-4">
+        <div className="flex justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
+            <Search className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">
+            Interesado cualificado sin propiedades activas
+          </p>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Este interesado está cualificado pero no tiene viviendas en gestión.
+            Explora la Cartera de Propiedades para presentarle nuevas opciones que
+            se ajusten a sus necesidades.
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-3 pt-1">
+          {onTabChange && (
+            <Button size="sm" onClick={() => onTabChange("cartera")}>
+              <Search className="h-4 w-4" />
+              Explorar Cartera
+            </Button>
+          )}
+          {onOpenClosureModal && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-amber-700 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-900/20"
+              onClick={() => onOpenClosureModal("perdido")}
+            >
+              <UserX className="h-4 w-4" />
+              Marcar como Perdido
+            </Button>
+          )}
+        </div>
+      </div>
+    ),
+    [onTabChange, onOpenClosureModal]
+  );
+
   const renderPropertiesSection = useCallback(
     (items: typeof activeItems, title: string) => (
       <div className="rounded-[var(--vistral-radius-xl)] border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card p-5 md:p-6 space-y-4">
@@ -313,17 +393,21 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
             <RentalsHomeLoader />
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              No hay propiedades en gestión.
-            </p>
-          </div>
+          lead.currentPhase === "Interesado Cualificado"
+            ? renderEmptyStateIC()
+            : (
+              <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No hay propiedades en gestión activa.
+                </p>
+              </div>
+            )
         ) : (
           items.map(renderPropertyCard)
         )}
       </div>
     ),
-    [leadPropertiesLoading, renderPropertyCard]
+    [leadPropertiesLoading, renderPropertyCard, lead.currentPhase, renderEmptyStateIC]
   );
 
   const renderArchive = useCallback(
@@ -481,20 +565,38 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
     [archivedItems, leadPropertiesLoading, transition, refetchLeadProperties, onLeadRefetch]
   );
 
+  // ---------- View: Gestión de Propiedades tab (Recogiendo Información) ----------
+
+  const renderGestionView = useCallback(
+    () => (
+      <div className="space-y-4 md:space-y-6">
+        {renderPropertiesSection(secondaryActiveItems, "Gestión de Propiedades")}
+      </div>
+    ),
+    [renderPropertiesSection, secondaryActiveItems]
+  );
+
   // ---------- View: Phases 1-2 workspace ----------
+
+  const phase1Sections = lead.currentPhase === "Interesado Cualificado"
+    ? LEAD_PHASE1_SECTIONS
+    : [];
 
   const renderPropertyManagementView = useCallback(
     (items: typeof activeItems, showProgress: boolean) => (
       <div className="space-y-4 md:space-y-6">
         {showProgress && (
-          <ProgressOverviewWidget sections={[]} formData={{}} />
+          <ProgressOverviewWidget
+            sections={phase1Sections}
+            formData={phase1FormData}
+          />
         )}
         <div className="space-y-8">
-          {renderPropertiesSection(items, "Propiedades en gestión")}
+          {renderPropertiesSection(items, "Gestión de Propiedades")}
         </div>
       </div>
     ),
-    [renderPropertiesSection]
+    [renderPropertiesSection, phase1Sections, phase1FormData]
   );
 
   // ---------- View: Phases 3+ workspace ----------
@@ -582,6 +684,10 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
       return renderArchivoView();
     }
 
+    if (activeView === "gestion") {
+      return renderGestionView();
+    }
+
     if (isPhase1or2) {
       return renderPropertyManagementView(activeItems, true);
     }
@@ -630,12 +736,38 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks" }: Lead
           propertyAddress={modalReagendar.address}
           currentVisitDate={modalReagendar.visitDate}
           onConfirm={async (newVisitDate) => {
-            await updateLeadsProperty(modalReagendar.lpId, {
-              visit_date: newVisitDate,
-              current_status: "visita_agendada",
-            });
+            if (modalReagendar.fromStatus === "pendiente_de_evaluacion") {
+              await transition(modalReagendar.lpId, "visita_agendada", "revert", {
+                visit_date: newVisitDate,
+                visit_completed: null,
+              });
+            } else {
+              await updateLeadsProperty(modalReagendar.lpId, {
+                visit_date: newVisitDate,
+                current_status: "visita_agendada",
+              });
+            }
             setModalReagendar(null);
             await refetchLeadProperties();
+            if (modalReagendar.fromStatus === "pendiente_de_evaluacion") {
+              await onLeadRefetch?.();
+            }
+          }}
+        />
+      )}
+      {modalCancelarVisita && (
+        <MtpModalCancelarVisita
+          open={!!modalCancelarVisita}
+          onOpenChange={(open) => !open && setModalCancelarVisita(null)}
+          propertyAddress={modalCancelarVisita.address}
+          onConfirm={async (exitReason, exitComments) => {
+            await transition(modalCancelarVisita.lpId, "descartada", "advance", {
+              exit_reason: exitReason,
+              exit_comments: exitComments,
+            });
+            setModalCancelarVisita(null);
+            await refetchLeadProperties();
+            await onLeadRefetch?.();
           }}
         />
       )}

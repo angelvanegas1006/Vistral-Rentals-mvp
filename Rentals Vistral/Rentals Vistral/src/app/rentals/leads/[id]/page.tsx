@@ -113,6 +113,7 @@ export default function LeadDetailPage() {
     : null;
 
   const PHASES_1_2 = ["Interesado Cualificado", "Visita Agendada"];
+  const PHASE_RECOGIENDO = "Recogiendo Información";
   const PHASE_ACEPTADO = "Interesado Aceptado";
   const TERMINAL_PHASES = ["Interesado Perdido", "Interesado Rechazado"];
   const isTerminal = TERMINAL_PHASES.includes(currentPhase);
@@ -132,9 +133,25 @@ export default function LeadDetailPage() {
         { id: "summary", label: "Interesado", badge: undefined },
       ];
     }
+    if (currentPhase === PHASE_RECOGIENDO) {
+      return [
+        { id: "tasks", label: "Espacio de trabajo", badge: undefined },
+        { id: "gestion", label: "Gestión de Propiedades", badge: undefined },
+        { id: "cartera", label: "Cartera de Propiedades", badge: undefined },
+        { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
+    if (PHASES_1_2.includes(currentPhase)) {
+      return [
+        { id: "tasks", label: "Espacio de trabajo", badge: undefined },
+        { id: "cartera", label: "Cartera de Propiedades", badge: undefined },
+        { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
     return [
       { id: "tasks", label: "Espacio de trabajo", badge: undefined },
-      { id: "cartera", label: "Cartera de Propiedades", badge: undefined },
       { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
       { id: "summary", label: "Interesado", badge: undefined },
     ];
@@ -256,8 +273,14 @@ export default function LeadDetailPage() {
                   className="pb-24"
                   onScroll={handleScroll}
                 >
-                  {(effectiveTab === "tasks" || effectiveTab === "cartera" || effectiveTab === "archivo") && (
-                    <LeadTasksTab lead={lead} onLeadRefetch={handleLeadRefetch} activeView={effectiveTab as "tasks" | "cartera" | "archivo"} />
+                  {(effectiveTab === "tasks" || effectiveTab === "gestion" || effectiveTab === "cartera" || effectiveTab === "archivo") && (
+                    <LeadTasksTab
+                      lead={lead}
+                      onLeadRefetch={handleLeadRefetch}
+                      activeView={effectiveTab as "tasks" | "gestion" | "cartera" | "archivo"}
+                      onTabChange={handleTabChange}
+                      onOpenClosureModal={canClose ? handleOpenClosureModal : undefined}
+                    />
                   )}
                   {effectiveTab === "resolucion" && (
                     <LeadResolutionTab

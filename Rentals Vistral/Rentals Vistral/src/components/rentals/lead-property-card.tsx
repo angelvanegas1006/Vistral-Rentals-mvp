@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PropertySummaryTab } from "@/components/rentals/property-summary-tab";
-import { ChevronDown, MoreVertical, Eye, History, Calendar, Trash2, RotateCcw } from "lucide-react";
+import { ChevronDown, MoreVertical, Eye, History, Trash2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MTP_STATUS_TITLES, type MtpStatusId } from "@/lib/leads/mtp-status";
 import type { Database } from "@/lib/supabase/types";
@@ -60,14 +60,12 @@ export interface LeadPropertyCardProps {
   property: PropertyRow;
   workSection: React.ReactNode;
   className?: string;
-  onReagendar?: () => void;
   onDescartar?: () => void;
   onRegistroActividad?: () => void;
   onRecuperar?: () => void;
 }
 
 const MTP_NO_ACTION_STATUSES = new Set([
-  "visita_agendada",
   "interesado_aceptado",
   "en_espera",
   "descartada",
@@ -88,14 +86,14 @@ export function LeadPropertyCard({
   property,
   workSection,
   className,
-  onReagendar,
   onDescartar,
   onRegistroActividad,
   onRecuperar,
 }: LeadPropertyCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const status = leadsProperty.current_status ?? "interesado_cualificado";
-  const [workOpen, setWorkOpen] = useState(() => !MTP_NO_ACTION_STATUSES.has(status));
+  const requiresWork = !MTP_NO_ACTION_STATUSES.has(status);
+  const [workOpen, setWorkOpen] = useState(() => requiresWork);
   const imageUrl = getFirstImage(property);
   const address = property.address || "Dirección no disponible";
   const areaCluster = property.area_cluster || "";
@@ -105,9 +103,6 @@ export function LeadPropertyCard({
   const currentPhase = property.current_stage || property.current_phase || "Publicado";
 
   const statusLabel = MTP_STATUS_TITLES[status as keyof typeof MTP_STATUS_TITLES] ?? status;
-  const showReagendar =
-    (status === "visita_agendada" || status === "pendiente_de_evaluacion") &&
-    onReagendar;
 
   return (
     <>
@@ -187,12 +182,6 @@ export function LeadPropertyCard({
                   Recuperar
                 </DropdownMenuItem>
               )}
-              {showReagendar && (
-                <DropdownMenuItem onClick={onReagendar}>
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Reagendar Visita
-                </DropdownMenuItem>
-              )}
               {onDescartar && (
                 <DropdownMenuItem onClick={onDescartar} className="text-destructive focus:text-destructive">
                   <Trash2 className="mr-2 h-4 w-4" />
@@ -203,28 +192,35 @@ export function LeadPropertyCard({
           </DropdownMenu>
         </div>
 
-        {/* Toggle de sección de trabajo */}
-        <button
-          type="button"
-          onClick={() => setWorkOpen((prev) => !prev)}
-          className="w-full flex items-center px-4 md:px-5 py-2.5 text-sm font-medium text-muted-foreground hover:bg-[var(--vistral-gray-50)] dark:hover:bg-[var(--vistral-gray-900)] transition-colors cursor-pointer"
-          aria-expanded={workOpen}
-        >
-          {!workOpen && <span className="flex-1 text-center">{MTP_NO_ACTION_STATUSES.has(status) ? "Ver motivos" : "Ver campos"}</span>}
-          {workOpen && <span className="flex-1" />}
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 flex-shrink-0 transition-transform duration-200",
-              workOpen ? "rotate-180" : "rotate-0"
-            )}
-          />
-        </button>
-
-        {/* Sección de trabajo colapsable */}
-        {workOpen && (
+        {/* Toggle de sección de trabajo (disabled when work is pending) */}
+        {requiresWork ? (
           <CardContent className="p-4 md:p-5 pt-2">
             {workSection}
           </CardContent>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setWorkOpen((prev) => !prev)}
+              className="w-full flex items-center px-4 md:px-5 py-2.5 text-sm font-medium text-muted-foreground hover:bg-[var(--vistral-gray-50)] dark:hover:bg-[var(--vistral-gray-900)] transition-colors cursor-pointer"
+              aria-expanded={workOpen}
+            >
+              {!workOpen && <span className="flex-1 text-center">Ver motivos</span>}
+              {workOpen && <span className="flex-1" />}
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 flex-shrink-0 transition-transform duration-200",
+                  workOpen ? "rotate-180" : "rotate-0"
+                )}
+              />
+            </button>
+
+            {workOpen && (
+              <CardContent className="p-4 md:p-5 pt-2">
+                {workSection}
+              </CardContent>
+            )}
+          </>
         )}
       </Card>
 

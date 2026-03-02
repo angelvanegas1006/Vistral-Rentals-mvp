@@ -35,6 +35,7 @@ export async function PATCH(
       previous_status,
       visit_date,
       visit_feedback,
+      visit_completed,
       tenant_confirmed_interest,
       sent_to_finaer_at,
       finaer_status,
@@ -53,6 +54,7 @@ export async function PATCH(
     if (previous_status !== undefined) updateData.previous_status = previous_status;
     if (visit_date !== undefined) updateData.visit_date = visit_date === "" || visit_date === null ? null : visit_date;
     if (visit_feedback !== undefined) updateData.visit_feedback = visit_feedback;
+    if (visit_completed !== undefined) updateData.visit_completed = visit_completed;
     if (tenant_confirmed_interest !== undefined) {
       updateData.tenant_confirmed_interest = tenant_confirmed_interest === "" || tenant_confirmed_interest === null ? null : tenant_confirmed_interest;
     }

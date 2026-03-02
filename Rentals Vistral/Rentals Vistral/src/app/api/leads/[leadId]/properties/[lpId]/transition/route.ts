@@ -232,7 +232,9 @@ export async function POST(
         description: `Estado: ${statusTitle}.${exitReason ? ` Motivo: ${exitReason}.` : ""}`,
         new_status: finalStatus,
       });
-    } else if (phaseChanged) {
+    }
+
+    if (phaseChanged) {
       const backward = isPhaseBackward(normalizedLeadPhase, calculatedPhase);
       await insertLeadEvent(supabase, {
         leads_unique_id: leadId,
@@ -246,7 +248,9 @@ export async function POST(
           : `El interesado ha cambiado de fase porque la propiedad ${address} ha pasado al estado ${statusTitle}.`,
         new_status: finalStatus,
       });
-    } else {
+    }
+
+    if (!isMtpExitStatus(finalStatus) && !phaseChanged) {
       await insertLeadEvent(supabase, {
         leads_unique_id: leadId,
         properties_unique_id: currentMtp.properties_unique_id,
