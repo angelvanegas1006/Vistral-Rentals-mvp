@@ -5,6 +5,7 @@ import { Phone } from "lucide-react";
 
 interface Lead {
   id: string;
+  leadsUniqueId?: string;
   name: string;
   phone: string;
   email?: string;
@@ -53,8 +54,8 @@ export function RentalsLeadCard({
       data-lead-id={lead.id}
       onClick={handleClick}
       className={cn(
-        // Estilos base
-        "rounded-lg border-2 border-border bg-card p-5 md:p-6 shadow-sm w-full relative max-w-full",
+        // Estilos base - mismo tamaño que tarjetas de Captación/Cierre
+        "rounded-lg border border-border bg-card p-5 md:p-6 shadow-sm w-full relative max-w-full",
         // Transiciones
         "transition-all duration-200 ease-out",
         // Estados de cursor
@@ -64,26 +65,33 @@ export function RentalsLeadCard({
           "hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.15)]",
           // Solo cambiar bordes superior, derecho e inferior en hover, mantener izquierdo si está retrasada
           lead.needsUpdate
-            ? "hover:border-t-[var(--prophero-gray-300)] hover:border-r-[var(--prophero-gray-300)] hover:border-b-[var(--prophero-gray-300)]"
-            : "hover:border-[var(--prophero-gray-300)]",
+            ? "hover:border-t-[var(--vistral-gray-300)] hover:border-r-[var(--vistral-gray-300)] hover:border-b-[var(--vistral-gray-300)]"
+            : "hover:border-[var(--vistral-gray-300)]",
         ],
         // Hover Dark mode
         !disabled && [
           "dark:hover:bg-[#1a1a1a]",
           "dark:hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.6)]",
           lead.needsUpdate
-            ? "dark:hover:border-t-[var(--prophero-gray-700)] dark:hover:border-r-[var(--prophero-gray-700)] dark:hover:border-b-[var(--prophero-gray-700)]"
-            : "dark:hover:border-[var(--prophero-gray-700)]",
+            ? "dark:hover:border-t-[var(--vistral-gray-700)] dark:hover:border-r-[var(--vistral-gray-700)] dark:hover:border-b-[var(--vistral-gray-700)]"
+            : "dark:hover:border-[var(--vistral-gray-700)]",
         ],
         // Estado highlighted
         isHighlighted &&
-          "ring-2 ring-[var(--prophero-blue-500)] shadow-lg border-[var(--prophero-blue-500)] bg-[var(--prophero-blue-50)] dark:bg-[var(--prophero-blue-950)]/30",
+          "ring-2 ring-[var(--vistral-blue-500)] shadow-lg border-[var(--vistral-blue-500)] bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-950)]/30",
         // Estado retrasado (borde izquierdo rojo intenso)
         lead.needsUpdate && "border-l-4 border-l-red-500",
         className
       )}
       style={{ pointerEvents: disabled ? "none" : "auto" }}
     >
+      {/* Header con ID */}
+      {lead.leadsUniqueId && (
+        <div className="flex items-start justify-between mb-2">
+          <div className="text-xs font-semibold text-muted-foreground">ID {lead.leadsUniqueId}</div>
+        </div>
+      )}
+
       {/* Nombre del Lead */}
       <div className="mb-2">
         <h3 className="text-sm font-semibold text-foreground truncate">
@@ -117,20 +125,6 @@ export function RentalsLeadCard({
         <div className="mb-2">
           <span className="text-xs text-muted-foreground">Zona: </span>
           <span className="text-xs font-medium text-foreground">{lead.zone}</span>
-        </div>
-      )}
-
-      {/* Días en fase */}
-      {lead.daysInPhase !== undefined && (
-        <div>
-          <span className="text-xs text-muted-foreground">
-            {lead.daysInPhase === 0
-              ? "Hoy"
-              : lead.daysInPhase === 1
-              ? "1 día"
-              : `${lead.daysInPhase} días`}{" "}
-            en esta fase
-          </span>
         </div>
       )}
     </div>

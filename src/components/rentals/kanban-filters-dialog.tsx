@@ -135,7 +135,7 @@ export function KanbanFiltersDialog({
                         className="flex items-center space-x-2 cursor-pointer"
                         onClick={() => {
                           const newSelection = isChecked
-                            ? localFilters.property_type.filter((t) => t !== type)
+                            ? localFilters.property_type.filter((t: string) => t !== type)
                             : [...localFilters.property_type, type];
                           handleFilterChange("property_type", newSelection);
                         }}
@@ -146,7 +146,7 @@ export function KanbanFiltersDialog({
                           onCheckedChange={(checked) => {
                             const newSelection = checked
                               ? [...localFilters.property_type, type]
-                              : localFilters.property_type.filter((t) => t !== type);
+                              : localFilters.property_type.filter((t: string) => t !== type);
                             handleFilterChange("property_type", newSelection);
                           }}
                         />

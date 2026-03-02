@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Circle, Info } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getObligatoryFieldKeys } from "@/components/rentals/lead-laboral-obligatory-docs";
 
 interface Section {
   id: string;
@@ -109,116 +110,42 @@ export function ProgressOverviewWidget({
   const getRoomState = (room: { type: string; index?: number }): "incomplete" | "good" | "blocking" | "non-blocking" => {
     if (!supabaseProperty) return "incomplete";
 
-    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+    const getRoomData = (room: { type: string; index?: number }) => {
+      const report = supabaseProperty.technical_inspection_report as any;
+      if (!report) return null;
+      
       if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.check_bedrooms;
-        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
-          return arr[room.index] as "good" | "incident";
-        }
-        return null;
+        return report.bedrooms?.[room.index] || null;
       }
       if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.check_bathrooms;
-        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
-          return arr[room.index] as "good" | "incident";
-        }
-        return null;
+        return report.bathrooms?.[room.index] || null;
       }
-      const statusMap: Record<string, string | null> = {
-        common_areas: supabaseProperty.check_common_areas,
-        entry_hallways: supabaseProperty.check_entry_hallways,
-        living_room: supabaseProperty.check_living_room,
-        kitchen: supabaseProperty.check_kitchen,
-        exterior: supabaseProperty.check_exterior,
-        garage: supabaseProperty.check_garage,
-        terrace: supabaseProperty.check_terrace,
-      };
-      const status = statusMap[room.type];
-      return (status === "good" || status === "incident") ? status : null;
+      return report[room.type] || null;
+    };
+
+    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+      const data = getRoomData(room);
+      return data?.status || null;
     };
 
     const getRoomComment = (room: { type: string; index?: number }): string => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.comment_bedrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.comment_bathrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
-      }
-      const commentMap: Record<string, string | null> = {
-        common_areas: supabaseProperty.comment_common_areas,
-        entry_hallways: supabaseProperty.comment_entry_hallways,
-        living_room: supabaseProperty.comment_living_room,
-        kitchen: supabaseProperty.comment_kitchen,
-        exterior: supabaseProperty.comment_exterior,
-        garage: supabaseProperty.comment_garage,
-        terrace: supabaseProperty.comment_terrace,
-      };
-      return commentMap[room.type] || "";
+      const data = getRoomData(room);
+      return data?.comment || "";
     };
 
     const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.affects_commercialization_bedrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.affects_commercialization_bathrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
-      }
-      const affectsMap: Record<string, boolean | null> = {
-        common_areas: supabaseProperty.affects_commercialization_common_areas,
-        entry_hallways: supabaseProperty.affects_commercialization_entry_hallways,
-        living_room: supabaseProperty.affects_commercialization_living_room,
-        kitchen: supabaseProperty.affects_commercialization_kitchen,
-        exterior: supabaseProperty.affects_commercialization_exterior,
-        garage: supabaseProperty.affects_commercialization_garage,
-        terrace: supabaseProperty.affects_commercialization_terrace,
-      };
-      return affectsMap[room.type] ?? null;
+      const data = getRoomData(room);
+      return data?.affects_commercialization ?? null;
     };
 
     const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.marketing_photos_bedrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.marketing_photos_bathrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      const photosMap: Record<string, string[] | null> = {
-        common_areas: supabaseProperty.marketing_photos_common_areas,
-        entry_hallways: supabaseProperty.marketing_photos_entry_hallways,
-        living_room: supabaseProperty.marketing_photos_living_room,
-        kitchen: supabaseProperty.marketing_photos_kitchen,
-        exterior: supabaseProperty.marketing_photos_exterior,
-        garage: supabaseProperty.marketing_photos_garage,
-        terrace: supabaseProperty.marketing_photos_terrace,
-      };
-      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      const data = getRoomData(room);
+      return Array.isArray(data?.marketing_photos) ? data.marketing_photos : [];
     };
 
     const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.incident_photos_bedrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.incident_photos_bathrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      const photosMap: Record<string, string[] | null> = {
-        common_areas: supabaseProperty.incident_photos_common_areas,
-        entry_hallways: supabaseProperty.incident_photos_entry_hallways,
-        living_room: supabaseProperty.incident_photos_living_room,
-        kitchen: supabaseProperty.incident_photos_kitchen,
-        exterior: supabaseProperty.incident_photos_exterior,
-        garage: supabaseProperty.incident_photos_garage,
-        terrace: supabaseProperty.incident_photos_terrace,
-      };
-      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      const data = getRoomData(room);
+      return Array.isArray(data?.incident_photos) ? data.incident_photos : [];
     };
 
     const status = getRoomStatus(room);
@@ -261,116 +188,42 @@ export function ProgressOverviewWidget({
   const isRoomComplete = (room: { type: string; index?: number }): boolean => {
     if (!supabaseProperty) return false;
 
-    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+    const getRoomData = (room: { type: string; index?: number }) => {
+      const report = supabaseProperty.technical_inspection_report as any;
+      if (!report) return null;
+      
       if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.check_bedrooms;
-        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
-          return arr[room.index] as "good" | "incident";
-        }
-        return null;
+        return report.bedrooms?.[room.index] || null;
       }
       if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.check_bathrooms;
-        if (Array.isArray(arr) && (arr[room.index] === "good" || arr[room.index] === "incident")) {
-          return arr[room.index] as "good" | "incident";
-        }
-        return null;
+        return report.bathrooms?.[room.index] || null;
       }
-      const statusMap: Record<string, string | null> = {
-        common_areas: supabaseProperty.check_common_areas,
-        entry_hallways: supabaseProperty.check_entry_hallways,
-        living_room: supabaseProperty.check_living_room,
-        kitchen: supabaseProperty.check_kitchen,
-        exterior: supabaseProperty.check_exterior,
-        garage: supabaseProperty.check_garage,
-        terrace: supabaseProperty.check_terrace,
-      };
-      const status = statusMap[room.type];
-      return (status === "good" || status === "incident") ? status : null;
+      return report[room.type] || null;
+    };
+
+    const getRoomStatus = (room: { type: string; index?: number }): "good" | "incident" | null => {
+      const data = getRoomData(room);
+      return data?.status || null;
     };
 
     const getRoomComment = (room: { type: string; index?: number }): string => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.comment_bedrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.comment_bathrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "string") ? arr[room.index] : "";
-      }
-      const commentMap: Record<string, string | null> = {
-        common_areas: supabaseProperty.comment_common_areas,
-        entry_hallways: supabaseProperty.comment_entry_hallways,
-        living_room: supabaseProperty.comment_living_room,
-        kitchen: supabaseProperty.comment_kitchen,
-        exterior: supabaseProperty.comment_exterior,
-        garage: supabaseProperty.comment_garage,
-        terrace: supabaseProperty.comment_terrace,
-      };
-      return commentMap[room.type] || "";
+      const data = getRoomData(room);
+      return data?.comment || "";
     };
 
     const getRoomAffectsCommercialization = (room: { type: string; index?: number }): boolean | null => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.affects_commercialization_bedrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.affects_commercialization_bathrooms;
-        return (Array.isArray(arr) && typeof arr[room.index] === "boolean") ? arr[room.index] : null;
-      }
-      const affectsMap: Record<string, boolean | null> = {
-        common_areas: supabaseProperty.affects_commercialization_common_areas,
-        entry_hallways: supabaseProperty.affects_commercialization_entry_hallways,
-        living_room: supabaseProperty.affects_commercialization_living_room,
-        kitchen: supabaseProperty.affects_commercialization_kitchen,
-        exterior: supabaseProperty.affects_commercialization_exterior,
-        garage: supabaseProperty.affects_commercialization_garage,
-        terrace: supabaseProperty.affects_commercialization_terrace,
-      };
-      return affectsMap[room.type] ?? null;
+      const data = getRoomData(room);
+      return data?.affects_commercialization ?? null;
     };
 
     const getRoomCommercialPhotos = (room: { type: string; index?: number }): string[] => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.marketing_photos_bedrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.marketing_photos_bathrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      const photosMap: Record<string, string[] | null> = {
-        common_areas: supabaseProperty.marketing_photos_common_areas,
-        entry_hallways: supabaseProperty.marketing_photos_entry_hallways,
-        living_room: supabaseProperty.marketing_photos_living_room,
-        kitchen: supabaseProperty.marketing_photos_kitchen,
-        exterior: supabaseProperty.marketing_photos_exterior,
-        garage: supabaseProperty.marketing_photos_garage,
-        terrace: supabaseProperty.marketing_photos_terrace,
-      };
-      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      const data = getRoomData(room);
+      return Array.isArray(data?.marketing_photos) ? data.marketing_photos : [];
     };
 
     const getRoomIncidentPhotos = (room: { type: string; index?: number }): string[] => {
-      if (room.type === "bedrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.incident_photos_bedrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      if (room.type === "bathrooms" && room.index !== undefined) {
-        const arr = supabaseProperty.incident_photos_bathrooms;
-        return (Array.isArray(arr) && Array.isArray(arr[room.index])) ? arr[room.index] : [];
-      }
-      const photosMap: Record<string, string[] | null> = {
-        common_areas: supabaseProperty.incident_photos_common_areas,
-        entry_hallways: supabaseProperty.incident_photos_entry_hallways,
-        living_room: supabaseProperty.incident_photos_living_room,
-        kitchen: supabaseProperty.incident_photos_kitchen,
-        exterior: supabaseProperty.incident_photos_exterior,
-        garage: supabaseProperty.incident_photos_garage,
-        terrace: supabaseProperty.incident_photos_terrace,
-      };
-      return (Array.isArray(photosMap[room.type])) ? photosMap[room.type]! : [];
+      const data = getRoomData(room);
+      return Array.isArray(data?.incident_photos) ? data.incident_photos : [];
     };
 
     const state = getRoomState(room);
@@ -411,6 +264,41 @@ export function ProgressOverviewWidget({
   };
 
   const calculateSectionProgress = (section: Section) => {
+    // Special handling for client-presentation section
+    // Cuando clientPresentationDone está en blanco o es "No": mostrar 0/1
+    // Cuando clientPresentationDone es "Sí": mostrar 1/3 y calcular progreso de los otros campos
+    if (section.id === "client-presentation") {
+      const clientPresentationDone = formData["readyToRent.clientPresentationDone"];
+      
+      // Si está en blanco (null/undefined) o es false (No), mostrar 0/1
+      if (clientPresentationDone === null || clientPresentationDone === undefined || clientPresentationDone === false) {
+        return { completed: 0, total: 1 };
+      }
+      
+      // Si es true (Sí), mostrar 1/3 y calcular progreso de los otros 2 campos
+      if (clientPresentationDone === true) {
+        const clientPresentationDate = formData["readyToRent.clientPresentationDate"];
+        const clientPresentationChannel = formData["readyToRent.clientPresentationChannel"];
+        
+        let completedFields = 1; // Ya contamos clientPresentationDone como completado
+        
+        // Verificar si la fecha está completa
+        if (clientPresentationDate && typeof clientPresentationDate === 'string' && clientPresentationDate.trim() !== "") {
+          completedFields++;
+        }
+        
+        // Verificar si el canal está completo
+        if (clientPresentationChannel && typeof clientPresentationChannel === 'string' && clientPresentationChannel.trim() !== "") {
+          completedFields++;
+        }
+        
+        return { completed: completedFields, total: 3 };
+      }
+      
+      // Fallback (no debería llegar aquí)
+      return { completed: 0, total: 1 };
+    }
+
     // Special handling for technical inspection section
     if (section.id === "technical-inspection" && supabaseProperty) {
       const allRooms = getAllRooms();
@@ -420,6 +308,322 @@ export function ProgressOverviewWidget({
       return { completed: completedRooms, total: totalRooms };
     }
 
+    // Special handling for commercial-launch section
+    // La sección está completa cuando:
+    // - publishOnline === false (no necesita idealistaDescription), O
+    // - publishOnline === true && idealistaDescription tiene contenido
+    if (section.id === "commercial-launch") {
+      const publishOnline = formData["readyToRent.publishOnline"];
+      const idealistaDescription = formData["readyToRent.idealistaDescription"] || "";
+      
+      // Si publishOnline es false, la sección está completa (1/1 campos requeridos)
+      if (publishOnline === false) {
+        return { completed: 1, total: 1 };
+      }
+      
+      // Si publishOnline es true, necesita idealistaDescription
+      if (publishOnline === true) {
+        const hasDescription = idealistaDescription && typeof idealistaDescription === 'string' && idealistaDescription.trim() !== "";
+        return { completed: hasDescription ? 1 : 0, total: 1 };
+      }
+      
+      // Si publishOnline es null/undefined, la sección no está completa
+      return { completed: 0, total: 1 };
+    }
+
+    // Special handling for lead "Información Personal del Interesado" section
+    if (section.id === "personal-info") {
+      const nationality = formData["personal-info.nationality"];
+      const identityDocType = formData["personal-info.identity_doc_type"];
+      const identityDocNumber = formData["personal-info.identity_doc_number"];
+      const identityDocUrl = formData["personal-info.identity_doc_url"];
+      const dateOfBirth = formData["personal-info.date_of_birth"];
+      const familyProfile = formData["personal-info.family_profile"];
+      const childrenCount = formData["personal-info.children_count"];
+      const hasPets = formData["personal-info.has_pets"];
+      const petDetails = formData["personal-info.pet_details"];
+
+      const has = (v: unknown) =>
+        v !== undefined && v !== null && v !== "" && String(v).trim() !== "";
+
+      let completed = 0;
+      let total = 7; // Base: nationality, identity_doc_type, identity_doc_number, identity_doc_url, date_of_birth, family_profile, has_pets
+
+      if (has(nationality)) completed++;
+      if (has(identityDocType)) completed++;
+      if (has(identityDocNumber)) completed++;
+      if (has(identityDocUrl)) completed++;
+      if (has(dateOfBirth)) completed++;
+      if (has(familyProfile)) completed++;
+      if (hasPets === "yes" || hasPets === "no") completed++;
+
+      // children_count: required when family_profile === "Con hijos"
+      if (familyProfile === "Con hijos") {
+        total++;
+        if (childrenCount !== undefined && childrenCount !== null && String(childrenCount).trim() !== "") completed++;
+      }
+
+      // pet_details: required when has_pets === "yes"
+      if (hasPets === "yes") {
+        total++;
+        if (has(petDetails)) completed++;
+      }
+
+      return { completed, total };
+    }
+
+    // Special handling for lead "Información Laboral y Financiera del Interesado" section
+    if (section.id === "employment-financial") {
+      const employmentStatus = formData["employment-financial.employment_status"];
+      const employmentContractType = formData["employment-financial.employment_contract_type"];
+      const obligatory = (formData["employment-financial.obligatory_docs"] as Record<string, string>) || {};
+
+      const has = (v: unknown) =>
+        v !== undefined && v !== null && v !== "" && String(v).trim() !== "";
+
+      const status = typeof employmentStatus === "string" ? employmentStatus : "";
+      const contractType = typeof employmentContractType === "string" ? employmentContractType : null;
+
+      let completed = 0;
+      let total = 0;
+
+      if (!has(status)) {
+        return { completed: 0, total: 1 };
+      }
+      total++;
+      completed++;
+
+      const STATUSES_WITH_CONTRACT = ["Empleado", "Funcionario"];
+      if (STATUSES_WITH_CONTRACT.includes(status)) {
+        total++;
+        if (has(contractType)) completed++;
+      }
+
+      const fieldKeys = getObligatoryFieldKeys(status, contractType);
+      total += fieldKeys.length;
+      for (const key of fieldKeys) {
+        const url = obligatory[key];
+        if (url && typeof url === "string" && url.trim() !== "") completed++;
+      }
+
+      return { completed, total };
+    }
+
+    // Special handling for "Inquilino aceptado" phase sections
+    // These sections read from supabaseProperty directly, not formData
+    const tenantAcceptedSectionIds = ["bank-data", "contract", "guarantee"];
+    const isTenantAcceptedSection = tenantAcceptedSectionIds.includes(section.id);
+    
+    if (isTenantAcceptedSection && supabaseProperty) {
+      if (section.id === "bank-data") {
+        // Bank data section: Complete if:
+        // - client_wants_to_change_bank_account === false (uses existing account), OR
+        // - client_wants_to_change_bank_account === true AND both IBAN and certificate are filled
+        const wantsToChange = supabaseProperty.client_wants_to_change_bank_account;
+        const iban = supabaseProperty.client_rent_receiving_iban;
+        const certificate = supabaseProperty.client_rent_receiving_bank_certificate_url;
+        
+        let completed = 0;
+        const total = 1; // 1 task: Confirm bank data
+        
+        // Only count as completed if there's a definitive answer
+        if (wantsToChange === false) {
+          // Uses existing account - section is complete
+          completed = 1;
+        } else if (wantsToChange === true) {
+          // Wants to change - both fields must be filled and valid
+          const hasValidIban = iban && typeof iban === 'string' && iban.trim() !== '';
+          const hasValidCertificate = certificate && typeof certificate === 'string' && certificate.trim() !== '';
+          if (hasValidIban && hasValidCertificate) {
+            completed = 1;
+          }
+        }
+        // If wantsToChange is null/undefined, completed remains 0
+        
+        return { completed, total };
+      }
+      
+      if (section.id === "contract") {
+        // Contract section: Check 5 required fields
+        // 1. Contract file (signed_lease_contract_url)
+        // 2. Signature date (contract_signature_date)
+        // 3. Start date (lease_start_date)
+        // 4. Duration (lease_duration + lease_duration_unit counted together)
+        // 5. Rent amount (final_rent_amount)
+        const contractUrl = supabaseProperty.signed_lease_contract_url;
+        const signatureDate = supabaseProperty.contract_signature_date;
+        const startDate = supabaseProperty.lease_start_date;
+        const duration = supabaseProperty.lease_duration;
+        const durationUnit = supabaseProperty.lease_duration_unit;
+        const rentAmount = supabaseProperty.final_rent_amount;
+        
+        let completed = 0;
+        const total = 5; // 5 fields as shown in widget
+        
+        // Check contract file
+        if (contractUrl && typeof contractUrl === 'string' && contractUrl.trim() !== '') completed++;
+        
+        // Check signature date
+        if (signatureDate && typeof signatureDate === 'string' && signatureDate.trim() !== '') completed++;
+        
+        // Check start date
+        if (startDate && typeof startDate === 'string' && startDate.trim() !== '') completed++;
+        
+        // Duration and durationUnit counted together as 1 field
+        // Both must be present and valid
+        if (duration && durationUnit && 
+            duration.toString().trim() !== '' && 
+            (durationUnit === 'months' || durationUnit === 'years')) {
+          completed++;
+        }
+        
+        // Check rent amount
+        if (rentAmount !== null && rentAmount !== undefined && 
+            (typeof rentAmount === 'number' ? rentAmount > 0 : parseFloat(String(rentAmount)) > 0)) {
+          completed++;
+        }
+        
+        return { completed, total };
+      }
+      
+      if (section.id === "guarantee") {
+        // Guarantee section for Phase 4: Only the answer to the question matters
+        // Only check guarantee_sent_to_signature (1 field)
+        const guaranteeSent = supabaseProperty.guarantee_sent_to_signature;
+        
+        let completed = 0;
+        const total = 1; // Only 1 field: the answer to the question
+        
+        // Count as completed only if guarantee_sent_to_signature === true
+        if (guaranteeSent === true) {
+          completed = 1;
+        }
+        
+        return { completed, total };
+      }
+    }
+    
+    // Special handling for "Pendiente de trámites" phase sections
+    // These sections read from supabaseProperty directly, not formData
+    const pendingProceduresSectionIds = ["guarantee-signing", "deposit", "supplies-change", "first-rent-payment"];
+    const isPendingProceduresSection = pendingProceduresSectionIds.includes(section.id);
+    
+    if (isPendingProceduresSection && supabaseProperty) {
+      if (section.id === "guarantee-signing") {
+        // Guarantee section for Phase 5: Check both guarantee_signed and guarantee_file_url
+        // 1. guarantee_signed === true (confirmation that guarantee was signed)
+        // 2. guarantee_file_url exists (signed document uploaded)
+        const guaranteeSigned = supabaseProperty.guarantee_signed;
+        const guaranteeFileUrl = supabaseProperty.guarantee_file_url;
+        
+        let completed = 0;
+        const total = 2; // 2 fields: signed confirmation + file upload
+        
+        // Check if guarantee is signed
+        if (guaranteeSigned === true) {
+          completed++;
+        }
+        
+        // Check if guarantee file is uploaded
+        if (guaranteeFileUrl && typeof guaranteeFileUrl === 'string' && guaranteeFileUrl.trim() !== '') {
+          completed++;
+        }
+        
+        return { completed, total };
+      }
+      
+      if (section.id === "deposit") {
+        // Deposit section for Phase 5: Check deposit_responsible and deposit_receipt_file_url
+        // Complete if:
+        // - deposit_responsible === "Inversor" (no document needed), OR
+        // - deposit_responsible === "Prophero" AND deposit_receipt_file_url exists
+        const depositResponsible = supabaseProperty.deposit_responsible;
+        const depositReceiptUrl = supabaseProperty.deposit_receipt_file_url;
+        
+        let completed = 0;
+        const total = 1; // 1 field: responsible selection (document is conditional)
+        
+        // Check if responsible is selected
+        if (depositResponsible === "Inversor") {
+          // Inversor is responsible - section is complete
+          completed = 1;
+        } else if (depositResponsible === "Prophero") {
+          // Prophero is responsible - need document
+          if (depositReceiptUrl && typeof depositReceiptUrl === 'string' && depositReceiptUrl.trim() !== '') {
+            completed = 1;
+          }
+        }
+        
+        return { completed, total };
+      }
+      
+      if (section.id === "supplies-change") {
+        // Supplies change section: Check if all required tenant contracts are uploaded
+        // Based on toggle states and contract uploads
+        const toggles = supabaseProperty.tenant_supplies_toggles || {};
+        const tenantContractElectricity = supabaseProperty.tenant_contract_electricity;
+        const tenantContractWater = supabaseProperty.tenant_contract_water;
+        const tenantContractGas = supabaseProperty.tenant_contract_gas;
+        const tenantContractOther = supabaseProperty.rental_custom_utilities_documents;
+        
+        // If no toggles are enabled, section is complete
+        const hasAnyToggleEnabled = Object.values(toggles).some((v: any) => v === true);
+        if (!hasAnyToggleEnabled) {
+          return { completed: 1, total: 1 };
+        }
+        
+        // Check if all required contracts are uploaded
+        let completed = 0;
+        let total = 0;
+        
+        if (toggles.electricity) {
+          total++;
+          if (tenantContractElectricity && typeof tenantContractElectricity === 'string' && tenantContractElectricity.trim() !== '') {
+            completed++;
+          }
+        }
+        
+        if (toggles.water) {
+          total++;
+          if (tenantContractWater && typeof tenantContractWater === 'string' && tenantContractWater.trim() !== '') {
+            completed++;
+          }
+        }
+        
+        if (toggles.gas) {
+          total++;
+          if (tenantContractGas && typeof tenantContractGas === 'string' && tenantContractGas.trim() !== '') {
+            completed++;
+          }
+        }
+        
+        if (toggles.other) {
+          total++;
+          if (tenantContractOther && Array.isArray(tenantContractOther) && tenantContractOther.length > 0) {
+            completed++;
+          }
+        }
+        
+        return { completed, total: total || 1 };
+      }
+      
+      if (section.id === "first-rent-payment") {
+        // First rent payment section: Check if first_rent_payment_file_url exists
+        // Section is complete when the transfer receipt document is uploaded
+        const firstRentPaymentUrl = supabaseProperty.first_rent_payment_file_url;
+        
+        let completed = 0;
+        const total = 1; // 1 field: document upload
+        
+        // Check if document is uploaded
+        if (firstRentPaymentUrl && typeof firstRentPaymentUrl === 'string' && firstRentPaymentUrl.trim() !== '') {
+          completed = 1;
+        }
+        
+        return { completed, total };
+      }
+    }
+    
     // For Prophero sections, check review state first
     // Prophero sections ONLY count as complete if isCorrect === true in review state
     const isPropheroSection = PROPHERO_SECTION_IDS.includes(section.id);

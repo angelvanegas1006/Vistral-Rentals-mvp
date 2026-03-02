@@ -84,6 +84,62 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "owner_financial/custom",
   },
+  // Tenant custom documents
+  tenant_custom_identity_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/identity",
+  },
+  tenant_custom_financial_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/financial",
+  },
+  tenant_custom_other_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/other",
+  },
+  // Rental Data (Folder 1: rental) - contractual_financial (Folder 2)
+  signed_lease_contract_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/lease_contract",
+  },
+  guarantee_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/non-payment_insurance",
+  },
+  deposit_receipt_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/deposit",
+  },
+  first_rent_payment_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/first_rent_payment",
+  },
+  rental_custom_contractual_financial_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/other",
+  },
+  // Rental - utilities (Folder 2)
+  tenant_contract_electricity: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  tenant_contract_water: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  tenant_contract_gas: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  rental_custom_utilities_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  // Rental - other (Folder 2)
+  rental_custom_other_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/other",
+  },
   // Property Marketing Photos (Listo para Alquilar phase)
   marketing_photos_common_areas: {
     bucket: "properties-public-docs",
@@ -193,7 +249,7 @@ const JSONB_ARRAY_FIELDS = [
   "incident_photos_terrace",
   "incident_photos_storage",
 ];
-const CUSTOM_DOCUMENT_FIELDS = ["custom_legal_documents", "custom_insurance_documents", "custom_supplies_documents", "custom_investor_documents"];
+const CUSTOM_DOCUMENT_FIELDS = ["custom_legal_documents", "custom_insurance_documents", "custom_supplies_documents", "custom_investor_documents", "tenant_custom_identity_documents", "tenant_custom_financial_documents", "tenant_custom_other_documents", "rental_custom_contractual_financial_documents", "rental_custom_utilities_documents", "rental_custom_other_documents"];
 
 /**
  * Extract storage path from a Supabase Storage URL
@@ -287,9 +343,70 @@ export async function DELETE(request: NextRequest) {
       );
       
       updateData = { [fieldName]: updatedArray };
-    } else if (JSONB_ARRAY_FIELDS.includes(fieldName)) {
-      // Special handling for bedrooms and bathrooms (arrays of arrays)
-      if ((fieldName === "marketing_photos_bedrooms" || fieldName === "marketing_photos_bathrooms" || fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms") && roomIndex !== undefined && roomIndex !== null) {
+    } else if (fieldName.startsWith("marketing_photos_") || fieldName.startsWith("incident_photos_")) {
+      // Handle technical inspection photos - write to technical_inspection_report JSONB
+      const fieldToRoomMap: Record<string, { roomType: string; photoType: "marketing_photos" | "incident_photos" }> = {
+        "marketing_photos_common_areas": { roomType: "common_areas", photoType: "marketing_photos" },
+        "marketing_photos_entry_hallways": { roomType: "entry_hallways", photoType: "marketing_photos" },
+        "marketing_photos_living_room": { roomType: "living_room", photoType: "marketing_photos" },
+        "marketing_photos_kitchen": { roomType: "kitchen", photoType: "marketing_photos" },
+        "marketing_photos_exterior": { roomType: "exterior", photoType: "marketing_photos" },
+        "marketing_photos_garage": { roomType: "garage", photoType: "marketing_photos" },
+        "marketing_photos_terrace": { roomType: "terrace", photoType: "marketing_photos" },
+        "marketing_photos_storage": { roomType: "storage", photoType: "marketing_photos" },
+        "marketing_photos_bedrooms": { roomType: "bedrooms", photoType: "marketing_photos" },
+        "marketing_photos_bathrooms": { roomType: "bathrooms", photoType: "marketing_photos" },
+        "incident_photos_common_areas": { roomType: "common_areas", photoType: "incident_photos" },
+        "incident_photos_entry_hallways": { roomType: "entry_hallways", photoType: "incident_photos" },
+        "incident_photos_living_room": { roomType: "living_room", photoType: "incident_photos" },
+        "incident_photos_kitchen": { roomType: "kitchen", photoType: "incident_photos" },
+        "incident_photos_exterior": { roomType: "exterior", photoType: "incident_photos" },
+        "incident_photos_garage": { roomType: "garage", photoType: "incident_photos" },
+        "incident_photos_terrace": { roomType: "terrace", photoType: "incident_photos" },
+        "incident_photos_storage": { roomType: "storage", photoType: "incident_photos" },
+        "incident_photos_bedrooms": { roomType: "bedrooms", photoType: "incident_photos" },
+        "incident_photos_bathrooms": { roomType: "bathrooms", photoType: "incident_photos" },
+      };
+
+      const roomMapping = fieldToRoomMap[fieldName];
+      if (!roomMapping) {
+        return NextResponse.json(
+          { error: `Unknown photo field: ${fieldName}` },
+          { status: 400 }
+        );
+      }
+
+      // Get current technical_inspection_report
+      const { data: currentProperty } = await supabase
+        .from("properties")
+        .select("technical_inspection_report")
+        .eq("property_unique_id", propertyId)
+        .single();
+
+      if (!currentProperty) {
+        return NextResponse.json(
+          { error: "Property not found" },
+          { status: 404 }
+        );
+      }
+
+      // Parse the JSONB field
+      let report = currentProperty.technical_inspection_report;
+      if (typeof report === 'string') {
+        try {
+          report = JSON.parse(report);
+        } catch {
+          report = {};
+        }
+      }
+      if (!report || typeof report !== 'object') {
+        report = {};
+      }
+
+      const updatedReport = { ...report };
+
+      // Handle bedrooms and bathrooms (arrays)
+      if ((roomMapping.roomType === "bedrooms" || roomMapping.roomType === "bathrooms") && roomIndex !== undefined && roomIndex !== null) {
         const roomIdx = typeof roomIndex === "string" ? parseInt(roomIndex, 10) : roomIndex;
         if (isNaN(roomIdx)) {
           return NextResponse.json(
@@ -298,57 +415,52 @@ export async function DELETE(request: NextRequest) {
           );
         }
 
-        // Get current array of arrays
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", propertyId)
-          .single();
-
-        if (!currentProperty) {
-          return NextResponse.json(
-            { error: "Property not found" },
-            { status: 404 }
-          );
-        }
-
-        const currentArrayOfArrays = Array.isArray(currentProperty[fieldName])
-          ? (currentProperty[fieldName] as string[][])
-          : [];
-
-        // Ensure array has enough elements
-        if (currentArrayOfArrays[roomIdx]) {
-          // Remove the URL from the specific room's array
-          currentArrayOfArrays[roomIdx] = currentArrayOfArrays[roomIdx].filter(
-            (url: string) => url !== fileUrl
-          );
-        }
-
-        updateData = { [fieldName]: currentArrayOfArrays };
-      } else {
-        // For simple JSONB arrays: remove the URL from the array
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", propertyId)
-          .single();
-
-        if (!currentProperty) {
-          return NextResponse.json(
-            { error: "Property not found" },
-            { status: 404 }
-          );
-        }
-
-        const currentArray = Array.isArray(currentProperty[fieldName])
-          ? currentProperty[fieldName]
-          : [];
-
-        // Remove the URL from the array
-        const updatedArray = currentArray.filter((url: string) => url !== fileUrl);
+        const roomArray = roomMapping.roomType === "bedrooms" ? "bedrooms" : "bathrooms";
+        const rooms = Array.isArray(updatedReport[roomArray]) ? [...updatedReport[roomArray]] : [];
         
-        updateData = { [fieldName]: updatedArray };
+        if (rooms[roomIdx] && Array.isArray(rooms[roomIdx]?.[roomMapping.photoType])) {
+          rooms[roomIdx] = {
+            ...rooms[roomIdx],
+            [roomMapping.photoType]: rooms[roomIdx][roomMapping.photoType].filter((url: string) => url !== fileUrl)
+          };
+          updatedReport[roomArray] = rooms;
+        }
+      } else {
+        // Handle simple rooms (single objects)
+        const roomKey = roomMapping.roomType as keyof typeof updatedReport;
+        const currentRoom = updatedReport[roomKey];
+        if (currentRoom && Array.isArray(currentRoom[roomMapping.photoType])) {
+          updatedReport[roomKey] = {
+            ...currentRoom,
+            [roomMapping.photoType]: currentRoom[roomMapping.photoType].filter((url: string) => url !== fileUrl)
+          };
+        }
       }
+
+      updateData = { technical_inspection_report: updatedReport };
+    } else if (JSONB_ARRAY_FIELDS.includes(fieldName)) {
+      // For other JSONB arrays: remove the URL from the array
+      const { data: currentProperty } = await supabase
+        .from("properties")
+        .select(fieldName)
+        .eq("property_unique_id", propertyId)
+        .single();
+
+      if (!currentProperty) {
+        return NextResponse.json(
+          { error: "Property not found" },
+          { status: 404 }
+        );
+      }
+
+      const currentArray = Array.isArray(currentProperty[fieldName])
+        ? currentProperty[fieldName]
+        : [];
+
+      // Remove the URL from the array
+      const updatedArray = currentArray.filter((url: string) => url !== fileUrl);
+      
+      updateData = { [fieldName]: updatedArray };
     } else {
       // For single text fields: set to null
       updateData = { [fieldName]: null };

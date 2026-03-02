@@ -72,6 +72,15 @@ export default function PropertyDetailPage() {
   const [propheroSectionReviews, setPropheroSectionReviews] = useState<PropheroSectionReviews | undefined>(undefined);
   const previousPropheroReviewsRef = useRef<PropheroSectionReviews | undefined>(undefined);
   
+  // Estado para progreso de fase 2
+  const [phase2Progress, setPhase2Progress] = useState<number>(0);
+  
+  // Estado para progreso de fase 4 (Inquilino aceptado)
+  const [phase4Progress, setPhase4Progress] = useState<number>(0);
+  
+  // Estado para progreso de fase 5 (Pendiente de trámites)
+  const [phase5Progress, setPhase5Progress] = useState<number>(0);
+  
   // Función estabilizada para actualizar propheroSectionReviews
   // Solo actualiza si los valores realmente cambiaron para evitar re-renderizados innecesarios
   const handlePropheroReviewsChange = useCallback((reviews: PropheroSectionReviews | undefined) => {
@@ -316,17 +325,41 @@ export default function PropertyDetailPage() {
 
   // Check if phase advancement is blocked
   const isPhaseBlocked = useMemo(() => {
-    // Only block if we're in Prophero phase AND sections are not complete
-    if (property.currentPhase !== "Viviendas Prophero") {
-      return false;
+    // Block phase 1 (Viviendas Prophero) if sections are not complete
+    if (property.currentPhase === "Viviendas Prophero") {
+      const blocked = !checkPropheroSectionsComplete;
+      console.log(`🔒 Phase blocked check - currentPhase: ${property.currentPhase}, checkComplete: ${checkPropheroSectionsComplete}, blocked: ${blocked}`);
+      console.log(`🔒 propheroSectionReviews state:`, propheroSectionReviews);
+      console.log(`🔒 supabaseProperty.prophero_section_reviews:`, supabaseProperty?.prophero_section_reviews);
+      return blocked;
     }
-    const blocked = !checkPropheroSectionsComplete;
-    console.log(`🔒 Phase blocked check - currentPhase: ${property.currentPhase}, checkComplete: ${checkPropheroSectionsComplete}, blocked: ${blocked}`);
-    console.log(`🔒 propheroSectionReviews state:`, propheroSectionReviews);
-    console.log(`🔒 supabaseProperty.prophero_section_reviews:`, supabaseProperty?.prophero_section_reviews);
-    return blocked;
-  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews]);
-  const blockedMessage = "Avance bloqueado - Completa todas las secciones requeridas";
+    
+    // Block phase 2 (Listo para Alquilar) if progress is not 100%
+    if (property.currentPhase === "Listo para Alquilar") {
+      const blocked = phase2Progress < 100;
+      console.log(`🔒 Phase 2 blocked check - currentPhase: ${property.currentPhase}, progress: ${phase2Progress}%, blocked: ${blocked}`);
+      return blocked;
+    }
+    
+    // Block phase 4 (Inquilino aceptado) if progress is not 100%
+    if (property.currentPhase === "Inquilino aceptado") {
+      const blocked = phase4Progress < 100;
+      console.log(`🔒 Phase 4 blocked check - currentPhase: ${property.currentPhase}, progress: ${phase4Progress}%, blocked: ${blocked}`);
+      return blocked;
+    }
+    
+    // Block phase 5 (Pendiente de trámites) if progress is not 100%
+    if (property.currentPhase === "Pendiente de trámites") {
+      const blocked = phase5Progress < 100;
+      console.log(`🔒 Phase 5 blocked check - currentPhase: ${property.currentPhase}, progress: ${phase5Progress}%, blocked: ${blocked}`);
+      return blocked;
+    }
+    
+    return false;
+  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews, phase2Progress, phase4Progress, phase5Progress]);
+  const blockedMessage = property.currentPhase === "Listo para Alquilar" || property.currentPhase === "Inquilino aceptado" || property.currentPhase === "Pendiente de trámites"
+    ? "Avance bloqueado - Completa el Progreso General de la fase"
+    : "Avance bloqueado - Completa todas las secciones requeridas";
 
   // Función para avanzar a la siguiente fase
   const handleNextPhase = async () => {
@@ -389,6 +422,9 @@ export default function PropertyDetailPage() {
             onCanSubmitCommentsRef={canSubmitCommentsRef}
             onHasAnySectionWithNoChange={setHasAnySectionWithNo}
             onCanSubmitCommentsChange={setCanSubmitComments}
+            onPhase2ProgressChange={setPhase2Progress}
+            onPhase4ProgressChange={setPhase4Progress}
+            onPhase5ProgressChange={setPhase5Progress}
           />
         );
       case "property-summary":
@@ -419,6 +455,9 @@ export default function PropertyDetailPage() {
             onCanSubmitCommentsRef={canSubmitCommentsRef}
             onHasAnySectionWithNoChange={setHasAnySectionWithNo}
             onCanSubmitCommentsChange={setCanSubmitComments}
+            onPhase2ProgressChange={setPhase2Progress}
+            onPhase4ProgressChange={setPhase4Progress}
+            onPhase5ProgressChange={setPhase5Progress}
           />
         );
     }
@@ -482,7 +521,7 @@ export default function PropertyDetailPage() {
           />
 
           {/* Main Content - Matching HTML design */}
-          <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#111827]">
+          <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#111827] scrollbar-stable">
             <div className="max-w-7xl mx-auto px-6 md:px-12 py-8">
               {/* Address and Property Info Section */}
               <div className="mb-6">
@@ -537,12 +576,12 @@ export default function PropertyDetailPage() {
           {hasUnsavedChanges && (
             <div
               className={cn(
-                "fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[var(--prophero-gray-900)] px-margin-xs sm:px-margin-sm py-4 md:hidden border-t border-[var(--prophero-gray-200)] dark:border-[var(--prophero-gray-700)] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out",
+                "fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[var(--vistral-gray-900)] px-margin-xs sm:px-margin-sm py-4 md:hidden border-t border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out",
                 showFooter ? "translate-y-0" : "translate-y-full"
               )}
             >
               <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
-                <Button className="w-full flex items-center justify-center rounded-lg bg-[var(--prophero-blue-600)] hover:bg-[var(--prophero-blue-700)] text-white h-12 text-base font-medium">
+                <Button className="w-full flex items-center justify-center rounded-lg bg-[var(--vistral-blue-600)] hover:bg-[var(--vistral-blue-700)] text-white h-12 text-base font-medium">
                   Guardar Cambios
                 </Button>
                 <Button
@@ -566,9 +605,9 @@ export default function PropertyDetailPage() {
               onClick={() => setIsSidebarOpen(false)}
             />
             {/* Drawer */}
-            <div className="fixed right-0 top-0 h-full w-[85vw] max-w-sm bg-card dark:bg-[var(--prophero-gray-900)] border-l z-50 lg:hidden shadow-xl overflow-y-auto">
+            <div className="fixed right-0 top-0 h-full w-[85vw] max-w-sm bg-card dark:bg-[var(--vistral-gray-900)] border-l z-50 lg:hidden shadow-xl overflow-y-auto">
               {/* Header del drawer */}
-              <div className="sticky top-0 bg-card dark:bg-[var(--prophero-gray-900)] border-b p-4 flex items-center justify-between z-10">
+              <div className="sticky top-0 bg-card dark:bg-[var(--vistral-gray-900)] border-b p-4 flex items-center justify-between z-10">
                 <h2 className="text-lg font-semibold">Informaciรณn</h2>
                 <Button
                   variant="ghost"

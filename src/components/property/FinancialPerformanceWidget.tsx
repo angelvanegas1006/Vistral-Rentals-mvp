@@ -129,8 +129,23 @@ export function FinancialPerformanceWidget({ property, currentPhase }: Financial
               <div>
                 <p className="text-xs text-muted-foreground mb-1.5">Rentabilidad implícita</p>
                 <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {/* Calculate implied yield if we had total investment, otherwise show -- */}
-                  {"--"}
+                  {(() => {
+                    // Calcular rentabilidad implícita usando regla de tres:
+                    // Si target_rent_price da expected_yield, entonces announcement_price da rentabilidad_implicita
+                    // rentabilidad_implicita = (announcement_price * expected_yield) / target_rent_price
+                    if (
+                      property?.target_rent_price && 
+                      property?.target_rent_price > 0 &&
+                      property?.expected_yield !== null &&
+                      property?.expected_yield !== undefined &&
+                      property?.announcement_price && 
+                      property.announcement_price > 0
+                    ) {
+                      const impliedYield = (property.announcement_price * property.expected_yield) / property.target_rent_price;
+                      return `${impliedYield.toFixed(2)}%`;
+                    }
+                    return "--";
+                  })()}
                 </p>
               </div>
             </div>

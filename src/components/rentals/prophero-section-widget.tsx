@@ -177,7 +177,7 @@ export function PropheroSectionWidget({
       return "border-blue-100 bg-blue-50/30 dark:bg-blue-950/10 dark:border-blue-800/20";
     } else {
       // Color normal (blanco/gris) - cuando isCorrect === true
-      return "border-gray-200 bg-white dark:bg-[var(--prophero-gray-900)]";
+      return "border-gray-200 bg-white dark:bg-[var(--vistral-gray-900)]";
     }
   };
 

@@ -10,6 +10,19 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+/** Laboral/financial documents for leads. Obligatory: one URL per field key. Complementary: array with type, title, url, createdAt. */
+export interface LaboralFinancialComplementaryDoc {
+  type: string;
+  title: string;
+  url: string;
+  createdAt: string;
+}
+
+export interface LaboralFinancialDocs {
+  obligatory?: Record<string, string>;
+  complementary?: LaboralFinancialComplementaryDoc[];
+}
+
 // Types for Prophero section reviews
 export interface PropheroSectionReview {
   reviewed: boolean;
@@ -38,6 +51,35 @@ export type PropheroSectionReviews = {
   [sectionId: string]: PropheroSectionReview;
   _meta?: PropheroSectionReviewsMeta;
 };
+
+// Enum for Client Presentation Channel (Section 1: Presentación al Cliente)
+export enum ClientPresentationChannel {
+  PHONE = "Llamada telefónica",
+  EMAIL = "Correo electrónico",
+  BOTH = "Ambos",
+}
+
+// Types for Technical Inspection Report (Section 3: Inspección Técnica)
+export interface RoomInspectionData {
+  status: "good" | "incident" | null;
+  comment: string | null;
+  affects_commercialization: boolean | null;
+  incident_photos: string[];
+  marketing_photos: string[];
+}
+
+export interface TechnicalInspectionReport {
+  common_areas?: RoomInspectionData;
+  entry_hallways?: RoomInspectionData;
+  living_room?: RoomInspectionData;
+  kitchen?: RoomInspectionData;
+  exterior?: RoomInspectionData;
+  garage?: RoomInspectionData;
+  terrace?: RoomInspectionData;
+  storage?: RoomInspectionData;
+  bedrooms?: RoomInspectionData[];
+  bathrooms?: RoomInspectionData[];
+}
 
 export interface Database {
   public: {
@@ -79,64 +121,11 @@ export interface Database {
           // Sección 1: Presentación al Cliente
           client_presentation_done: boolean | null; // ¿Se ha realizado la presentación del servicio al cliente?
           client_presentation_date: string | null; // Fecha de presentación (DATE)
-          client_presentation_channel: string | null; // Canal: "Llamada telefónica", "Correo electrónico", "Ambos"
+          client_presentation_channel: ClientPresentationChannel | null; // Canal de comunicación utilizado para la presentación
           // Sección 2: Estrategia de Precio
           price_approval: boolean | null; // ¿Ha aprobado el cliente este precio de publicación?
-          // Property Marketing Photos (Listo para Alquilar phase)
-          marketing_photos_common_areas: Json | null; // Entorno y zonas comunes
-          marketing_photos_entry_hallways: Json | null; // Entrada y pasillos
-          marketing_photos_bedrooms: Json | null; // Habitaciones (array dinámico)
-          marketing_photos_living_room: Json | null; // Salón
-          marketing_photos_bathrooms: Json | null; // Baños (array dinámico)
-          marketing_photos_kitchen: Json | null; // Cocina
-          marketing_photos_exterior: Json | null; // Exteriores
-          marketing_photos_garage: Json | null; // Garaje (condicional)
-          marketing_photos_storage: Json | null; // Trastero (condicional)
-          marketing_photos_terrace: Json | null; // Terraza (condicional)
-          // Property Check Fields (Final check verification)
-          check_common_areas: "good" | "incident" | null; // Entorno y zonas comunes
-          check_entry_hallways: "good" | "incident" | null; // Entrada y pasillos
-          check_bedrooms: Json | null; // Habitaciones (array de textos: good, incident)
-          check_living_room: "good" | "incident" | null; // Salón
-          check_bathrooms: Json | null; // Baños (array de textos: good, incident)
-          check_kitchen: "good" | "incident" | null; // Cocina
-          check_exterior: "good" | "incident" | null; // Exteriores
-          check_garage: "good" | "incident" | null; // Garaje
-          check_terrace: "good" | "incident" | null; // Terraza
-          check_storage: "good" | "incident" | null; // Trastero
-          // Property Comment Fields (comentarios cuando el estado es repair o replace)
-          comment_common_areas: string | null; // Comentario para entorno y zonas comunes
-          comment_entry_hallways: string | null; // Comentario para entrada y pasillos
-          comment_bedrooms: Json | null; // Comentarios para habitaciones (array de textos)
-          comment_living_room: string | null; // Comentario para salón
-          comment_bathrooms: Json | null; // Comentarios para baños (array de textos)
-          comment_kitchen: string | null; // Comentario para cocina
-          comment_exterior: string | null; // Comentario para exteriores
-          comment_garage: string | null; // Comentario para garaje
-          comment_terrace: string | null; // Comentario para terraza
-          comment_storage: string | null; // Comentario para trastero
-          // Property Commercialization Impact Fields (si la incidencia afecta la comercialización)
-          affects_commercialization_common_areas: boolean | null; // ¿Afecta la comercialización? - Entorno y zonas comunes
-          affects_commercialization_entry_hallways: boolean | null; // ¿Afecta la comercialización? - Entrada y pasillos
-          affects_commercialization_bedrooms: Json | null; // ¿Afecta la comercialización? - Habitaciones (array de booleanos)
-          affects_commercialization_living_room: boolean | null; // ¿Afecta la comercialización? - Salón
-          affects_commercialization_bathrooms: Json | null; // ¿Afecta la comercialización? - Baños (array de booleanos)
-          affects_commercialization_kitchen: boolean | null; // ¿Afecta la comercialización? - Cocina
-          affects_commercialization_exterior: boolean | null; // ¿Afecta la comercialización? - Exteriores
-          affects_commercialization_garage: boolean | null; // ¿Afecta la comercialización? - Garaje
-          affects_commercialization_terrace: boolean | null; // ¿Afecta la comercialización? - Terraza
-          affects_commercialization_storage: boolean | null; // ¿Afecta la comercialización? - Trastero
-          // Property Incident Photos (Fotos de incidencias - diferentes de fotos comerciales)
-          incident_photos_common_areas: Json | null; // Fotos de incidencias - Entorno y zonas comunes
-          incident_photos_entry_hallways: Json | null; // Fotos de incidencias - Entrada y pasillos
-          incident_photos_bedrooms: Json | null; // Fotos de incidencias - Habitaciones (array dinámico)
-          incident_photos_living_room: Json | null; // Fotos de incidencias - Salón
-          incident_photos_bathrooms: Json | null; // Fotos de incidencias - Baños (array dinámico)
-          incident_photos_kitchen: Json | null; // Fotos de incidencias - Cocina
-          incident_photos_exterior: Json | null; // Fotos de incidencias - Exteriores
-          incident_photos_garage: Json | null; // Fotos de incidencias - Garaje (condicional)
-          incident_photos_terrace: Json | null; // Fotos de incidencias - Terraza (condicional)
-          incident_photos_storage: Json | null; // Fotos de incidencias - Trastero (condicional)
+          // Sección 3: Inspección Técnica y Reportaje
+          technical_inspection_report: Json | null; // Reporte completo de inspección técnica agrupado por estancia (JSONB)
           // Property Details
           square_meters: number | null;
           bedrooms: number | null;
@@ -185,6 +174,10 @@ export interface Database {
           client_email: string | null;
           client_iban: string | null;
           client_bank_certificate_url: string | null;
+          // Rent receiving bank account fields (Phase 4: Inquilino aceptado)
+          client_rent_receiving_iban: string | null;
+          client_rent_receiving_bank_certificate_url: string | null;
+          client_wants_to_change_bank_account: boolean | null;
           // Custom documents JSONB fields
           custom_legal_documents: Json | null;
           custom_insurance_documents: Json | null;
@@ -195,17 +188,35 @@ export interface Database {
           tenant_email: string | null;
           tenant_phone: string | null;
           tenant_nif: string | null;
+          tenant_iban: string | null;
+          tenant_custom_identity_documents: Json | null;
+          tenant_custom_financial_documents: Json | null;
+          tenant_custom_other_documents: Json | null;
           // Contract fields (Inquilino aceptado phase)
           contract_signed: boolean | null;
           contract_signature_date: string | null;
+          signed_lease_contract_url: string | null;
+          final_rent_amount: number | null;
+          lease_start_date: string | null;
+          lease_end_date: string | null;
+          next_rent_update_date: string | null;
+          lease_duration: string | null;
+          lease_duration_unit: "months" | "years" | null;
+          // Legacy contract fields (deprecated, kept for compatibility)
           contract_start_date: string | null;
           contract_duration: string | null;
           contract_duration_unit: string | null;
           final_rent_price: number | null;
           guarantee_id: string | null;
           guarantee_signed: boolean | null;
+          guarantee_sent_to_signature: boolean | null;
           contract_file_url: string | null;
           guarantee_file_url: string | null;
+          // Tenant supply contracts (Phase 5: Pendiente de trámites - Cambio de suministros)
+          tenant_contract_electricity: string | null;
+          tenant_contract_water: string | null;
+          tenant_contract_gas: string | null;
+          tenant_supplies_toggles: Json | null; // JSONB object: {electricity: boolean, water: boolean, gas: boolean, other: boolean}
           // Pending procedures fields (Pendiente de trámites phase)
           utilities_validated: boolean | null;
           ownership_changed: boolean | null;
@@ -213,8 +224,14 @@ export interface Database {
           liquidation_completed: boolean | null;
           documents_closed: boolean | null;
           utilities_files_urls: Json | null;
+          deposit_responsible: "Prophero" | "Inversor" | null;
           deposit_receipt_file_url: string | null;
+          first_rent_payment_file_url: string | null;
           payment_receipt_file_url: string | null;
+          // Rental custom documents (JSONB arrays: [{title, url, createdAt}])
+          rental_custom_contractual_financial_documents: Json | null;
+          rental_custom_utilities_documents: Json | null;
+          rental_custom_other_documents: Json | null;
           // Rented phase fields
           is_vacant: boolean | null;
           // IPC Update phase fields
@@ -338,6 +355,7 @@ export interface Database {
       leads: {
         Row: {
           id: string;
+          leads_unique_id: string;
           name: string;
           phone: string;
           email: string | null;
@@ -352,6 +370,29 @@ export interface Database {
           average_income: number | null;
           finaer_status: string | null;
           number_of_occupants: number | null;
+          move_in_timeframe?: string | null;
+          lease_duration_preference?: string | null;
+          employment_status?: string | null;
+          job_title?: string | null;
+          employment_contract_type?: string | null;
+          laboral_financial_docs?: LaboralFinancialDocs | null;
+          monthly_net_income?: number | null;
+          has_guarantor?: boolean | null;
+          /** Información personal (Fase 3: Recogiendo información) */
+          nationality: string | null;
+          identity_doc_type: "DNI" | "NIE" | "Pasaporte" | null;
+          identity_doc_number: string | null;
+          identity_doc_url: string | null;
+          date_of_birth: string | null;
+          age: number | null;
+          /** Perfil familiar */
+          family_profile: "Soltero" | "Pareja" | "Con hijos" | null;
+          children_count: number | null;
+          pet_info: Record<string, unknown> | null;
+          /** Cierre global del lead (Perdido/Rechazado) */
+          exit_reason: string | null;
+          exit_comments: string | null;
+          exited_at: string | null;
           needs_update: boolean;
           created_at: string;
           updated_at: string;
@@ -363,18 +404,62 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["leads"]["Insert"]>;
       };
-      lead_properties: {
+      leads_properties: {
         Row: {
           id: string;
-          lead_id: string;
-          property_id: string; // References properties.property_unique_id
+          leads_unique_id: string;
+          properties_unique_id: string;
+          scheduled_visit_date?: string | null;
+          current_status?: string | null;
+          previous_status?: string | null;
+          updated_at?: string | null;
+          visit_date?: string | null;
+          visit_feedback?: string | null;
+          tenant_confirmed_interest?: string | null;
+          sent_to_finaer_at?: string | null;
+          finaer_status?: string | null;
+          finaer_rejection_reason?: string | null;
+          owner_status?: string | null;
+          owner_rejection_reason?: string | null;
+          exit_reason?: string | null;
+          exit_comments?: string | null;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["lead_properties"]["Row"], "id" | "created_at"> & {
+        Insert: Omit<Database["public"]["Tables"]["leads_properties"]["Row"], "id" | "created_at"> & {
+          id?: string;
+          created_at?: string;
+          scheduled_visit_date?: string | null;
+          current_status?: string | null;
+          previous_status?: string | null;
+          updated_at?: string | null;
+          visit_date?: string | null;
+          visit_feedback?: string | null;
+          tenant_confirmed_interest?: string | null;
+          sent_to_finaer_at?: string | null;
+          finaer_status?: string | null;
+          finaer_rejection_reason?: string | null;
+          owner_status?: string | null;
+          owner_rejection_reason?: string | null;
+          exit_reason?: string | null;
+          exit_comments?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["leads_properties"]["Insert"]>;
+      };
+      lead_events: {
+        Row: {
+          id: string;
+          leads_unique_id: string;
+          properties_unique_id: string | null;
+          event_type: "PROPERTY_ADDED" | "MTP_UPDATE" | "PHASE_CHANGE" | "PHASE_CHANGE_BACKWARD" | "MTP_ARCHIVED";
+          title: string;
+          description: string;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["lead_events"]["Row"], "id" | "created_at"> & {
           id?: string;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["lead_properties"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["lead_events"]["Insert"]>;
       };
     };
     Views: {

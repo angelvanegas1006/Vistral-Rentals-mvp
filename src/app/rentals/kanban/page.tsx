@@ -35,7 +35,7 @@ export default function RentalsKanbanPage() {
   const propertyTypes = useMemo(() => {
     const types = allProperties
       .map((p) => p.property_asset_type)
-      .filter((type): type is string => Boolean(type) && typeof type === "string");
+      .filter((type): type is NonNullable<typeof type> => Boolean(type) && typeof type === "string");
     // Usar Set para eliminar duplicados y ordenar
     return Array.from(new Set(types)).sort();
   }, [allProperties]);
@@ -72,7 +72,7 @@ export default function RentalsKanbanPage() {
         />
 
         {/* Kanban Board */}
-        <div className="flex-1 overflow-hidden bg-[var(--prophero-gray-50)] dark:bg-[var(--prophero-gray-950)]">
+        <div className="flex-1 overflow-hidden bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-950)]">
           <RentalsKanbanBoard searchQuery={searchQuery} filters={filters} loading={false} />
         </div>
       </div>

@@ -31,7 +31,7 @@ export function RentalsKanbanHeader({
       <div className="flex flex-col gap-3 md:hidden">
         {/* Top row: Title, Filter */}
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-bold text-[#212121] flex-1 truncate">{title}</h1>
+          <h1 className="text-lg font-semibold text-foreground flex-1 truncate">{title}</h1>
 
           <button
             onClick={onFilterClick}
@@ -40,7 +40,7 @@ export function RentalsKanbanHeader({
           >
             <FilterIcon className="h-6 w-6 text-[#2050F6]" />
             {filterCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--prophero-blue-600)] text-xs font-semibold text-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--vistral-blue-600)] text-xs font-semibold text-white">
                 {filterCount}
               </span>
             )}
@@ -66,7 +66,7 @@ export function RentalsKanbanHeader({
       <div className="hidden md:flex items-center justify-between gap-4">
         {/* Left section: Title */}
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-[#212121] whitespace-nowrap">{title}</h1>
+          <h1 className="text-lg md:text-xl lg:text-2xl font-semibold text-foreground whitespace-nowrap">{title}</h1>
         </div>
 
         {/* Right section: Search, Filter, Add */}
@@ -98,7 +98,7 @@ export function RentalsKanbanHeader({
           >
             <FilterIcon className="h-6 w-6 text-[#2050F6]" />
             {filterCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--prophero-blue-600)] text-xs font-semibold text-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--vistral-blue-600)] text-xs font-semibold text-white">
                 {filterCount}
               </span>
             )}

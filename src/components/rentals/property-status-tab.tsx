@@ -96,7 +96,7 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
     <div className="space-y-8">
       {/* Investor Information Section - Similar to Property owners reference */}
       <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-6">Propietario</h2>
+        <h2 className="text-xl font-semibold mb-6">Inversor</h2>
         
         {/* Owner Profile */}
         <div className="flex items-center gap-4 mb-8">
@@ -122,7 +122,7 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
         <div className="space-y-4">
           {/* ID Number */}
           <div className="flex justify-between items-center">
-            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">ID Number</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de Identificación</p>
             <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
               {localProperty?.client_identity_doc_number || "No disponible"}
             </p>
@@ -163,7 +163,7 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
 
           {/* Phone */}
           <div className="flex justify-between items-center">
-            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Phone number</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de teléfono</p>
             {localProperty?.client_phone ? (
               <div className="flex items-center gap-2">
                 <a
@@ -222,6 +222,137 @@ export function PropertyStatusTab({ propertyId, currentPhase, property }: Proper
         </div>
 
       </Card>
+
+      {/* Tenant Information Section - Same format as Investor */}
+      {localProperty?.tenant_full_name && (
+        <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm">
+          <h2 className="text-xl font-semibold mb-6">Inquilino</h2>
+          
+          {/* Tenant Profile */}
+          <div className="flex items-center gap-4 mb-8">
+            {/* Avatar with initials */}
+            <div className="w-12 h-12 rounded-full bg-[#E5E7EB] dark:bg-[#374151] flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-medium text-[#6B7280] dark:text-[#9CA3AF]">
+                {getInitials(localProperty?.tenant_full_name)}
+              </span>
+            </div>
+            
+            {/* Name and Role */}
+            <div>
+              <p className="text-base font-semibold text-[#111827] dark:text-[#F9FAFB]">
+                {localProperty?.tenant_full_name || "No disponible"}
+              </p>
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+                Inquilino
+              </p>
+            </div>
+          </div>
+
+          {/* Contact Details - Two Column Layout */}
+          <div className="space-y-4">
+            {/* ID Number */}
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de Identificación</p>
+              <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
+                {localProperty?.tenant_nif || "No disponible"}
+              </p>
+            </div>
+
+            {/* Email */}
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Email</p>
+              {localProperty?.tenant_email ? (
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`mailto:${localProperty.tenant_email}`}
+                    className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] hover:text-[#2563EB] dark:hover:text-[#3B82F6] transition-colors"
+                  >
+                    {localProperty.tenant_email}
+                  </a>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(localProperty.tenant_email!, "tenant-email");
+                    }}
+                    className="p-1 hover:bg-[#F3F4F6] dark:hover:bg-[#374151] rounded transition-colors"
+                    title="Copiar email"
+                  >
+                    {copiedField === "tenant-email" ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
+                  No disponible
+                </p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Número de teléfono</p>
+              {localProperty?.tenant_phone ? (
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`tel:${localProperty.tenant_phone.replace(/\s/g, "")}`}
+                    className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] hover:text-[#2563EB] dark:hover:text-[#3B82F6] transition-colors"
+                  >
+                    {localProperty.tenant_phone}
+                  </a>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(localProperty.tenant_phone!, "tenant-phone");
+                    }}
+                    className="p-1 hover:bg-[#F3F4F6] dark:hover:bg-[#374151] rounded transition-colors"
+                    title="Copiar teléfono"
+                  >
+                    {copiedField === "tenant-phone" ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">
+                  No disponible
+                </p>
+              )}
+            </div>
+
+            {/* IBAN */}
+            {localProperty?.tenant_iban && (
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Cuenta bancaria</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] font-mono">
+                    {maskBankAccount(localProperty.tenant_iban)}
+                  </p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(localProperty.tenant_iban!, "tenant-iban");
+                    }}
+                    className="p-1 hover:bg-[#F3F4F6] dark:hover:bg-[#374151] rounded transition-colors"
+                    title="Copiar cuenta bancaria"
+                  >
+                    {copiedField === "tenant-iban" ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </Card>
+      )}
 
       {/* Documents Section - Reorganized with subsecciones */}
       <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm hover:shadow-md transition-shadow">

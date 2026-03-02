@@ -7,7 +7,9 @@ type Locale = "es" | "en";
 
 interface I18nContextType {
   locale: Locale;
+  language: Locale;
   setLocale: (locale: Locale) => void;
+  changeLanguage: (locale: Locale) => void;
   t: (key: string) => string;
 }
 
@@ -45,7 +47,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t }}>
+    <I18nContext.Provider value={{ locale, language: locale, setLocale, changeLanguage: setLocale, t }}>
       {children}
     </I18nContext.Provider>
   );

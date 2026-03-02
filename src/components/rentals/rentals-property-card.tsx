@@ -197,13 +197,13 @@ export function RentalsPropertyCard({
       data-property-id={property.id || property.property_unique_id}
       onClick={handleClick}
       className={cn(
-        "rounded-lg border border-border bg-card dark:bg-[var(--vistral-bg-card)] p-[var(--vistral-container-padding-sm)] md:p-[var(--vistral-container-padding-md)] shadow-sm w-full overflow-hidden",
+        "rounded-lg border border-border bg-card dark:bg-[var(--vistral-gray-900)] p-4 md:p-5 shadow-sm w-full overflow-hidden",
         "transition-all duration-500 ease-out",
         disabled 
           ? "cursor-not-allowed opacity-60" 
           : "cursor-pointer hover:border-2 hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.15)]",
         isHighlighted 
-          ? "ring-2 ring-[var(--vistral-primary-default-bg)] shadow-lg border-[var(--vistral-primary-default-bg)] bg-[var(--vistral-semantic-bg-brand-subtle)] dark:bg-[var(--vistral-primary-default-bg)]/10" 
+          ? "ring-2 ring-[var(--vistral-blue-500)] shadow-lg border-[var(--vistral-blue-500)] bg-[var(--vistral-blue-50)] dark:bg-[var(--vistral-blue-950)]/30" 
           : "",
         // Estado retrasado (borde izquierdo rojo intenso) - puede coexistir con highlighted
         property.needsUpdate && "border-l-4 border-l-red-500",
@@ -239,13 +239,13 @@ export function RentalsPropertyCard({
       style={{ pointerEvents: disabled ? "none" : "auto" }}
     >
       {/* Header con ID y Tag de Subestado */}
-      <div className="flex items-start justify-between mb-[var(--vistral-spacing-2)]">
+      <div className="flex items-start justify-between mb-2">
         <div className="text-xs font-semibold text-muted-foreground">ID {property.property_unique_id}</div>
         {/* Tag de subestado de Prophero - esquina superior derecha */}
         {property.currentPhase === "Viviendas Prophero" && property.propheroSubstate !== null && property.propheroSubstate !== undefined && (
           <span
             className={cn(
-              "inline-flex items-center rounded-full text-xs font-medium px-[var(--vistral-spacing-2)] py-[var(--vistral-spacing-1)]",
+              "inline-flex items-center rounded-full text-xs font-medium px-2 py-1",
               getPropheroSubstateColor(property.propheroSubstate)
             )}
           >
@@ -255,17 +255,17 @@ export function RentalsPropertyCard({
       </div>
       
       {/* Address */}
-      <div className="text-sm font-medium text-foreground mb-[var(--vistral-spacing-1)]">{property.address}</div>
+      <div className="text-sm font-medium text-foreground mb-[5px]">{property.address}</div>
 
       {/* Tags and Info */}
-      <div className="space-y-[var(--vistral-spacing-2)]">
+      <div className="space-y-2">
           {/* Todos los elementos en la misma fila: Pills y círculos */}
-          <div className="flex items-center gap-[var(--vistral-spacing-2)] flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Pills de colores: Tipo de alquiler y Tipo de activo */}
             {property.rentalType && (
               <span
                 className={cn(
-                  "inline-flex items-center rounded-full text-xs font-medium px-[var(--vistral-spacing-2)] py-[var(--vistral-spacing-1)]",
+                  "inline-flex items-center rounded-full text-xs font-medium px-2 py-1",
                   getRentalTypeColor(property.rentalType)
                 )}
               >
@@ -279,14 +279,14 @@ export function RentalsPropertyCard({
               return (
                 <div
                   className="relative group"
-                  title={property.propertyManager || ""}
+                  title={`Property Manager: ${property.propertyManager}`}
                 >
                   <div
                     className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center",
                       getPropertyManagerColor(property.propertyManager),
                       "text-xs font-semibold cursor-default",
-                      "border-2 border-white dark:border-[var(--vistral-border-default)]",
+                      "border-2 border-white dark:border-[var(--vistral-gray-800)]",
                       "shadow-sm hover:shadow-md transition-shadow"
                     )}
                   >
@@ -296,20 +296,20 @@ export function RentalsPropertyCard({
                   <div
                     className={cn(
                       "absolute bottom-full left-1/2 -translate-x-1/2 mb-2",
-                      "px-[var(--vistral-spacing-2)] py-[var(--vistral-spacing-1)] rounded-md text-xs font-medium",
-                      "bg-[var(--vistral-semantic-text-primary)] dark:bg-[var(--vistral-semantic-bg-default)]",
-                      "text-white dark:text-[var(--vistral-semantic-text-primary)]",
+                      "px-2 py-1 rounded-md text-xs font-medium",
+                      "bg-[var(--vistral-gray-900)] dark:bg-[var(--vistral-gray-100)]",
+                      "text-white dark:text-[var(--vistral-gray-900)]",
                       "opacity-0 group-hover:opacity-100 pointer-events-none",
-                      "transition-opacity duration-200 z-50",
+                      "transition-opacity duration-200 z-10",
                       "whitespace-nowrap shadow-lg"
                     )}
                   >
-                    {property.propertyManager}
+                    Property Manager: {property.propertyManager}
                     <div
                       className={cn(
                         "absolute top-full left-1/2 -translate-x-1/2",
-                        "border-4 border-transparent border-t-[var(--vistral-semantic-text-primary)]",
-                        "dark:border-t-[var(--vistral-semantic-bg-default)]"
+                        "border-4 border-transparent border-t-[var(--vistral-gray-900)]",
+                        "dark:border-t-[var(--vistral-gray-100)]"
                       )}
                     />
                   </div>
@@ -321,14 +321,14 @@ export function RentalsPropertyCard({
               return (
                 <div
                   className="relative group"
-                  title={property.rentalsAnalyst || ""}
+                  title={`Analista de Rentals: ${property.rentalsAnalyst}`}
                 >
                   <div
                     className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center",
                       getRentalsAnalystColor(property.rentalsAnalyst),
                       "text-xs font-semibold cursor-default",
-                      "border-2 border-white dark:border-[var(--vistral-border-default)]",
+                      "border-2 border-white dark:border-[var(--vistral-gray-800)]",
                       "shadow-sm hover:shadow-md transition-shadow"
                     )}
                   >
@@ -338,20 +338,20 @@ export function RentalsPropertyCard({
                   <div
                     className={cn(
                       "absolute bottom-full left-1/2 -translate-x-1/2 mb-2",
-                      "px-[var(--vistral-spacing-2)] py-[var(--vistral-spacing-1)] rounded-md text-xs font-medium",
-                      "bg-[var(--vistral-semantic-text-primary)] dark:bg-[var(--vistral-semantic-bg-default)]",
-                      "text-white dark:text-[var(--vistral-semantic-text-primary)]",
+                      "px-2 py-1 rounded-md text-xs font-medium",
+                      "bg-[var(--vistral-gray-900)] dark:bg-[var(--vistral-gray-100)]",
+                      "text-white dark:text-[var(--vistral-gray-900)]",
                       "opacity-0 group-hover:opacity-100 pointer-events-none",
-                      "transition-opacity duration-200 z-50",
+                      "transition-opacity duration-200 z-10",
                       "whitespace-nowrap shadow-lg"
                     )}
                   >
-                    {property.rentalsAnalyst}
+                    Analista de Rentals: {property.rentalsAnalyst}
                     <div
                       className={cn(
                         "absolute top-full left-1/2 -translate-x-1/2",
-                        "border-4 border-transparent border-t-[var(--vistral-semantic-text-primary)]",
-                        "dark:border-t-[var(--vistral-semantic-bg-default)]"
+                        "border-4 border-transparent border-t-[var(--vistral-gray-900)]",
+                        "dark:border-t-[var(--vistral-gray-100)]"
                       )}
                     />
                   </div>
@@ -361,14 +361,14 @@ export function RentalsPropertyCard({
           </div>
 
         {/* Dates and Days - Mostrar según la fase */}
-        <div className="space-y-[var(--vistral-spacing-0-5)] text-xs text-muted-foreground">
+        <div className="space-y-0.5 text-xs text-muted-foreground">
           {/* Fase 1: Viviendas Prophero - Mostrar renoEndDate y propertyReadyDate */}
           {property.currentPhase === "Viviendas Prophero" && (
             <>
               {property.renoEndDate && (() => {
                 const formattedDate = formatDate(property.renoEndDate);
                 return formattedDate && (
-                  <div className="flex items-center gap-[var(--vistral-spacing-1-5)]">
+                  <div className="flex items-center gap-1.5">
                     <Calendar className="h-3 w-3 flex-shrink-0" />
                     <span>Fecha fin de Obra: {formattedDate}</span>
                   </div>
@@ -377,7 +377,7 @@ export function RentalsPropertyCard({
               {property.propertyReadyDate && (() => {
                 const formattedDate = formatDate(property.propertyReadyDate);
                 return formattedDate && (
-                  <div className="flex items-center gap-[var(--vistral-spacing-1-5)]">
+                  <div className="flex items-center gap-1.5">
                     <Calendar className="h-3 w-3 flex-shrink-0" />
                     <span>Fecha de vivienda lista: {formattedDate}</span>
                   </div>
@@ -392,7 +392,7 @@ export function RentalsPropertyCard({
               {property.propertyReadyDate && (() => {
                 const formattedDate = formatDate(property.propertyReadyDate);
                 return formattedDate && (
-                  <div className="flex items-center gap-[var(--vistral-spacing-1-5)]">
+                  <div className="flex items-center gap-1.5">
                     <Calendar className="h-3 w-3 flex-shrink-0" />
                     <span>Fecha de vivienda lista: {formattedDate}</span>
                   </div>

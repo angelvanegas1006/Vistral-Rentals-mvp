@@ -86,9 +86,69 @@ const FIELD_MAPPINGS: Record<string, FieldMapping> = {
     bucket: "properties-restricted-docs",
     folder: "client/financial",
   },
+  client_rent_receiving_bank_certificate_url: {
+    bucket: "properties-restricted-docs",
+    folder: "client/financial",
+  },
   client_custom_other_documents: {
     bucket: "properties-restricted-docs",
     folder: "client/other",
+  },
+  // Tenant Data (V2.1 Architecture)
+  tenant_identity_doc_url: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/identity",
+  },
+  tenant_custom_identity_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/identity",
+  },
+  tenant_custom_other_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/other",
+  },
+  // Rental Data (Folder 1: rental) - contractual_financial (Folder 2)
+  signed_lease_contract_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/lease_contract",
+  },
+  guarantee_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/non-payment_insurance",
+  },
+  deposit_receipt_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/deposit",
+  },
+  first_rent_payment_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/first_rent_payment",
+  },
+  rental_custom_contractual_financial_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/other",
+  },
+  // Rental - utilities (Folder 2)
+  tenant_contract_electricity: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  tenant_contract_water: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  tenant_contract_gas: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  rental_custom_utilities_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  // Rental - other (Folder 2)
+  rental_custom_other_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/other",
   },
   custom_insurance_documents: {
     bucket: "properties-restricted-docs",

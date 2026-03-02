@@ -186,7 +186,7 @@ export function RentalsSidebar() {
         >
           <Icon className={cn("h-5 w-5 flex-shrink-0", active ? "text-[#182C90]" : "text-current")} />
           {item.badge && item.badge > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--prophero-blue-600)] text-[10px] font-semibold text-white">
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--vistral-blue-600)] text-[10px] font-semibold text-white">
               {item.badge}
             </span>
           )}
@@ -223,7 +223,7 @@ export function RentalsSidebar() {
           <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-[#182C90]" />
         )}
         {!active && isConfig && item.badge && item.badge > 0 && (
-          <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-[var(--prophero-blue-600)] text-xs font-semibold text-white">
+          <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-[var(--vistral-blue-600)] text-xs font-semibold text-white">
             {item.badge}
           </span>
         )}
@@ -285,7 +285,7 @@ export function RentalsSidebar() {
               </Link>
               <button
                 onClick={() => setCollapsed(true)}
-                className="p-1.5 rounded-md hover:bg-[var(--prophero-gray-100)] dark:hover:bg-[#1a1a1a] transition-colors flex-shrink-0"
+                className="p-1.5 rounded-md hover:bg-[var(--vistral-gray-100)] dark:hover:bg-[#1a1a1a] transition-colors flex-shrink-0"
               >
                 <PanelLeftClose className="h-5 w-5 text-foreground" />
               </button>

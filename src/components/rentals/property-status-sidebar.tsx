@@ -33,7 +33,7 @@ export function PropertyStatusSidebar({
   };
 
   return (
-    <div className="w-full lg:w-80 border-l-0 lg:border-l bg-card dark:bg-[var(--prophero-gray-900)] flex flex-col overflow-hidden">
+    <div className="w-full lg:w-80 border-l-0 lg:border-l bg-card dark:bg-[var(--vistral-gray-900)] flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Phase Badge */}
         <div>

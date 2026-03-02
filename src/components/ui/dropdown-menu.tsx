@@ -95,74 +95,53 @@ const DropdownMenuContent = React.forwardRef<
   const contentRef = React.useRef<HTMLDivElement>(null);
   const menuContainerRef = React.useRef<HTMLElement | null>(null);
 
-  // Encontrar el contenedor del menu y el trigger
-  React.useEffect(() => {
-    if (open && contentRef.current) {
-      menuContainerRef.current = contentRef.current.closest('[data-dropdown-menu]') as HTMLElement;
+  // Posicionar el menú justo al abrirse (useLayoutEffect evita el flash)
+  React.useLayoutEffect(() => {
+    if (!open || !contentRef.current) return;
+
+    const container = contentRef.current.closest('[data-dropdown-menu]') as HTMLElement | null;
+    if (!container) return;
+    menuContainerRef.current = container;
+
+    const trigger = container.querySelector('button, [role="button"]') as HTMLElement;
+    if (!trigger) return;
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const contentRect = contentRef.current.getBoundingClientRect();
+
+    const spaceBelow = window.innerHeight - triggerRect.bottom;
+    const spaceAbove = triggerRect.top;
+    const shouldOpenAbove = side === "top" || (spaceBelow < contentRect.height + 100 && spaceAbove > spaceBelow);
+
+    let top: number;
+    let left = triggerRect.left;
+
+    if (shouldOpenAbove) {
+      top = triggerRect.top - contentRect.height - sideOffset;
+      if (top < 8) top = 8;
+    } else {
+      top = triggerRect.bottom + sideOffset;
     }
-  }, [open]);
 
-  // Calcular posición cuando se abre
-  React.useEffect(() => {
-    if (open && contentRef.current && menuContainerRef.current) {
-      const trigger = menuContainerRef.current.querySelector('button, [role="button"]') as HTMLElement;
-      if (!trigger) return;
-
-      const triggerRect = trigger.getBoundingClientRect();
-      
-      // Crear el elemento temporalmente para medir
-      contentRef.current.style.visibility = "hidden";
-      contentRef.current.style.display = "block";
-      const contentRect = contentRef.current.getBoundingClientRect();
-      
-      // Determinar si abrir arriba o abajo
-      const spaceBelow = window.innerHeight - triggerRect.bottom;
-      const spaceAbove = triggerRect.top;
-      // Solo abrir arriba si realmente no hay espacio suficiente abajo (con margen de 100px)
-      const shouldOpenAbove = side === "top" || (spaceBelow < contentRect.height + 100 && spaceAbove > spaceBelow);
-      
-      let top: number;
-      let left = triggerRect.left;
-      
-      if (shouldOpenAbove) {
-        // Abrir arriba del trigger, pero no tan arriba - dejar un pequeño margen
-        top = triggerRect.top - contentRect.height - sideOffset;
-        // Asegurar que no quede demasiado arriba
-        if (top < 8) {
-          top = 8;
-        }
-      } else {
-        // Abrir abajo del trigger
-        top = triggerRect.bottom + sideOffset;
-      }
-      
-      if (align === "end") {
-        left = triggerRect.right - contentRect.width;
-      } else if (align === "center") {
-        left = triggerRect.left + (triggerRect.width - contentRect.width) / 2;
-      }
-
-      // Ajustar si se sale de la pantalla horizontalmente
-      if (left + contentRect.width > window.innerWidth) {
-        left = window.innerWidth - contentRect.width - 8;
-      }
-      if (left < 8) {
-        left = 8;
-      }
-      
-      // Ajustar si se sale de la pantalla verticalmente
-      if (top + contentRect.height > window.innerHeight) {
-        top = window.innerHeight - contentRect.height - 8;
-      }
-      if (top < 8) {
-        top = 8;
-      }
-
-      contentRef.current.style.position = "fixed";
-      contentRef.current.style.top = `${top}px`;
-      contentRef.current.style.left = `${left}px`;
-      contentRef.current.style.visibility = "visible";
+    if (align === "end") {
+      left = triggerRect.right - contentRect.width;
+    } else if (align === "center") {
+      left = triggerRect.left + (triggerRect.width - contentRect.width) / 2;
     }
+
+    if (left + contentRect.width > window.innerWidth) {
+      left = window.innerWidth - contentRect.width - 8;
+    }
+    if (left < 8) left = 8;
+
+    if (top + contentRect.height > window.innerHeight) {
+      top = window.innerHeight - contentRect.height - 8;
+    }
+    if (top < 8) top = 8;
+
+    contentRef.current.style.top = `${top}px`;
+    contentRef.current.style.left = `${left}px`;
+    contentRef.current.style.visibility = "visible";
   }, [open, align, sideOffset, side]);
 
   if (!open) return null;
@@ -188,6 +167,7 @@ const DropdownMenuContent = React.forwardRef<
           }
           contentRef.current = node;
         }}
+        style={{ position: "fixed", visibility: "hidden" }}
         className={cn(
           "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",

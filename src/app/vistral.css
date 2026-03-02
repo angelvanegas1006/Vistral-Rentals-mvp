@@ -1,0 +1,53 @@
+/* Vistral Design System Tokens - Additional compatibility tokens */
+/* These tokens complement the official design system tokens */
+
+:root {
+  /* Brand Primary Colors - Vistral Blue Palette (for compatibility) */
+  --vistral-blue-50: #eef2ff;
+  --vistral-blue-100: #e0e7ff;
+  --vistral-blue-200: #c7d2fe;
+  --vistral-blue-300: #a5b4fc;
+  --vistral-blue-400: #818cf8;
+  --vistral-blue-500: #316eff; /* Primary brand color - maps to --vistral-primary-default-bg */
+  --vistral-blue-600: #2246cc;
+  --vistral-blue-700: #1b36a3;
+  --vistral-blue-800: #152a80;
+  --vistral-blue-900: #112266;
+  --vistral-blue-950: #0d1b4d;
+
+  /* Semantic Colors (for compatibility) */
+  --vistral-success: #10b981;
+  --vistral-success-hover: #059669;
+  --vistral-warning: #f59e0b;
+  --vistral-warning-hover: #d97706;
+  --vistral-danger: #ef4444;
+  --vistral-danger-hover: #dc2626;
+  --vistral-info: #3b82f6;
+  --vistral-info-hover: #2563eb;
+
+  /* Neutral Grays (for compatibility) */
+  --vistral-gray-50: #f9fafb;
+  --vistral-gray-100: #f3f4f6;
+  --vistral-gray-200: #e5e7eb;
+  --vistral-gray-300: #d1d5db;
+  --vistral-gray-400: #9ca3af;
+  --vistral-gray-500: #6b7280;
+  --vistral-gray-600: #4b5563;
+  --vistral-gray-700: #374151;
+  --vistral-gray-800: #1f2937;
+  --vistral-gray-900: #111827;
+  --vistral-gray-950: #030712;
+}
+
+/* Dark Mode Overrides */
+.dark {
+  /* Dark mode adjustments for semantic colors */
+  --vistral-success: #22c55e;
+  --vistral-success-hover: #16a34a;
+  --vistral-warning: #fbbf24;
+  --vistral-warning-hover: #f59e0b;
+  --vistral-danger: #f87171;
+  --vistral-danger-hover: #ef4444;
+  --vistral-info: #60a5fa;
+  --vistral-info-hover: #3b82f6;
+}

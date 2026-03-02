@@ -20,7 +20,7 @@ export default function TestUIPage() {
           <div>
             <h1 className="text-4xl font-bold mb-2">Test UI Components</h1>
             <p className="text-muted-foreground">
-              Página de prueba para verificar el sistema de diseño PropHero
+              Página de prueba para verificar el sistema de diseño Vistral
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -165,32 +165,32 @@ export default function TestUIPage() {
           </CardContent>
         </Card>
 
-        {/* PropHero Colors */}
+        {/* Vistral Colors */}
         <Card>
           <CardHeader>
-            <CardTitle>PropHero Design Tokens</CardTitle>
-            <CardDescription>Colores del sistema de diseño PropHero</CardDescription>
+            <CardTitle>Vistral Design Tokens</CardTitle>
+            <CardDescription>Colores del sistema de diseño Vistral</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-5 gap-4">
               <div className="space-y-2">
-                <div className="h-16 rounded-md bg-[var(--prophero-blue-500)]"></div>
+                <div className="h-16 rounded-md bg-[var(--vistral-blue-500)]"></div>
                 <p className="text-xs text-muted-foreground">Blue 500</p>
               </div>
               <div className="space-y-2">
-                <div className="h-16 rounded-md bg-[var(--prophero-blue-600)]"></div>
+                <div className="h-16 rounded-md bg-[var(--vistral-blue-600)]"></div>
                 <p className="text-xs text-muted-foreground">Blue 600</p>
               </div>
               <div className="space-y-2">
-                <div className="h-16 rounded-md bg-[var(--prophero-success)]"></div>
+                <div className="h-16 rounded-md bg-[var(--vistral-success)]"></div>
                 <p className="text-xs text-muted-foreground">Success</p>
               </div>
               <div className="space-y-2">
-                <div className="h-16 rounded-md bg-[var(--prophero-warning)]"></div>
+                <div className="h-16 rounded-md bg-[var(--vistral-warning)]"></div>
                 <p className="text-xs text-muted-foreground">Warning</p>
               </div>
               <div className="space-y-2">
-                <div className="h-16 rounded-md bg-[var(--prophero-danger)]"></div>
+                <div className="h-16 rounded-md bg-[var(--vistral-danger)]"></div>
                 <p className="text-xs text-muted-foreground">Danger</p>
               </div>
             </div>

@@ -305,6 +305,25 @@ export function InvestorSummaryTab({ propertyId, currentPhase, property }: Inves
             />
           </div>
 
+          {/* Nueva cuenta bancaria para recibir renta (si se cambió) */}
+          {localProperty?.client_wants_to_change_bank_account === true && 
+           localProperty?.client_rent_receiving_iban && (
+            <div className="space-y-2">
+              <Label htmlFor="rent-receiving-iban" className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                Cuenta de domiciliación de ingresos
+              </Label>
+              <Input
+                id="rent-receiving-iban"
+                type="text"
+                placeholder="ES91 2100 0418 4502 0005 1332"
+                value={localProperty.client_rent_receiving_iban ? maskBankAccount(localProperty.client_rent_receiving_iban) : ""}
+                readOnly
+                className="bg-muted/50 font-mono"
+              />
+            </div>
+          )}
+
           {/* Información Bancaria y Fiscal Section */}
           <DocumentSection
             title="Información Bancaria y Fiscal"
@@ -315,6 +334,13 @@ export function InvestorSummaryTab({ propertyId, currentPhase, property }: Inves
                 label: "Certificado Titularidad",
                 path: "client/financial",
               },
+              // Show new certificate if account was changed
+              ...(localProperty?.client_wants_to_change_bank_account === true && 
+                  localProperty?.client_rent_receiving_bank_certificate_url ? [{
+                dbField: "client_rent_receiving_bank_certificate_url",
+                label: "Certificado de titularidad - Cuenta para recibir renta",
+                path: "client/financial",
+              }] : []),
             ]}
             customField="client_custom_financial_documents"
             customPath="client/financial"

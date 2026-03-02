@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
@@ -10,14 +9,15 @@ export function useProperty(propertyId: string) {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const supabase = createClient();
 
   useEffect(() => {
     let isInitialLoad = true;
     
     async function fetchProperty(skipLoading = false) {
-      if (!propertyId) {
+      if (!propertyId || propertyId.trim() === "") {
         setLoading(false);
+        setProperty(null);
+        setError(new Error("Property ID is required"));
         return;
       }
 
@@ -28,14 +28,23 @@ export function useProperty(propertyId: string) {
         }
         setError(null);
 
-        // Buscar por property_unique_id (primary identifier for routing)
-        const { data, error: fetchError } = await supabase
-          .from("properties")
-          .select("*")
-          .eq("property_unique_id", propertyId)
-          .single();
+        // Usar API route con service role key para evitar problemas de RLS
+        const response = await fetch(`/api/properties/${encodeURIComponent(propertyId)}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+          console.error(`Error fetching property ${propertyId}:`, errorMessage);
+          throw new Error(errorMessage);
+        }
 
-        if (fetchError) throw fetchError;
+        const result = await response.json();
+        const data = result.property;
+
+        if (!data) {
+          console.error(`Property ${propertyId} not found in response`);
+          throw new Error("Propiedad no encontrada");
+        }
 
         setProperty(data);
       } catch (err) {

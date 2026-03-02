@@ -72,9 +72,74 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "client/financial",
   },
+  client_rent_receiving_bank_certificate_url: {
+    bucket: "properties-restricted-docs",
+    folder: "client/financial",
+  },
   client_custom_other_documents: {
     bucket: "properties-restricted-docs",
     folder: "client/other",
+  },
+  // Tenant Data (V2.1 Architecture)
+  tenant_identity_doc_url: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/identity",
+  },
+  // Tenant custom documents (V2.1 Architecture)
+  tenant_custom_identity_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/identity",
+  },
+  tenant_custom_financial_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/financial",
+  },
+  tenant_custom_other_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "tenant/other",
+  },
+  // Rental Data (Folder 1: rental) - contractual_financial (Folder 2)
+  signed_lease_contract_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/lease_contract",
+  },
+  guarantee_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/non-payment_insurance",
+  },
+  deposit_receipt_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/deposit",
+  },
+  first_rent_payment_file_url: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/first_rent_payment",
+  },
+  rental_custom_contractual_financial_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/contractual_financial/other",
+  },
+  // Rental - utilities (Folder 2)
+  tenant_contract_electricity: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  tenant_contract_water: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  tenant_contract_gas: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  rental_custom_utilities_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/utilities",
+  },
+  // Rental - other (Folder 2)
+  rental_custom_other_documents: {
+    bucket: "properties-restricted-docs",
+    folder: "rental/other",
   },
   custom_insurance_documents: {
     bucket: "properties-restricted-docs",
@@ -297,10 +362,12 @@ export async function POST(request: NextRequest) {
     let updateData: Record<string, unknown>;
     
     // Check if this is a custom document field (requires title from formData)
-    // Custom document fields can start with: custom_, property_custom_, client_custom_
+    // Custom document fields can start with: custom_, property_custom_, client_custom_, tenant_custom_, rental_custom_
     const isCustomDocument = fieldName.startsWith("custom_") || 
                              fieldName.startsWith("property_custom_") || 
-                             fieldName.startsWith("client_custom_");
+                             fieldName.startsWith("client_custom_") ||
+                             fieldName.startsWith("tenant_custom_") ||
+                             fieldName.startsWith("rental_custom_");
     
     if (isCustomDocument && customTitle) {
       // Custom documents: add to JSONB array with title
@@ -310,8 +377,9 @@ export async function POST(request: NextRequest) {
         .eq("property_unique_id", propertyId)
         .single();
 
-      const currentArray = Array.isArray(currentProperty?.[fieldName])
-        ? currentProperty[fieldName]
+      const propRecord = currentProperty as unknown as Record<string, unknown>;
+      const currentArray = Array.isArray(propRecord?.[fieldName])
+        ? (propRecord[fieldName] as Array<{ url: string; title?: string }>)
         : [];
 
       const newDocument = {
@@ -322,7 +390,7 @@ export async function POST(request: NextRequest) {
 
       // If oldValue is provided (editing existing file), replace it
       if (oldValue) {
-        const updatedArray = currentArray.map((doc: { url: string; title?: string }) =>
+        const updatedArray = currentArray.map((doc) =>
           doc.url === oldValue ? newDocument : doc
         );
         updateData = { [fieldName]: updatedArray };
@@ -332,9 +400,97 @@ export async function POST(request: NextRequest) {
           [fieldName]: [...currentArray, newDocument],
         };
       }
-    } else if (fieldName === "doc_renovation_files" || fieldName.startsWith("marketing_photos_") || fieldName.startsWith("incident_photos_")) {
-      // Special handling for bedrooms and bathrooms (arrays of arrays)
-      if ((fieldName === "marketing_photos_bedrooms" || fieldName === "marketing_photos_bathrooms" || fieldName === "incident_photos_bedrooms" || fieldName === "incident_photos_bathrooms") && roomIndex !== null) {
+    } else if (fieldName === "doc_renovation_files") {
+      // Get current array value for simple array fields
+      const { data: currentProperty } = await supabase
+        .from("properties")
+        .select(fieldName)
+        .eq("property_unique_id", propertyId)
+        .single();
+
+      const renoRecord = currentProperty as unknown as Record<string, unknown>;
+      const currentArray = Array.isArray(renoRecord?.[fieldName])
+        ? (renoRecord[fieldName] as string[])
+        : [];
+
+      // If oldValue is provided (editing existing file), replace it in the array
+      // Otherwise, append new URL to array
+      if (oldValue && currentArray.includes(oldValue)) {
+        // Replace the old URL with the new one
+        const updatedArray = currentArray.map((url) =>
+          url === oldValue ? documentUrl : url
+        );
+        updateData = { [fieldName]: updatedArray };
+      } else {
+        // Append new URL to array (or create new array if empty)
+        updateData = {
+          [fieldName]: [...currentArray, documentUrl],
+        };
+      }
+    } else if (fieldName.startsWith("marketing_photos_") || fieldName.startsWith("incident_photos_")) {
+      // Handle technical inspection photos - write to technical_inspection_report JSONB
+      const fieldToRoomMap: Record<string, { roomType: string; photoType: "marketing_photos" | "incident_photos" }> = {
+        "marketing_photos_common_areas": { roomType: "common_areas", photoType: "marketing_photos" },
+        "marketing_photos_entry_hallways": { roomType: "entry_hallways", photoType: "marketing_photos" },
+        "marketing_photos_living_room": { roomType: "living_room", photoType: "marketing_photos" },
+        "marketing_photos_kitchen": { roomType: "kitchen", photoType: "marketing_photos" },
+        "marketing_photos_exterior": { roomType: "exterior", photoType: "marketing_photos" },
+        "marketing_photos_garage": { roomType: "garage", photoType: "marketing_photos" },
+        "marketing_photos_terrace": { roomType: "terrace", photoType: "marketing_photos" },
+        "marketing_photos_storage": { roomType: "storage", photoType: "marketing_photos" },
+        "marketing_photos_bedrooms": { roomType: "bedrooms", photoType: "marketing_photos" },
+        "marketing_photos_bathrooms": { roomType: "bathrooms", photoType: "marketing_photos" },
+        "incident_photos_common_areas": { roomType: "common_areas", photoType: "incident_photos" },
+        "incident_photos_entry_hallways": { roomType: "entry_hallways", photoType: "incident_photos" },
+        "incident_photos_living_room": { roomType: "living_room", photoType: "incident_photos" },
+        "incident_photos_kitchen": { roomType: "kitchen", photoType: "incident_photos" },
+        "incident_photos_exterior": { roomType: "exterior", photoType: "incident_photos" },
+        "incident_photos_garage": { roomType: "garage", photoType: "incident_photos" },
+        "incident_photos_terrace": { roomType: "terrace", photoType: "incident_photos" },
+        "incident_photos_storage": { roomType: "storage", photoType: "incident_photos" },
+        "incident_photos_bedrooms": { roomType: "bedrooms", photoType: "incident_photos" },
+        "incident_photos_bathrooms": { roomType: "bathrooms", photoType: "incident_photos" },
+      };
+
+      const roomMapping = fieldToRoomMap[fieldName];
+      if (!roomMapping) {
+        return NextResponse.json(
+          { error: `Unknown photo field: ${fieldName}` },
+          { status: 400 }
+        );
+      }
+
+      // Get current technical_inspection_report
+      const { data: currentProperty } = await supabase
+        .from("properties")
+        .select("technical_inspection_report")
+        .eq("property_unique_id", propertyId)
+        .single();
+
+      if (!currentProperty) {
+        return NextResponse.json(
+          { error: "Property not found" },
+          { status: 404 }
+        );
+      }
+
+      // Parse the JSONB field
+      let report = currentProperty.technical_inspection_report;
+      if (typeof report === 'string') {
+        try {
+          report = JSON.parse(report);
+        } catch {
+          report = {};
+        }
+      }
+      if (!report || typeof report !== 'object') {
+        report = {};
+      }
+
+      const updatedReport = { ...report };
+
+      // Handle bedrooms and bathrooms (arrays)
+      if ((roomMapping.roomType === "bedrooms" || roomMapping.roomType === "bathrooms") && roomIndex !== null) {
         const roomIdx = parseInt(roomIndex, 10);
         if (isNaN(roomIdx)) {
           return NextResponse.json(
@@ -343,63 +499,45 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Get current array of arrays
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", propertyId)
-          .single();
-
-        const currentArrayOfArrays = Array.isArray(currentProperty?.[fieldName])
-          ? (currentProperty[fieldName] as string[][])
-          : [];
-
+        const roomArray = roomMapping.roomType === "bedrooms" ? "bedrooms" : "bathrooms";
+        const rooms = Array.isArray(updatedReport[roomArray]) ? [...updatedReport[roomArray]] : [];
+        
         // Ensure array has enough elements
-        while (currentArrayOfArrays.length <= roomIdx) {
-          currentArrayOfArrays.push([]);
+        while (rooms.length <= roomIdx) {
+          rooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
         }
 
-        // Get the specific room's photo array
-        const roomPhotos = Array.isArray(currentArrayOfArrays[roomIdx])
-          ? currentArrayOfArrays[roomIdx]
+        // Get current photos array
+        const currentPhotos = Array.isArray(rooms[roomIdx]?.[roomMapping.photoType]) 
+          ? [...rooms[roomIdx][roomMapping.photoType]] 
           : [];
 
         // If oldValue is provided, replace it; otherwise append
-        if (oldValue && roomPhotos.includes(oldValue)) {
-          roomPhotos[roomPhotos.indexOf(oldValue)] = documentUrl;
+        if (oldValue && currentPhotos.includes(oldValue)) {
+          currentPhotos[currentPhotos.indexOf(oldValue)] = documentUrl;
         } else {
-          roomPhotos.push(documentUrl);
+          currentPhotos.push(documentUrl);
         }
 
-        currentArrayOfArrays[roomIdx] = roomPhotos;
-        updateData = { [fieldName]: currentArrayOfArrays };
+        rooms[roomIdx] = { ...rooms[roomIdx], [roomMapping.photoType]: currentPhotos };
+        updatedReport[roomArray] = rooms;
       } else {
-        // Get current array value for simple array fields
-        const { data: currentProperty } = await supabase
-          .from("properties")
-          .select(fieldName)
-          .eq("property_unique_id", propertyId)
-          .single();
+        // Handle simple rooms (single objects)
+        const roomKey = roomMapping.roomType as keyof typeof updatedReport;
+        const currentRoom = updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] };
+        const currentPhotos = Array.isArray(currentRoom[roomMapping.photoType]) ? [...currentRoom[roomMapping.photoType]] : [];
 
-        const currentArray = Array.isArray(currentProperty?.[fieldName])
-          ? currentProperty[fieldName]
-          : [];
-
-        // If oldValue is provided (editing existing file), replace it in the array
-        // Otherwise, append new URL to array
-        if (oldValue && currentArray.includes(oldValue)) {
-          // Replace the old URL with the new one
-          const updatedArray = currentArray.map((url: string) =>
-            url === oldValue ? documentUrl : url
-          );
-          updateData = { [fieldName]: updatedArray };
+        // If oldValue is provided, replace it; otherwise append
+        if (oldValue && currentPhotos.includes(oldValue)) {
+          currentPhotos[currentPhotos.indexOf(oldValue)] = documentUrl;
         } else {
-          // Append new URL to array (or create new array if empty)
-          updateData = {
-            [fieldName]: [...currentArray, documentUrl],
-          };
+          currentPhotos.push(documentUrl);
         }
+
+        updatedReport[roomKey] = { ...currentRoom, [roomMapping.photoType]: currentPhotos };
       }
+
+      updateData = { technical_inspection_report: updatedReport };
     } else {
       // Single string value for other fields
       updateData = { [fieldName]: documentUrl };

@@ -1,67 +1,164 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { NavbarL2 } from "@/components/layout/navbar-l2";
 import { PropertyTabs } from "@/components/layout/property-tabs";
-import { RentalsSidebar } from "@/components/rentals/rentals-sidebar";
 import { LeadTasksTab } from "@/components/rentals/lead-tasks-tab";
 import { LeadSummaryTab } from "@/components/rentals/lead-summary-tab";
-import { LeadPropertiesTab } from "@/components/rentals/lead-properties-tab";
+import { LeadGestionRegistroTab } from "@/components/rentals/lead-gestion-registro-tab";
+import { LeadResolutionTab } from "@/components/rentals/lead-resolution-tab";
+import { LeadClosureModal, type LeadClosureType } from "@/components/rentals/lead-closure-modal";
+import { LeadRightSidebar } from "@/components/rentals/lead-right-sidebar";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { mockLeadsColumns } from "@/components/rentals/rentals-leads-kanban-board";
+import { useLead } from "@/hooks/use-lead";
+import { TrendingDown, Ban } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const leadId = params.id as string;
+  const { lead: leadRow, loading: isLoading, error: loadError, refetch: refetchLead } = useLead(leadId);
   const [activeTab, setActiveTab] = useState("tasks");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showFooter, setShowFooter] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const eventsRefetchRef = useRef<(() => Promise<void> | void) | null>(null);
+  const [closureModalOpen, setClosureModalOpen] = useState(false);
+  const [closureType, setClosureType] = useState<LeadClosureType>("perdido");
 
-  // Función helper para obtener el lead de los datos mock
-  const getLeadFromMock = (id: string) => {
-    const allLeads = mockLeadsColumns.flatMap((col) => col.leads);
-    return allLeads.find((l) => l.id === id);
-  };
+  const handleLeadRefetch = useCallback(async () => {
+    await refetchLead();
+    await eventsRefetchRef.current?.();
+  }, [refetchLead]);
 
-  // Obtener datos del lead desde mock
-  const mockLead = getLeadFromMock(leadId);
-
-  // Mock lead data
-  const lead = {
-    id: leadId,
-    name: mockLead?.name || "Lead Desconocido",
-    phone: mockLead?.phone || "",
-    email: mockLead?.email || "",
-    zone: mockLead?.zone || "",
-    currentPhase: mockLead?.currentPhase || "Sin Contactar",
-    interestedProperties: mockLead?.interestedProperty
-      ? [mockLead.interestedProperty]
-      : [],
-  };
-
-  // Simulate loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+  const handleOpenClosureModal = useCallback((type: LeadClosureType) => {
+    setClosureType(type);
+    setClosureModalOpen(true);
   }, []);
 
-  const tabs = [
-    { id: "tasks", label: "Tareas", badge: undefined },
-    { id: "summary", label: "Resumen Lead", badge: undefined },
-    { id: "properties", label: "Propiedades interesado", badge: undefined },
-  ];
+  const handleCloseLead = useCallback(async (exitReason: string, exitComments: string) => {
+    const res = await fetch(`/api/leads/${leadRow?.leads_unique_id}/close`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        closure_type: closureType,
+        exit_reason: exitReason,
+        exit_comments: exitComments || undefined,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error ?? "Error al cerrar el interesado");
+    }
+    toast.success(
+      closureType === "perdido"
+        ? "Interesado marcado como Perdido"
+        : "Interesado marcado como Rechazado"
+    );
+    await handleLeadRefetch();
+  }, [leadRow?.leads_unique_id, closureType, handleLeadRefetch]);
+
+  const rawPhase = leadRow?.current_phase ?? "Interesado Cualificado";
+  const phaseMap: Record<string, string> = {
+    "Calificación aprobada": "Interesado Presentado",
+    "Inquilino presentado": "Interesado Presentado",
+    "Inquilino aceptado": "Interesado Aceptado",
+    "Perfil cualificado": "Interesado Cualificado",
+    "Interesado cualificado": "Interesado Cualificado",
+    "Visita agendada": "Visita Agendada",
+    "Recogiendo información": "Recogiendo Información",
+    "Calificación en curso": "Calificación en Curso",
+    "Interesado presentado": "Interesado Presentado",
+    "Interesado aceptado": "Interesado Aceptado",
+    "Interesado perdido": "Interesado Perdido",
+    "Interesado rechazado": "Interesado Rechazado",
+  };
+  const currentPhase = phaseMap[rawPhase] ?? rawPhase;
+
+  const lead = leadRow
+    ? {
+        id: leadRow.id,
+        leadsUniqueId: leadRow.leads_unique_id,
+        name: leadRow.name ?? "",
+        phone: leadRow.phone ?? "",
+        email: leadRow.email ?? undefined,
+        zone: leadRow.zone ?? undefined,
+        currentPhase,
+        interestedProperties: [],
+        occupant_count: leadRow.number_of_occupants ?? undefined,
+        move_in_timeframe: leadRow.move_in_timeframe ?? undefined,
+        lease_duration_preference: leadRow.lease_duration_preference ?? undefined,
+        employment_status: leadRow.employment_status ?? undefined,
+        job_title: leadRow.job_title ?? undefined,
+        employment_contract_type: leadRow.employment_contract_type ?? undefined,
+        laboral_financial_docs: leadRow.laboral_financial_docs ?? undefined,
+        monthly_net_income: leadRow.monthly_net_income ?? undefined,
+        has_guarantor: leadRow.has_guarantor ?? undefined,
+        nationality: leadRow.nationality ?? undefined,
+        identityDocType: leadRow.identity_doc_type ?? undefined,
+        identityDocNumber: leadRow.identity_doc_number ?? undefined,
+        identityDocUrl: leadRow.identity_doc_url ?? undefined,
+        dateOfBirth: leadRow.date_of_birth ?? undefined,
+        age: leadRow.age ?? undefined,
+        familyProfile: leadRow.family_profile ?? undefined,
+        childrenCount: leadRow.children_count ?? undefined,
+        petInfo: leadRow.pet_info ?? undefined,
+        exitReason: leadRow.exit_reason ?? null,
+        exitComments: leadRow.exit_comments ?? null,
+        exitedAt: leadRow.exited_at ?? null,
+      }
+    : null;
+
+  const PHASES_1_2 = ["Interesado Cualificado", "Visita Agendada"];
+  const PHASE_RECOGIENDO = "Recogiendo Información";
+  const PHASE_ACEPTADO = "Interesado Aceptado";
+  const TERMINAL_PHASES = ["Interesado Perdido", "Interesado Rechazado"];
+  const isTerminal = TERMINAL_PHASES.includes(currentPhase);
+  const canClose = !isTerminal && currentPhase !== PHASE_ACEPTADO;
+
+  const tabs = (() => {
+    if (isTerminal) {
+      return [
+        { id: "resolucion", label: "Resolución", badge: undefined },
+        { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
+    if (currentPhase === PHASE_ACEPTADO) {
+      return [
+        { id: "registro", label: "Registro de Gestión", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
+    if (currentPhase === PHASE_RECOGIENDO) {
+      return [
+        { id: "tasks", label: "Espacio de trabajo", badge: undefined },
+        { id: "gestion", label: "Gestión de Propiedades", badge: undefined },
+        { id: "cartera", label: "Cartera de Propiedades", badge: undefined },
+        { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
+    if (PHASES_1_2.includes(currentPhase)) {
+      return [
+        { id: "tasks", label: "Espacio de trabajo", badge: undefined },
+        { id: "cartera", label: "Cartera de Propiedades", badge: undefined },
+        { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
+        { id: "summary", label: "Interesado", badge: undefined },
+      ];
+    }
+    return [
+      { id: "tasks", label: "Espacio de trabajo", badge: undefined },
+      { id: "archivo", label: "Archivo de Propiedades", badge: undefined },
+      { id: "summary", label: "Interesado", badge: undefined },
+    ];
+  })();
+
+  const validTabIds = tabs.map((t) => t.id);
+  const effectiveTab = validTabIds.includes(activeTab) ? activeTab : validTabIds[0];
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -80,7 +177,6 @@ export default function LeadDetailPage() {
   if (isLoading) {
     return (
       <div className="flex h-screen overflow-hidden">
-        <RentalsSidebar />
         <div className="flex flex-1 items-center justify-center">
           <RentalsHomeLoader />
         </div>
@@ -88,20 +184,18 @@ export default function LeadDetailPage() {
     );
   }
 
-  // Solo mostrar error si hay un error real, no si el lead no está en mock (usaremos valores por defecto)
-  if (error) {
+  if (loadError || !lead) {
     return (
       <div className="flex h-screen overflow-hidden">
-        <RentalsSidebar />
         <div className="flex flex-1 flex-col items-center justify-center">
           <p className="text-lg font-semibold text-foreground mb-2">
-            Error al cargar el lead
+            {loadError ? "Error al cargar el interesado" : "Interesado no encontrado"}
           </p>
           <Button
             variant="outline"
             onClick={() => router.push("/rentals/leads")}
           >
-            Volver al Kanban de Leads
+            Volver al Kanban de Interesados
           </Button>
         </div>
       </div>
@@ -110,66 +204,111 @@ export default function LeadDetailPage() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <RentalsSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
+        {/* Header - mismo estilo que detalle de propiedad */}
         <NavbarL2
-          title={lead.name}
-          subtitle={`ID: ${lead.id} · Fase: ${lead.currentPhase}`}
-          onBack={() => router.push("/rentals/leads")}
-        />
-
-        {/* Tabs */}
-        <PropertyTabs
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-        />
-
-        {/* Content + Sidebar */}
-        <div className="flex flex-1 overflow-hidden pt-2">
-          {/* Main Content */}
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 bg-[var(--prophero-gray-50)] dark:bg-[#000000] pb-24"
-            onScroll={handleScroll}
-          >
-            <div className="max-w-4xl mx-auto">
-              {activeTab === "tasks" && <LeadTasksTab lead={lead} />}
-              {activeTab === "summary" && <LeadSummaryTab lead={lead} />}
-              {activeTab === "properties" && (
-                <LeadPropertiesTab lead={lead} />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Sticky Mobile */}
-        {hasUnsavedChanges && (
-          <div
-            className={cn(
-              "fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[var(--prophero-gray-900)] px-4 py-4 md:hidden border-t border-[var(--prophero-gray-200)] dark:border-[var(--prophero-gray-700)] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out",
-              showFooter ? "translate-y-0" : "translate-y-full"
-            )}
-          >
-            <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
+          title="Detalles del interesado"
+          backHref="/rentals/leads"
+          rightContent={canClose ? (
+            <div className="flex items-center gap-2">
               <Button
-                className="w-full flex items-center justify-center rounded-lg bg-[var(--prophero-blue-600)] hover:bg-[var(--prophero-blue-700)] text-white h-12 text-base font-medium"
-                onClick={() => setHasUnsavedChanges(false)}
+                variant="outline"
+                size="sm"
+                className="text-amber-700 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-900/20"
+                onClick={() => handleOpenClosureModal("perdido")}
               >
-                Guardar Cambios
+                <TrendingDown className="h-4 w-4 mr-1.5" />
+                Interesado Perdido
               </Button>
               <Button
                 variant="outline"
-                className="w-full flex items-center justify-center rounded-lg h-12 text-base font-medium"
-                onClick={() => setHasUnsavedChanges(false)}
+                size="sm"
+                className="text-red-700 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/20"
+                onClick={() => handleOpenClosureModal("rechazado")}
               >
-                Cancelar
+                <Ban className="h-4 w-4 mr-1.5" />
+                Interesado Rechazado
               </Button>
             </div>
-          </div>
-        )}
+          ) : undefined}
+        />
+
+        {/* Contenido principal - misma estructura que propiedad */}
+        <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#111827] scrollbar-stable">
+          <div className="max-w-7xl mx-auto px-6 md:px-12 py-8">
+            {/* Nombre del interesado, ID y fase */}
+            <div className="mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-[#111827] dark:text-[#F9FAFB] mb-2">
+                {lead.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+                <span>ID Interesado: {lead.leadsUniqueId}</span>
+                <span className="text-[#E5E7EB] dark:text-[#374151]">|</span>
+                <span className={`px-2 py-1 rounded text-xs font-semibold uppercase ${
+                  currentPhase === "Interesado Perdido"
+                    ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+                    : currentPhase === "Interesado Rechazado"
+                      ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                      : "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                }`}>
+                  {lead.currentPhase}
+                </span>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="mb-8">
+              <PropertyTabs
+                tabs={tabs}
+                activeTab={effectiveTab}
+                onTabChange={handleTabChange}
+              />
+            </div>
+
+            {/* Grid: contenido + sidebar derecha */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
+              <div className="lg:col-span-2 space-y-8 relative z-20">
+                <div
+                  ref={scrollContainerRef}
+                  className="pb-24"
+                  onScroll={handleScroll}
+                >
+                  {(effectiveTab === "tasks" || effectiveTab === "gestion" || effectiveTab === "cartera" || effectiveTab === "archivo") && (
+                    <LeadTasksTab
+                      lead={lead}
+                      onLeadRefetch={handleLeadRefetch}
+                      activeView={effectiveTab as "tasks" | "gestion" | "cartera" | "archivo"}
+                      onTabChange={handleTabChange}
+                      onOpenClosureModal={canClose ? handleOpenClosureModal : undefined}
+                    />
+                  )}
+                  {effectiveTab === "resolucion" && (
+                    <LeadResolutionTab
+                      currentPhase={lead.currentPhase}
+                      exitReason={lead.exitReason}
+                      exitComments={lead.exitComments}
+                      exitedAt={lead.exitedAt}
+                    />
+                  )}
+                  {effectiveTab === "registro" && <LeadGestionRegistroTab lead={lead} />}
+                  {effectiveTab === "summary" && <LeadSummaryTab lead={lead} />}
+                </div>
+              </div>
+
+              <div className="lg:col-span-1 space-y-8 relative">
+                <LeadRightSidebar leadId={lead.leadsUniqueId} refetchRef={eventsRefetchRef} />
+              </div>
+        </div>
+        </div>
+        </div>
       </div>
+
+      <LeadClosureModal
+        type={closureType}
+        open={closureModalOpen}
+        onOpenChange={setClosureModalOpen}
+        onConfirm={handleCloseLead}
+      />
     </div>
   );
 }

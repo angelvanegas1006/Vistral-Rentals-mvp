@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 
 interface NavbarL2Props {
   backHref?: string;
+  /** Título del header. Si no se pasa, se muestra "Detalle de propiedad". Para leads: "Detalles del interesado" */
+  title?: string;
   className?: string;
   onSave?: () => void | Promise<void>;
   onNextPhase?: () => void | Promise<void>;
@@ -17,10 +19,13 @@ interface NavbarL2Props {
   blockedMessage?: string;
   onSubmitComments?: () => void | Promise<void>;
   canSubmitComments?: boolean;
+  /** Arbitrary content rendered on the right side of the header */
+  rightContent?: React.ReactNode;
 }
 
 export function NavbarL2({
   backHref,
+  title,
   className,
   onSave,
   onNextPhase,
@@ -31,6 +36,7 @@ export function NavbarL2({
   blockedMessage = "Avance bloqueado",
   onSubmitComments,
   canSubmitComments = true,
+  rightContent,
 }: NavbarL2Props) {
   const router = useRouter();
 
@@ -45,7 +51,7 @@ export function NavbarL2({
   return (
     <header
       className={cn(
-        "bg-white dark:bg-[var(--prophero-gray-900)] border-b border-[#D4D4D8] dark:border-[var(--prophero-gray-700)]",
+        "bg-white dark:bg-[var(--vistral-gray-900)] border-b border-[#D4D4D8] dark:border-[var(--vistral-gray-700)]",
         "py-4 px-6 md:px-12",
         "sticky top-0 z-10",
         className
@@ -66,10 +72,11 @@ export function NavbarL2({
           <div className="h-6 w-px bg-[#E5E7EB] dark:bg-[#374151]" />
           
           {/* Title */}
-          <span className="text-sm font-medium text-[#212121] dark:text-[#F9FAFB]">Detalle de propiedad</span>
+          <span className="text-sm font-medium text-[#212121] dark:text-[#F9FAFB]">{title ?? "Detalle de propiedad"}</span>
         </div>
 
         {/* Right: Action Buttons */}
+        {rightContent}
         {(onSave || onNextPhase || onSubmitComments) && (
           <div className="flex items-center gap-3">
             {onSave && (

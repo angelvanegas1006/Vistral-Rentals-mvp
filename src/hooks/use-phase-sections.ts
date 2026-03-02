@@ -156,7 +156,7 @@ export function usePhaseSections(currentPhase: string) {
     {
       id: "technical-inspection",
       title: "Inspección Técnica y Reportaje",
-      instructions: "Valida el estado físico estancia por estancia y carga material visual",
+      instructions: "Evalúa cada estancia/zona de la propiedad. Valida su estado y sube las fotos comerciales.",
       required: true,
       fields: [
         { id: "check_common_areas", type: "select", label: "Estado de estancias", required: true },

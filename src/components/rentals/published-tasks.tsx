@@ -39,8 +39,8 @@ interface Lead {
   email: string;
   called?: "Si" | "No";
   discarded?: "Si" | "No";
-  scheduledDate?: string; // Para "Leads sin gestionar"
-  visitDate?: string; // Para "Leads Agendados"
+  scheduledDate?: string; // Para "Interesados sin gestionar"
+  visitDate?: string; // Para "Interesados Agendados"
   qualified?: "Si" | "No"; // Para "Visita Hecha"
 }
 
@@ -289,7 +289,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b bg-muted/50 dark:bg-[var(--prophero-gray-900)]">
+            <tr className="border-b bg-muted/50 dark:bg-[var(--vistral-gray-900)]">
               {columns.map((col) => (
                 <th
                   key={col}
@@ -310,14 +310,14 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
                   colSpan={columns.length + 1}
                   className="px-3 py-6 text-center text-sm text-muted-foreground"
                 >
-                  No hay leads en esta lista
+                  No hay interesados en esta lista
                 </td>
               </tr>
             ) : (
               leads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className="border-b hover:bg-accent dark:hover:bg-[var(--prophero-gray-800)] transition-colors"
+                  className="border-b hover:bg-accent dark:hover:bg-[var(--vistral-gray-800)] transition-colors"
                 >
                   <td className="px-3 py-2 text-sm text-foreground">{lead.name}</td>
                   <td className="px-3 py-2 text-sm text-foreground">{lead.phone}</td>
@@ -627,7 +627,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">{localUnguidedLeads.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Leads sin gestionar</p>
+                <p className="text-xs text-muted-foreground mt-1">Interesados sin gestionar</p>
               </div>
             </CardContent>
           </Card>
@@ -635,7 +635,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">{localScheduledLeads.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Leads Agendados</p>
+                <p className="text-xs text-muted-foreground mt-1">Interesados Agendados</p>
               </div>
             </CardContent>
           </Card>
@@ -658,7 +658,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
         </div>
 
         {/* Toggle de Vista */}
-        <div className="flex items-center gap-2 bg-accent dark:bg-[var(--prophero-gray-800)] rounded-lg p-1">
+        <div className="flex items-center gap-2 bg-accent dark:bg-[var(--vistral-gray-800)] rounded-lg p-1">
           <Button
             variant={viewMode === "lists" ? "default" : "ghost"}
             size="sm"
@@ -666,7 +666,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             className={cn(
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
               viewMode === "lists"
-                ? "bg-[var(--prophero-blue-500)] text-white"
+                ? "bg-[var(--vistral-blue-500)] text-white"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -680,7 +680,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             className={cn(
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
               viewMode === "kanban"
-                ? "bg-[var(--prophero-blue-500)] text-white"
+                ? "bg-[var(--vistral-blue-500)] text-white"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -692,7 +692,7 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
 
       {/* Vista Kanban */}
       {viewMode === "kanban" && (
-        <div className="bg-[var(--prophero-gray-50)] dark:bg-[#000000] rounded-lg p-2 md:p-3 min-h-[600px] -mx-1 md:-mx-2">
+        <div className="bg-[var(--vistral-gray-50)] dark:bg-[#000000] rounded-lg p-2 md:p-3 min-h-[600px] -mx-1 md:-mx-2">
           <PublishedTasksKanban
             unguidedLeads={localUnguidedLeads}
             scheduledLeads={localScheduledLeads}
@@ -710,29 +710,27 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
       {/* Vista Listas (colapsadas por defecto) */}
       {viewMode === "lists" && (
         <Accordion type="multiple" defaultValue={[]} className="space-y-3">
-          {/* Leads sin gestionar */}
+          {/* Interesados sin gestionar */}
           <AccordionItem value="unguided" className="border rounded-lg overflow-hidden">
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-0 px-4 pt-4">
                 <AccordionTrigger className="hover:no-underline py-2">
                   <div className="flex items-center justify-between w-full pr-4">
-                    <CardTitle className="text-base font-semibold">Leads sin gestionar</CardTitle>
+                    <CardTitle className="text-base font-semibold">Interesados sin gestionar</CardTitle>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {localUnguidedLeads.length}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddLead("unguided");
                         }}
-                        className="h-8 px-2 text-xs"
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium h-8 px-2 hover:bg-[var(--vistral-gray-100)] hover:text-foreground dark:hover:bg-[var(--vistral-gray-800)] transition-all duration-200 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline ml-1">Añadir</span>
-                      </Button>
+                      </span>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -752,29 +750,27 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
             </Card>
           </AccordionItem>
 
-          {/* Leads Agendados */}
+          {/* Interesados Agendados */}
           <AccordionItem value="scheduled" className="border rounded-lg overflow-hidden">
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-0 px-4 pt-4">
                 <AccordionTrigger className="hover:no-underline py-2">
                   <div className="flex items-center justify-between w-full pr-4">
-                    <CardTitle className="text-base font-semibold">Leads Agendados</CardTitle>
+                    <CardTitle className="text-base font-semibold">Interesados Agendados</CardTitle>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {localScheduledLeads.length}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddLead("scheduled");
                         }}
-                        className="h-8 px-2 text-xs"
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium h-8 px-2 hover:bg-[var(--vistral-gray-100)] hover:text-foreground dark:hover:bg-[var(--vistral-gray-800)] transition-all duration-200 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline ml-1">Añadir</span>
-                      </Button>
+                      </span>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -806,18 +802,16 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
                       <Badge variant="secondary" className="text-xs">
                         {localVisitedLeads.length}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddLead("visited");
                         }}
-                        className="h-8 px-2 text-xs"
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium h-8 px-2 hover:bg-[var(--vistral-gray-100)] hover:text-foreground dark:hover:bg-[var(--vistral-gray-800)] transition-all duration-200 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline ml-1">Añadir</span>
-                      </Button>
+                      </span>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -847,18 +841,16 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
                       <Badge variant="secondary" className="text-xs">
                         {localDiscardedLeads.length}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddLead("discarded");
                         }}
-                        className="h-8 px-2 text-xs"
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium h-8 px-2 hover:bg-[var(--vistral-gray-100)] hover:text-foreground dark:hover:bg-[var(--vistral-gray-800)] transition-all duration-200 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline ml-1">Añadir</span>
-                      </Button>
+                      </span>
                     </div>
                   </div>
                 </AccordionTrigger>

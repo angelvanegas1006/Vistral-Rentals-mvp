@@ -967,7 +967,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="yes"
                                   checked={affectsCommercializationCommonAreas === true}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_common_areas", true)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">Sí</span>
@@ -979,7 +979,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="no"
                                   checked={affectsCommercializationCommonAreas === false}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_common_areas", false)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">No</span>
@@ -1044,7 +1044,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="yes"
                                   checked={affectsCommercializationEntryHallways === true}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_entry_hallways", true)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">Sí</span>
@@ -1056,7 +1056,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="no"
                                   checked={affectsCommercializationEntryHallways === false}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_entry_hallways", false)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">No</span>
@@ -1125,7 +1125,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                         value="yes"
                                         checked={affectsCommercializationBedrooms[0] === true}
                                         onChange={() => handleAffectsCommercializationChange("affects_commercialization_bedrooms", true, 0)}
-                                        className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                        className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                         required
                                       />
                                       <span className="text-sm">Sí</span>
@@ -1137,7 +1137,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                         value="no"
                                         checked={affectsCommercializationBedrooms[0] === false}
                                         onChange={() => handleAffectsCommercializationChange("affects_commercialization_bedrooms", false, 0)}
-                                        className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                        className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                         required
                                       />
                                       <span className="text-sm">No</span>
@@ -1212,7 +1212,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                           value="yes"
                                           checked={affectsCommercializationBedrooms[index] === true}
                                           onChange={() => handleAffectsCommercializationChange("affects_commercialization_bedrooms", true, index)}
-                                          className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                          className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                           required
                                         />
                                         <span className="text-sm">Sí</span>
@@ -1224,7 +1224,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                           value="no"
                                           checked={affectsCommercializationBedrooms[index] === false}
                                           onChange={() => handleAffectsCommercializationChange("affects_commercialization_bedrooms", false, index)}
-                                          className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                          className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                           required
                                         />
                                         <span className="text-sm">No</span>
@@ -1299,7 +1299,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="yes"
                                   checked={affectsCommercializationLivingRoom === true}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_living_room", true)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">Sí</span>
@@ -1311,7 +1311,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="no"
                                   checked={affectsCommercializationLivingRoom === false}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_living_room", false)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">No</span>
@@ -1380,7 +1380,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                         value="yes"
                                         checked={affectsCommercializationBathrooms[0] === true}
                                         onChange={() => handleAffectsCommercializationChange("affects_commercialization_bathrooms", true, 0)}
-                                        className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                        className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                         required
                                       />
                                       <span className="text-sm">Sí</span>
@@ -1392,7 +1392,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                         value="no"
                                         checked={affectsCommercializationBathrooms[0] === false}
                                         onChange={() => handleAffectsCommercializationChange("affects_commercialization_bathrooms", false, 0)}
-                                        className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                        className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                         required
                                       />
                                       <span className="text-sm">No</span>
@@ -1467,7 +1467,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                                 value="yes"
                                                 checked={affectsCommercializationBathrooms[index] === true}
                                                 onChange={() => handleAffectsCommercializationChange("affects_commercialization_bathrooms", true, index)}
-                                                className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                                className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                                 required
                                               />
                                               <span className="text-sm">Sí</span>
@@ -1479,7 +1479,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                                 value="no"
                                                 checked={affectsCommercializationBathrooms[index] === false}
                                                 onChange={() => handleAffectsCommercializationChange("affects_commercialization_bathrooms", false, index)}
-                                                className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                                className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                                 required
                                               />
                                               <span className="text-sm">No</span>
@@ -1554,7 +1554,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="yes"
                                   checked={affectsCommercializationKitchen === true}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_kitchen", true)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">Sí</span>
@@ -1566,7 +1566,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="no"
                                   checked={affectsCommercializationKitchen === false}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_kitchen", false)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">No</span>
@@ -1631,7 +1631,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="yes"
                                   checked={affectsCommercializationExterior === true}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_exterior", true)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">Sí</span>
@@ -1643,7 +1643,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                   value="no"
                                   checked={affectsCommercializationExterior === false}
                                   onChange={() => handleAffectsCommercializationChange("affects_commercialization_exterior", false)}
-                                  className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                  className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                   required
                                 />
                                 <span className="text-sm">No</span>
@@ -1711,7 +1711,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                     value="yes"
                                     checked={affectsCommercializationGarage === true}
                                     onChange={() => handleAffectsCommercializationChange("affects_commercialization_garage", true)}
-                                    className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                    className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                     required
                                   />
                                   <span className="text-sm">Sí</span>
@@ -1723,7 +1723,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                     value="no"
                                     checked={affectsCommercializationGarage === false}
                                     onChange={() => handleAffectsCommercializationChange("affects_commercialization_garage", false)}
-                                    className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                    className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                     required
                                   />
                                   <span className="text-sm">No</span>
@@ -1793,7 +1793,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                     value="yes"
                                     checked={affectsCommercializationTerrace === true}
                                     onChange={() => handleAffectsCommercializationChange("affects_commercialization_terrace", true)}
-                                    className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                    className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                     required
                                   />
                                   <span className="text-sm">Sí</span>
@@ -1805,7 +1805,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                                     value="no"
                                     checked={affectsCommercializationTerrace === false}
                                     onChange={() => handleAffectsCommercializationChange("affects_commercialization_terrace", false)}
-                                    className="w-4 h-4 text-[var(--prophero-blue-500)] focus:ring-[var(--prophero-blue-500)]"
+                                    className="w-4 h-4 text-[var(--vistral-blue-500)] focus:ring-[var(--vistral-blue-500)]"
                                     required
                                   />
                                   <span className="text-sm">No</span>

@@ -49,6 +49,7 @@ import { ComplianceStatusWidget } from "@/components/property/ComplianceStatusWi
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/types";
 import { config } from "@/lib/config/environment";
+import { PropertyInterestedSummary } from "@/components/rentals/property-interested-summary";
 
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 
@@ -56,12 +57,13 @@ interface PropertySummaryTabProps {
   propertyId: string;
   currentPhase?: string;
   property?: PropertyRow | null;
+  showInterestedSummary?: boolean;
 }
 
 // Placeholder image URL
 const PLACEHOLDER_IMAGE = "https://via.placeholder.com/800x600?text=No+Image+Available";
 
-export function PropertySummaryTab({ propertyId, currentPhase, property }: PropertySummaryTabProps) {
+export function PropertySummaryTab({ propertyId, currentPhase, property, showInterestedSummary = false }: PropertySummaryTabProps) {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryMedia, setGalleryMedia] = useState<GalleryMediaItem[]>([]);
   const [mainImageIndex, setMainImageIndex] = useState(0); // For interactive gallery
@@ -313,7 +315,7 @@ export function PropertySummaryTab({ propertyId, currentPhase, property }: Prope
     
     // For renovation files, store the full array (handled separately with SmartDocumentFieldArray)
     legalArrayDocs.renovationFiles = localProperty.doc_renovation_files && Array.isArray(localProperty.doc_renovation_files)
-      ? localProperty.doc_renovation_files
+      ? (localProperty.doc_renovation_files as string[])
       : null;
 
     // Insurance documents - ALWAYS include, even when NULL
@@ -365,20 +367,20 @@ export function PropertySummaryTab({ propertyId, currentPhase, property }: Prope
 
     const filterSuppliesBySearch = (supplies: typeof allDocs.supplies): typeof allDocs.supplies => {
       if (!searchLower) return supplies;
-      const filtered: typeof supplies = {};
+      const filtered: Record<string, any> = {};
       Object.keys(supplies).forEach((key) => {
-        const utility = supplies[key as keyof typeof supplies];
+        const utility = (supplies as any)[key];
         if (!utility) return;
-        const contractMatch = utility.contract?.name.toLowerCase().includes(searchLower);
-        const billMatch = utility.bill?.name.toLowerCase().includes(searchLower);
+        const contractMatch = utility.contract?.name?.toLowerCase().includes(searchLower);
+        const billMatch = utility.bill?.name?.toLowerCase().includes(searchLower);
         if (contractMatch || billMatch) {
-          filtered[key as keyof typeof supplies] = utility;
+          filtered[key] = utility;
         }
       });
-      return filtered;
+      return filtered as typeof allDocs.supplies;
     };
 
-    let result: typeof allDocs = { legal: [], legalArrays: { renovationFiles: null }, insurance: [], supplies: {} };
+    let result: any = { legal: [], legalArrays: { renovationFiles: null }, insurance: [], supplies: {} };
 
     if (documentFilter === "all") {
       result = {
@@ -629,6 +631,14 @@ export function PropertySummaryTab({ propertyId, currentPhase, property }: Prope
           </div>
         )}
       </Card>
+
+      {/* Resumen de Interesados - solo en modal "Ver más detalles" */}
+      {showInterestedSummary && (
+        <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm">
+          <h2 className="text-xl font-semibold mb-6">Resumen de Interesados</h2>
+          <PropertyInterestedSummary propertyId={propertyId} />
+        </Card>
+      )}
 
       {/* Widget 1: Rendimiento Financiero */}
       <Card className="bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm">
