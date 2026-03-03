@@ -395,6 +395,7 @@ export interface Database {
           exit_reason: string | null;
           exit_comments: string | null;
           exited_at: string | null;
+          label: string | null;
           needs_update: boolean;
           phase_entered_at: string;
           created_at: string;
@@ -426,6 +427,7 @@ export interface Database {
           owner_rejection_reason?: string | null;
           exit_reason?: string | null;
           exit_comments?: string | null;
+          max_status_reached?: string | null;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["leads_properties"]["Row"], "id" | "created_at"> & {
@@ -445,6 +447,7 @@ export interface Database {
           owner_rejection_reason?: string | null;
           exit_reason?: string | null;
           exit_comments?: string | null;
+          max_status_reached?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["leads_properties"]["Insert"]>;
       };
@@ -453,7 +456,7 @@ export interface Database {
           id: string;
           leads_unique_id: string;
           properties_unique_id: string | null;
-          event_type: "PROPERTY_ADDED" | "MTP_UPDATE" | "PHASE_CHANGE" | "PHASE_CHANGE_BACKWARD" | "MTP_ARCHIVED";
+          event_type: "PROPERTY_ADDED" | "MTP_UPDATE" | "PHASE_CHANGE" | "PHASE_CHANGE_BACKWARD" | "MTP_ARCHIVED" | "MTP_RECOVERED" | "PROPERTY_UNAVAILABLE";
           title: string;
           description: string;
           created_at: string;
@@ -463,6 +466,24 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["lead_events"]["Insert"]>;
+      };
+      lead_notifications: {
+        Row: {
+          id: string;
+          leads_unique_id: string;
+          properties_unique_id: string | null;
+          notification_type: string;
+          title: string;
+          message: string;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["lead_notifications"]["Row"], "id" | "created_at" | "is_read"> & {
+          id?: string;
+          created_at?: string;
+          is_read?: boolean;
+        };
+        Update: Partial<Database["public"]["Tables"]["lead_notifications"]["Insert"]>;
       };
     };
     Views: {

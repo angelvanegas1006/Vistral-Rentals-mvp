@@ -26,6 +26,11 @@ export interface LeadPropertyCardWorkSectionProps {
   onCancelarVisita?: () => void;
   onDescartar?: () => void;
   isSelectedForQualification?: boolean;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+  ownerEmail?: string | null;
+  onRecoverLead?: (context?: { rejectedMtpId: string; rejectionType: "finaer" | "propietario"; reason: string }) => void;
+  onOpenClosureModal?: () => void;
 }
 
 /**
@@ -39,6 +44,11 @@ export function LeadPropertyCardWorkSection({
   onCancelarVisita,
   onDescartar,
   isSelectedForQualification,
+  ownerName,
+  ownerPhone,
+  ownerEmail,
+  onRecoverLead,
+  onOpenClosureModal,
 }: LeadPropertyCardWorkSectionProps) {
   const status = leadsProperty.current_status ?? "interesado_cualificado";
 
@@ -91,8 +101,13 @@ export function LeadPropertyCardWorkSection({
       return (
         <LeadPropertyCardWorkCalificacionEnCurso
           leadsProperty={leadsProperty}
+          ownerName={ownerName}
+          ownerPhone={ownerPhone}
+          ownerEmail={ownerEmail}
           onUpdated={onUpdated}
           onTransition={onTransition}
+          onRecoverLead={onRecoverLead}
+          onOpenClosureModal={onOpenClosureModal}
         />
       );
     case "interesado_presentado":
@@ -101,6 +116,8 @@ export function LeadPropertyCardWorkSection({
           leadsProperty={leadsProperty}
           onUpdated={onUpdated}
           onTransition={onTransition}
+          onRecoverLead={onRecoverLead}
+          onOpenClosureModal={onOpenClosureModal}
         />
       );
     case "interesado_aceptado":

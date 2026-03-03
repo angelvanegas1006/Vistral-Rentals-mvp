@@ -213,6 +213,16 @@ interface LeadInsert {
   monthly_net_income: number;
   has_guarantor: boolean;
   raw_qualification_data: Record<string, unknown>;
+  label: string | null;
+}
+
+/**
+ * Labels only apply to leads in "Interesado Cualificado".
+ * We assign "nuevo" to most and "recuperado" to a couple to demo the badge.
+ */
+function assignLabel(phase: string, indexInPhase: number): string | null {
+  if (phase !== "Interesado Cualificado") return null;
+  return indexInPhase < 2 ? "recuperado" : "nuevo";
 }
 
 function buildLead(phase: string, indexInPhase: number, uniqueId: string): LeadInsert {
@@ -243,13 +253,26 @@ function buildLead(phase: string, indexInPhase: number, uniqueId: string): LeadI
       notes: `Lead de prueba ${indexInPhase + 1}`,
       qualified_at: new Date().toISOString(),
     },
+    label: assignLabel(phase, indexInPhase),
   };
 }
 
 async function main() {
   console.log("Iniciando seed de leads (30 registros)...\n");
 
-  // 1. Borrar lead_events, leads_properties y leads (en ese orden)
+  // 1. Borrar lead_notifications, lead_events, leads_properties y leads (en ese orden)
+  console.log("Borrando registros existentes en lead_notifications...");
+  const { error: notifDeleteError } = await supabase
+    .from("lead_notifications")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000");
+
+  if (notifDeleteError) {
+    console.error("Error borrando lead_notifications:", notifDeleteError.message);
+  } else {
+    console.log("lead_notifications borrados.");
+  }
+
   console.log("Borrando registros existentes en lead_events...");
   const { error: eventsDeleteError } = await supabase
     .from("lead_events")

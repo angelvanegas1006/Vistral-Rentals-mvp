@@ -11,13 +11,13 @@ const alertVariants = cva(
       variant: {
         default: "bg-background text-foreground border-border",
         success:
-          "bg-[var(--vistral-success)]/10 border-[var(--vistral-success)]/20 text-[var(--vistral-success)] dark:bg-[var(--vistral-success)]/5 dark:border-[var(--vistral-success)]/30 dark:text-[var(--vistral-success)]",
+          "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-100",
         warning:
-          "bg-[var(--vistral-warning)]/10 border-[var(--vistral-warning)]/20 text-[var(--vistral-warning)] dark:bg-[var(--vistral-warning)]/5 dark:border-[var(--vistral-warning)]/30 dark:text-[var(--vistral-warning)]",
+          "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-100",
         danger:
-          "bg-[var(--vistral-danger)]/10 border-[var(--vistral-danger)]/20 text-[var(--vistral-danger)] dark:bg-[var(--vistral-danger)]/5 dark:border-[var(--vistral-danger)]/30 dark:text-[var(--vistral-danger)]",
+          "bg-red-50 border-red-200 text-red-900 dark:bg-red-950/40 dark:border-red-800 dark:text-red-100",
         info:
-          "bg-[var(--vistral-info)]/10 border-[var(--vistral-info)]/20 text-[var(--vistral-info)] dark:bg-[var(--vistral-info)]/5 dark:border-[var(--vistral-info)]/30 dark:text-[var(--vistral-info)]",
+          "bg-blue-50 border-blue-200 text-blue-900 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-100",
       },
     },
     defaultVariants: {

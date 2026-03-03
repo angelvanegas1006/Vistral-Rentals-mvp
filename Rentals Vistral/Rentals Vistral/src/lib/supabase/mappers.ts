@@ -75,6 +75,7 @@ export function mapLeadFromSupabase(row: LeadRow) {
     finaerStatus: row.finaer_status || undefined,
     numberOfOccupants: row.number_of_occupants || undefined,
     needsUpdate: row.needs_update,
+    label: row.label || undefined,
     // Fase 3: Recogiendo información
     nationality: row.nationality || undefined,
     identityDocType: row.identity_doc_type || undefined,

@@ -17,6 +17,7 @@ import {
 import { LeadSelectedPropertySection } from "@/components/rentals/lead-selected-property-section";
 import { LeadFinaerConfirmationSection } from "@/components/rentals/lead-finaer-confirmation-section";
 import { MtpModalFinaerConfirmation } from "@/components/rentals/mtp-modal-finaer-confirmation";
+import { Phase2SectionWidget } from "@/components/rentals/phase2-section-widget";
 import { LeadPropertyCard } from "@/components/rentals/lead-property-card";
 import { LeadPropertyCardWorkSection } from "@/components/rentals/lead-property-card-work-section";
 import { OtrasPropiedadesCartera } from "@/components/rentals/otras-propiedades-cartera";
@@ -27,7 +28,9 @@ import { MtpModalDescarte } from "@/components/rentals/mtp-modal-descarte";
 import { MtpModalReagendar } from "@/components/rentals/mtp-modal-reagendar";
 import { MtpModalCancelarVisita } from "@/components/rentals/mtp-modal-cancelar-visita";
 import { MtpModalRegistroActividad } from "@/components/rentals/mtp-modal-registro-actividad";
+import { MtpModalRecuperacion } from "@/components/rentals/mtp-modal-recuperacion";
 import { LeadPropertyCardWorkArchived } from "@/components/rentals/lead-property-card-work-archived";
+import { LeadNotificationsSection } from "@/components/rentals/lead-notifications-section";
 import { updateLeadsProperty } from "@/services/leads-sync";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { MTP_EXIT_STATUS_IDS, MTP_STATUS_RANK } from "@/lib/leads/mtp-status";
@@ -256,7 +259,7 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
   const [modalCancelarVisita, setModalCancelarVisita] = useState<{ lpId: string; address: string } | null>(null);
   const [modalRegistro, setModalRegistro] = useState<{ leadsProperty: typeof leadPropertyItems[0]["leadsProperty"]; address: string } | null>(null);
   const [modalFinaer, setModalFinaer] = useState(false);
-
+  const [modalRecuperacion, setModalRecuperacion] = useState<{ leadsProperty: typeof leadPropertyItems[0]["leadsProperty"]; address: string } | null>(null);
   const { updateLead } = useUpdateLead();
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
     () => lead.qualificationPropertyId ?? null
@@ -398,6 +401,32 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
     }));
   }, []);
 
+  // ---------- Recover lead handler ----------
+
+  const handleRecoverLead = useCallback(async (context?: { rejectedMtpId: string; rejectionType: "finaer" | "propietario"; reason: string }) => {
+    try {
+      const res = await fetch(`/api/leads/${encodeURIComponent(lead.leadsUniqueId)}/recover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rejectedMtpId: context?.rejectedMtpId,
+          rejectionType: context?.rejectionType,
+          reason: context?.reason,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Error al recuperar interesado");
+        return;
+      }
+      toast.success(`Interesado recuperado. ${data.revivedCount ?? 0} propiedad(es) reactivada(s).`);
+      await refetchLeadProperties();
+      await onLeadRefetch?.();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al recuperar interesado");
+    }
+  }, [lead.leadsUniqueId, refetchLeadProperties, onLeadRefetch]);
+
   // ---------- Shared renders ----------
 
   const renderPropertyCard = useCallback(
@@ -411,6 +440,11 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
             leadsProperty={item.leadsProperty}
             onUpdated={refetchLeadProperties}
             onTransition={handleTransition}
+            ownerName={item.property.client_full_name}
+            ownerPhone={item.property.client_phone}
+            ownerEmail={item.property.client_email}
+            onRecoverLead={handleRecoverLead}
+            onOpenClosureModal={onOpenClosureModal ? () => onOpenClosureModal("rechazado") : undefined}
             onReagendar={() =>
               setModalReagendar({
                 lpId: item.leadsProperty.id,
@@ -447,7 +481,7 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
         }
       />
     ),
-    [refetchLeadProperties, handleTransition]
+    [refetchLeadProperties, handleTransition, handleRecoverLead, onOpenClosureModal]
   );
 
   const renderEmptyStateIC = useCallback(
@@ -535,7 +569,8 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
           <div className="space-y-3">
             {archivedItems.map(({ leadsProperty, property }) => {
               const st = leadsProperty.current_status ?? "";
-              const canRecover = st !== "no_disponible" && st !== "interesado_perdido" && st !== "interesado_rechazado" && !PHASES_RENTAL_IN_PROGRESS.includes(lead.currentPhase);
+              const nonRecoverableStatuses = ["interesado_perdido", "interesado_rechazado", "rechazado_por_finaer", "rechazado_por_propietario", "no_disponible"];
+              const canRecover = !nonRecoverableStatuses.includes(st) && !PHASES_RENTAL_IN_PROGRESS.includes(lead.currentPhase);
               return (
               <LeadPropertyCard
                 key={leadsProperty.id}
@@ -556,18 +591,7 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
                 }
                 onRecuperar={
                   canRecover
-                    ? async () => {
-                        const result = await transition(
-                          leadsProperty.id,
-                          "",
-                          "revive",
-                          {}
-                        );
-                        if (result?.completed) {
-                          await refetchLeadProperties();
-                          await onLeadRefetch?.();
-                        }
-                      }
+                    ? () => setModalRecuperacion({ leadsProperty, address: property.address || "Propiedad" })
                     : undefined
                 }
               />
@@ -576,7 +600,7 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
           </div>
         </div>
       ) : null,
-    [archivedItems, transition, refetchLeadProperties, onLeadRefetch]
+    [archivedItems, lead.currentPhase]
   );
 
   const renderCartera = useCallback(
@@ -634,7 +658,8 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
             <div className="space-y-3">
               {archivedItems.map(({ leadsProperty, property }) => {
                 const st = leadsProperty.current_status ?? "";
-                const canRecover = st !== "no_disponible" && st !== "interesado_perdido" && st !== "interesado_rechazado" && !PHASES_RENTAL_IN_PROGRESS.includes(lead.currentPhase);
+                const nonRecoverableStatuses = ["interesado_perdido", "interesado_rechazado", "rechazado_por_finaer", "rechazado_por_propietario", "no_disponible"];
+                const canRecover = !nonRecoverableStatuses.includes(st) && !PHASES_RENTAL_IN_PROGRESS.includes(lead.currentPhase);
                 return (
                 <LeadPropertyCard
                   key={leadsProperty.id}
@@ -655,18 +680,7 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
                   }
                   onRecuperar={
                     canRecover
-                      ? async () => {
-                          const result = await transition(
-                            leadsProperty.id,
-                            "",
-                            "revive",
-                            {}
-                          );
-                          if (result?.completed) {
-                            await refetchLeadProperties();
-                            await onLeadRefetch?.();
-                          }
-                        }
+                      ? () => setModalRecuperacion({ leadsProperty, address: property.address || "Propiedad" })
                       : undefined
                   }
                 />
@@ -708,12 +722,13 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
             formData={phase1FormData}
           />
         )}
+        <LeadNotificationsSection leadId={lead.leadsUniqueId} />
         <div className="space-y-8">
           {renderPropertiesSection(items, "Gestión de Propiedades")}
         </div>
       </div>
     ),
-    [renderPropertiesSection, phase1Sections, phase1FormData]
+    [renderPropertiesSection, phase1Sections, phase1FormData, lead.leadsUniqueId]
   );
 
   // ---------- View: Phases 3+ workspace ----------
@@ -756,6 +771,7 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
         sections={isRecogiendoInformacion ? LEAD_PHASE3_SECTIONS : []}
         formData={isRecogiendoInformacion ? mergedFormData : {}}
       />
+      <LeadNotificationsSection leadId={lead.leadsUniqueId} />
 
       {isRecogiendoInformacion ? (
         <>
@@ -815,28 +831,28 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
         </>
       ) : (
         <>
-          {primaryItem && (
-            <div className="space-y-2">
-              <h3 className="text-base font-semibold text-foreground">
-                Propiedad Seleccionada
-              </h3>
-              {renderPropertyCard(primaryItem)}
-            </div>
-          )}
-
-          {!primaryItem && !leadPropertiesLoading && (
-            <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                No hay propiedad seleccionada.
-              </p>
-            </div>
-          )}
-
-          {leadPropertiesLoading && (
-            <div className="flex justify-center py-8">
-              <RentalsHomeLoader />
-            </div>
-          )}
+          <Phase2SectionWidget
+            id="selected-property"
+            title="Propiedad Seleccionada"
+            instructions="Vivienda sobre la que se realizará el estudio de solvencia."
+            required
+            isComplete={!!primaryItem}
+            alwaysExpanded
+          >
+            {primaryItem ? (
+              renderPropertyCard(primaryItem)
+            ) : leadPropertiesLoading ? (
+              <div className="flex justify-center py-8">
+                <RentalsHomeLoader />
+              </div>
+            ) : (
+              <div className="rounded-[var(--vistral-radius-lg)] border border-dashed border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-[var(--vistral-gray-50)] dark:bg-[var(--vistral-gray-900)] p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No hay propiedad seleccionada.
+                </p>
+              </div>
+            )}
+          </Phase2SectionWidget>
         </>
       )}
     </div>
@@ -965,6 +981,29 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
         onConfirm={handleFinaerConfirm}
         onCancel={() => setModalFinaer(false)}
       />
+      {modalRecuperacion && (
+        <MtpModalRecuperacion
+          open={!!modalRecuperacion}
+          onOpenChange={(open) => !open && setModalRecuperacion(null)}
+          leadsProperty={modalRecuperacion.leadsProperty}
+          propertyAddress={modalRecuperacion.address}
+          onConfirm={async (targetStatus, newVisitDate) => {
+            const updates: Record<string, unknown> = {};
+            if (newVisitDate) updates.visit_date = newVisitDate;
+            const result = await transition(
+              modalRecuperacion.leadsProperty.id,
+              targetStatus,
+              "revive",
+              updates
+            );
+            if (result?.completed) {
+              setModalRecuperacion(null);
+              await refetchLeadProperties();
+              await onLeadRefetch?.();
+            }
+          }}
+        />
+      )}
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { MTP_STATUS_TITLES, MTP_EXIT_STATUS_IDS, type MtpStatusId } from "./mtp-status";
 
-export type LeadEventType = "PROPERTY_ADDED" | "MTP_UPDATE" | "PHASE_CHANGE" | "PHASE_CHANGE_BACKWARD" | "MTP_ARCHIVED";
+export type LeadEventType = "PROPERTY_ADDED" | "MTP_UPDATE" | "PHASE_CHANGE" | "PHASE_CHANGE_BACKWARD" | "MTP_ARCHIVED" | "MTP_RECOVERED" | "PROPERTY_UNAVAILABLE";
 
 export interface LeadEventPayload {
   leads_unique_id: string;

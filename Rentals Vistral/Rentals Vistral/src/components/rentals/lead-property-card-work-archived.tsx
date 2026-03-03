@@ -14,6 +14,22 @@ const EN_ESPERA_REASON_LABELS: Record<string, string> = {
   propiedad_en_calificacion: "Otra propiedad en calificación",
 };
 
+const FINAER_REJECTION_LABELS: Record<string, string> = {
+  ingresos_insuficientes: "Ingresos insuficientes",
+  documentacion_incompleta: "Documentación incompleta",
+  historial_crediticio: "Historial crediticio negativo",
+  situacion_laboral: "Situación laboral inestable",
+  otro: "Otro motivo",
+};
+
+const OWNER_REJECTION_LABELS: Record<string, string> = {
+  perfil_no_adecuado: "Perfil no adecuado",
+  prefiere_sin_mascotas: "Prefiere inquilino sin mascotas",
+  ingresos_justos: "Ingresos demasiado justos",
+  preferencia_otro_candidato: "Prefiere otro candidato",
+  otro: "Otro motivo",
+};
+
 function getReasonLabel(status: string, exitReason: string): string {
   if (status === "descartada") {
     return DESCARTE_REASON_LABELS[exitReason] || exitReason;
@@ -23,6 +39,12 @@ function getReasonLabel(status: string, exitReason: string): string {
   }
   if (status === "no_disponible") {
     return "Propiedad No Disponible";
+  }
+  if (status === "rechazado_por_finaer") {
+    return FINAER_REJECTION_LABELS[exitReason] || "Rechazado por Finaer";
+  }
+  if (status === "rechazado_por_propietario") {
+    return OWNER_REJECTION_LABELS[exitReason] || "Rechazado por el Propietario";
   }
   if (status === "interesado_perdido" || status === "interesado_rechazado") {
     return exitReason;
@@ -37,6 +59,12 @@ function getDefaultComments(status: string, exitReason: string | null | undefine
   if (status === "en_espera" && (!exitReason || exitReason === "propiedad_en_calificacion")) {
     return "Esta propiedad ha sido puesta en espera automáticamente porque el interesado ha decidido alquilar otra vivienda.";
   }
+  if (status === "rechazado_por_finaer" && !exitReason) {
+    return "Esta oportunidad fue rechazada por Finaer durante el proceso de calificación.";
+  }
+  if (status === "rechazado_por_propietario" && !exitReason) {
+    return "Esta oportunidad fue rechazada por el propietario de la vivienda.";
+  }
   return null;
 }
 
@@ -47,6 +75,10 @@ const STATUS_CONTAINER_STYLES: Record<string, string> = {
     "bg-yellow-50/60 border-yellow-200/60 dark:bg-yellow-950/20 dark:border-yellow-900/40",
   no_disponible:
     "bg-gray-50/60 border-gray-200/60 dark:bg-gray-800/30 dark:border-gray-700/40",
+  rechazado_por_finaer:
+    "bg-rose-50/60 border-rose-200/60 dark:bg-rose-950/20 dark:border-rose-900/40",
+  rechazado_por_propietario:
+    "bg-rose-50/60 border-rose-200/60 dark:bg-rose-950/20 dark:border-rose-900/40",
   interesado_perdido:
     "bg-amber-50/60 border-amber-200/60 dark:bg-amber-950/20 dark:border-amber-900/40",
   interesado_rechazado:
@@ -57,6 +89,8 @@ const STATUS_ICON_STYLES: Record<string, string> = {
   descartada: "text-red-500 dark:text-red-400",
   en_espera: "text-yellow-600 dark:text-yellow-400",
   no_disponible: "text-gray-500 dark:text-gray-400",
+  rechazado_por_finaer: "text-rose-500 dark:text-rose-400",
+  rechazado_por_propietario: "text-rose-500 dark:text-rose-400",
   interesado_perdido: "text-amber-600 dark:text-amber-400",
   interesado_rechazado: "text-red-500 dark:text-red-400",
 };
