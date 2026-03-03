@@ -17,6 +17,7 @@ interface Lead {
   zone?: string;
   currentPhase: string;
   daysInPhase?: number;
+  phaseEnteredAt?: string;
   isHighlighted?: boolean;
   needsUpdate?: boolean;
 }
@@ -125,6 +126,16 @@ export function RentalsLeadCard({
         <div className="mb-2">
           <span className="text-xs text-muted-foreground">Zona: </span>
           <span className="text-xs font-medium text-foreground">{lead.zone}</span>
+        </div>
+      )}
+
+      {/* Días en fase */}
+      {lead.phaseEnteredAt && (
+        <div className="space-y-0.5 text-xs text-muted-foreground">
+          <p>
+            <span className="font-medium">Días en fase:</span>{" "}
+            {Math.max(0, Math.floor((Date.now() - new Date(lead.phaseEnteredAt).getTime()) / 86400000))} días
+          </p>
         </div>
       )}
     </div>

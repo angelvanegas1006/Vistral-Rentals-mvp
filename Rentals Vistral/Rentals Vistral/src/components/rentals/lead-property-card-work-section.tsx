@@ -25,6 +25,7 @@ export interface LeadPropertyCardWorkSectionProps {
   onReagendar?: () => void;
   onCancelarVisita?: () => void;
   onDescartar?: () => void;
+  isSelectedForQualification?: boolean;
 }
 
 /**
@@ -37,6 +38,7 @@ export function LeadPropertyCardWorkSection({
   onReagendar,
   onCancelarVisita,
   onDescartar,
+  isSelectedForQualification,
 }: LeadPropertyCardWorkSectionProps) {
   const status = leadsProperty.current_status ?? "interesado_cualificado";
 
@@ -82,6 +84,7 @@ export function LeadPropertyCardWorkSection({
           leadsProperty={leadsProperty}
           onUpdated={onUpdated}
           onTransition={onTransition}
+          isSelectedForQualification={isSelectedForQualification}
         />
       );
     case "calificacion_en_curso":

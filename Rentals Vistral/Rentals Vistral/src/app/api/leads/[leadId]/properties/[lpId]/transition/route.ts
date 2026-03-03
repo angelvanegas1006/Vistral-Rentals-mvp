@@ -304,6 +304,7 @@ export async function POST(
         .update({
           current_phase: calculatedPhase,
           days_in_phase: 0,
+          phase_entered_at: new Date().toISOString(),
         })
         .eq("leads_unique_id", leadId);
     }

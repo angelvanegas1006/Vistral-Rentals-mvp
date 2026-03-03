@@ -22,6 +22,7 @@ interface Lead {
   zone?: string;
   currentPhase: string;
   daysInPhase?: number;
+  phaseEnteredAt?: string;
   isHighlighted?: boolean;
   needsUpdate?: boolean;
 }
@@ -191,7 +192,11 @@ export function RentalsLeadsKanbanBoard({
   const filteredColumns = useMemo(() => {
     const processLeads = (leads: Lead[], highlight: boolean) =>
       [...leads]
-        .sort((a, b) => (a.daysInPhase ?? Infinity) - (b.daysInPhase ?? Infinity))
+        .sort((a, b) => {
+          const aTime = a.phaseEnteredAt ? new Date(a.phaseEnteredAt).getTime() : 0;
+          const bTime = b.phaseEnteredAt ? new Date(b.phaseEnteredAt).getTime() : 0;
+          return bTime - aTime;
+        })
         .map((lead) => ({ ...lead, isHighlighted: highlight }));
 
     if (!searchQuery.trim()) {

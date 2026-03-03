@@ -65,6 +65,7 @@ export function mapLeadFromSupabase(row: LeadRow) {
     zone: row.zone || undefined,
     currentPhase: row.current_phase,
     daysInPhase: row.days_in_phase,
+    phaseEnteredAt: row.phase_entered_at || undefined,
     called: row.called || undefined,
     discarded: row.discarded || undefined,
     scheduledDate: row.scheduled_date || undefined,

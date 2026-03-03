@@ -341,7 +341,7 @@ export function MtpModalRegistroActividad({
                             )}
                           </div>
 
-                          {isPast && onRevert && currentStatus !== "no_disponible" && (
+                          {isPast && onRevert && !isExit && (
                             <Button
                               variant="ghost"
                               size="sm"

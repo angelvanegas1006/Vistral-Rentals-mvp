@@ -204,6 +204,7 @@ interface LeadInsert {
   email: string;
   area_cluster: string;
   days_in_phase: number;
+  phase_entered_at: string;
   occupant_count: number;
   move_in_timeframe: string;
   lease_duration_preference: string;
@@ -218,6 +219,8 @@ function buildLead(phase: string, indexInPhase: number, uniqueId: string): LeadI
   const name = generateName();
   const { employment_status, job_title, monthly_net_income, has_guarantor } =
     generateEmploymentData();
+  const daysInPhase = random.int(0, 14);
+  const phaseEnteredAt = new Date(Date.now() - daysInPhase * 86400000).toISOString();
   return {
     leads_unique_id: uniqueId,
     current_phase: phase,
@@ -225,7 +228,8 @@ function buildLead(phase: string, indexInPhase: number, uniqueId: string): LeadI
     phone: generatePhone(),
     email: generateEmail(name),
     area_cluster: random.choice(AREA_CLUSTERS),
-    days_in_phase: random.int(0, 14),
+    days_in_phase: daysInPhase,
+    phase_entered_at: phaseEnteredAt,
     occupant_count: random.int(1, 5),
     move_in_timeframe: random.choice(MOVE_IN_TIMEFRAMES),
     lease_duration_preference: random.choice(LEASE_DURATION_PREFERENCES),

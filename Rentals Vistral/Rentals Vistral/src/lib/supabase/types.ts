@@ -389,15 +389,18 @@ export interface Database {
           family_profile: "Soltero" | "Pareja" | "Con hijos" | null;
           children_count: number | null;
           pet_info: Record<string, unknown> | null;
+          /** MTP seleccionada para calificación Finaer (Fase Recogiendo Información) */
+          qualification_property_id: string | null;
           /** Cierre global del lead (Perdido/Rechazado) */
           exit_reason: string | null;
           exit_comments: string | null;
           exited_at: string | null;
           needs_update: boolean;
+          phase_entered_at: string;
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["leads"]["Row"], "id" | "created_at" | "updated_at"> & {
+        Insert: Omit<Database["public"]["Tables"]["leads"]["Row"], "id" | "created_at" | "updated_at" | "phase_entered_at"> & {
           id?: string;
           created_at?: string;
           updated_at?: string;

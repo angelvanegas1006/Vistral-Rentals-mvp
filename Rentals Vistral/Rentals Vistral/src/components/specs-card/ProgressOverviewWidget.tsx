@@ -331,6 +331,18 @@ export function ProgressOverviewWidget({
       return { completed: 0, total: 1 };
     }
 
+    // Special handling for lead "Propiedad seleccionada para calificación" section
+    if (section.id === "selected-property") {
+      const hasSelected = formData["selected-property.has_selected_property"];
+      return { completed: hasSelected ? 1 : 0, total: 1 };
+    }
+
+    // Special handling for lead "Confirmación de envío a Finaer" section
+    if (section.id === "finaer-confirmation") {
+      const finaerSent = formData["finaer-confirmation.finaer_sent"];
+      return { completed: finaerSent ? 1 : 0, total: 1 };
+    }
+
     // Special handling for lead "Información Personal del Interesado" section
     if (section.id === "personal-info") {
       const nationality = formData["personal-info.nationality"];

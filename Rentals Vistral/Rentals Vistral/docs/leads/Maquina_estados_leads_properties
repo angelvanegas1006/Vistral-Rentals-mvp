@@ -164,7 +164,23 @@ Los motivos almacenados como `exit_reason` se traducen a etiquetas legibles:
 
 En lugar de botones manuales, el sistema evalúa constantemente el "Rango Máximo" de las MTPs activas. Si el Rango Máximo cambia, se dispara el **Modal de Confirmación de Transición** (ver Sección 6).
 
-### 4.1. Distribución de Tabs por Fase
+### 4.1. Orden de Visualización de MTPs en cada Tab
+
+#### Gestión de Propiedades (MTPs activas)
+Las MTPs activas se muestran **ordenadas por estado de más avanzado a menos avanzado**, usando `MTP_STATUS_RANK` como criterio. Esto permite al PM ver primero las propiedades que requieren atención más urgente (las más avanzadas en el embudo).
+
+| Posición | Estado | Rank |
+|----------|--------|------|
+| Arriba | Interesado Aceptado | 8 |
+| ... | ... | ... |
+| Abajo | Interesado Cualificado | 1 |
+
+#### Archivo de Propiedades (MTPs en estados de salida)
+Las MTPs archivadas se muestran **ordenadas por tiempo de desactivación: las más recientes arriba y las más antiguas abajo**. Se usa el campo `updated_at` de `leads_properties` como referencia de cuándo se desactivó la MTP (con fallback a `created_at`).
+
+**Implementación:** Sorting client-side en `src/components/rentals/lead-tasks-tab.tsx`, sin cambios en la API ni en la base de datos.
+
+### 4.2. Distribución de Tabs por Fase
 
 #### Fases 1-2: Interesado Cualificado / Visita Agendada (4 Tabs)
 
@@ -232,7 +248,7 @@ Sustituye al espacio de trabajo. Muestra un histórico/timeline de solo lectura 
 **Tab 2: Interesado `(⚠️ Componente ya implementado)`**
 Display de los datos personales y de contacto del interesado.
 
-### 4.2. Transiciones entre Fases
+### 4.3. Transiciones entre Fases
 
 #### Fase 1 -> Fase 2: Interesado Cualificado -> Visita Agendada
 * **Condición:** Al menos una MTP pasa a `Visita Agendada`.
