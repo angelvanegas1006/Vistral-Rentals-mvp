@@ -366,18 +366,42 @@ async function main() {
     process.exit(0);
   }
 
-  // 3. Borrar registros existentes
+  // 3. Borrar lead_events y leads_properties existentes
   const leadIds = leads.map((l) => l.leads_unique_id);
+
+  console.log("Borrando lead_events existentes...");
+  const { error: eventsDeleteError } = await supabase
+    .from("lead_events")
+    .delete()
+    .in("leads_unique_id", leadIds);
+
+  if (eventsDeleteError) {
+    console.warn("Advertencia al limpiar lead_events:", eventsDeleteError.message);
+  }
+
+  console.log("Borrando leads_properties existentes...");
   const { error: deleteError } = await supabase
     .from("leads_properties")
     .delete()
     .in("leads_unique_id", leadIds);
 
   if (deleteError) {
-    console.warn("Advertencia al limpiar registros previos:", deleteError.message);
+    console.warn("Advertencia al limpiar leads_properties:", deleteError.message);
   }
 
   // 4. Generar MTPs coherentes
+  //
+  // Strategy: process "Interesado Aceptado" leads first so we can reserve
+  // their primary property IDs; then assign other leads using a property
+  // picker that avoids reserved IDs for primary MTPs.
+
+  const acceptedLeads = leads.filter((l) => l.current_phase === "Interesado Aceptado");
+  const otherLeads = leads.filter((l) => l.current_phase !== "Interesado Aceptado");
+
+  const acceptedPropertyIds = new Set<string>();
+  const primaryRecords = new Set<MtpRecord>();
+  const allRecords: MtpRecord[] = [];
+
   let propIdx = 0;
   const nextProperty = (): string => {
     const id = publishedIds[propIdx % publishedIds.length];
@@ -385,41 +409,56 @@ async function main() {
     return id;
   };
 
-  const allRecords: MtpRecord[] = [];
-  // Track which properties are "accepted" (lead in Interesado Aceptado)
-  const acceptedPropertyIds = new Set<string>();
-
-  // First pass: generate MTPs for each lead
-  for (const lead of leads) {
-    const phase = lead.current_phase ?? "Interesado Cualificado";
-    const leadId = lead.leads_unique_id;
-
-    const primaryStatus = getPrimaryMtpStatusForPhase(phase);
-    const primaryPropertyId = nextProperty();
-
-    // Primary MTP
-    allRecords.push(
-      createMtpRecord(leadId, primaryPropertyId, primaryStatus, null)
-    );
-
-    if (phase === "Interesado Aceptado") {
-      acceptedPropertyIds.add(primaryPropertyId);
+  const nextPropertyExcluding = (excluded: Set<string>): string => {
+    const maxAttempts = publishedIds.length;
+    for (let i = 0; i < maxAttempts; i++) {
+      const id = nextProperty();
+      if (!excluded.has(id)) return id;
     }
+    return nextProperty();
+  };
 
-    // Secondary MTPs
-    const secondaries = getSecondaryMtpStatuses(phase, primaryStatus);
+  // Phase A: generate MTPs for "Interesado Aceptado" leads, reserve their primary properties
+  for (const lead of acceptedLeads) {
+    const leadId = lead.leads_unique_id;
+    const primaryPropertyId = nextProperty();
+    acceptedPropertyIds.add(primaryPropertyId);
+
+    const primary = createMtpRecord(leadId, primaryPropertyId, "interesado_aceptado", null);
+    primaryRecords.add(primary);
+    allRecords.push(primary);
+
+    const secondaries = getSecondaryMtpStatuses("Interesado Aceptado", "interesado_aceptado");
     for (const sec of secondaries) {
-      const secPropertyId = nextProperty();
       allRecords.push(
-        createMtpRecord(leadId, secPropertyId, sec.status, sec.previousStatus)
+        createMtpRecord(leadId, nextProperty(), sec.status, sec.previousStatus)
       );
     }
   }
 
-  // Second pass: for properties that are "accepted", mark them as no_disponible
-  // in OTHER leads' MTPs (if any other lead has an MTP for the same property)
-  // Since we use round-robin, collisions are possible; handle them
+  // Phase B: generate MTPs for all other leads, skipping reserved properties for primary MTPs
+  for (const lead of otherLeads) {
+    const phase = lead.current_phase ?? "Interesado Cualificado";
+    const leadId = lead.leads_unique_id;
+
+    const primaryStatus = getPrimaryMtpStatusForPhase(phase);
+    const primaryPropertyId = nextPropertyExcluding(acceptedPropertyIds);
+
+    const primary = createMtpRecord(leadId, primaryPropertyId, primaryStatus, null);
+    primaryRecords.add(primary);
+    allRecords.push(primary);
+
+    const secondaries = getSecondaryMtpStatuses(phase, primaryStatus);
+    for (const sec of secondaries) {
+      allRecords.push(
+        createMtpRecord(leadId, nextProperty(), sec.status, sec.previousStatus)
+      );
+    }
+  }
+
+  // Phase C: mark colliding secondary MTPs as no_disponible (protect primary MTPs)
   for (const record of allRecords) {
+    if (primaryRecords.has(record)) continue;
     if (
       acceptedPropertyIds.has(record.properties_unique_id) &&
       record.current_status !== "interesado_aceptado"
@@ -446,7 +485,40 @@ async function main() {
     process.exit(1);
   }
 
-  // 6. Summary
+  // 6. Verification pass: leads with no active MTPs must be "Interesado Cualificado"
+  const EXIT_STATUSES = new Set([
+    "en_espera", "descartada", "no_disponible",
+    "interesado_perdido", "interesado_rechazado",
+  ]);
+
+  const mtpsByLead = new Map<string, MtpRecord[]>();
+  for (const r of allRecords) {
+    const list = mtpsByLead.get(r.leads_unique_id) ?? [];
+    list.push(r);
+    mtpsByLead.set(r.leads_unique_id, list);
+  }
+
+  const leadsToCorrect: string[] = [];
+  for (const [leadId, mtps] of mtpsByLead) {
+    const hasActive = mtps.some((m) => !EXIT_STATUSES.has(m.current_status));
+    if (!hasActive) leadsToCorrect.push(leadId);
+  }
+
+  if (leadsToCorrect.length > 0) {
+    console.log(`\nCorrigiendo ${leadsToCorrect.length} leads sin MTPs activas → "Interesado Cualificado":`);
+    console.log(`  ${leadsToCorrect.join(", ")}`);
+
+    const { error: updateError } = await supabase
+      .from("leads")
+      .update({ current_phase: "Interesado Cualificado" })
+      .in("leads_unique_id", leadsToCorrect);
+
+    if (updateError) {
+      console.error("Error actualizando fases de leads:", updateError.message);
+    }
+  }
+
+  // 7. Summary
   const statusCounts: Record<string, number> = {};
   for (const r of allRecords) {
     statusCounts[r.current_status] = (statusCounts[r.current_status] ?? 0) + 1;

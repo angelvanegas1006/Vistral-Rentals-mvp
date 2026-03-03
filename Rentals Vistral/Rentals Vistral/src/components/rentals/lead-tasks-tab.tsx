@@ -40,6 +40,15 @@ const LEAD_PHASE1_SECTIONS = [
   },
 ];
 
+const LEAD_PHASE2_SECTIONS = [
+  {
+    id: "mtp-rental-process",
+    title: "Iniciar proceso de alquiler",
+    required: true,
+    fields: [{ id: "has_rental_process_started", required: true }],
+  },
+];
+
 const LEAD_PHASE3_SECTIONS = [
   {
     id: "personal-info",
@@ -269,9 +278,17 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
     );
   }, [activeItems]);
 
+  const hasRentalProcessStarted = useMemo(() => {
+    const RECOGIENDO_MIN_RANK = MTP_STATUS_RANK.recogiendo_informacion;
+    return activeItems.some(
+      (i) => getMtpRank(i.leadsProperty.current_status ?? "") >= RECOGIENDO_MIN_RANK
+    );
+  }, [activeItems]);
+
   const phase1FormData = useMemo<Record<string, unknown>>(() => ({
     "mtp-visit-scheduled.has_visit_scheduled": hasVisitScheduled ? "yes" : undefined,
-  }), [hasVisitScheduled]);
+    "mtp-rental-process.has_rental_process_started": hasRentalProcessStarted ? "yes" : undefined,
+  }), [hasVisitScheduled, hasRentalProcessStarted]);
 
   const isPersonalComplete = isSectionComplete(liveFormData);
   const isEmploymentComplete = isEmploymentFinancialComplete(mergedFormData);
@@ -580,7 +597,9 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
 
   const phase1Sections = lead.currentPhase === "Interesado Cualificado"
     ? LEAD_PHASE1_SECTIONS
-    : [];
+    : lead.currentPhase === "Visita Agendada"
+      ? LEAD_PHASE2_SECTIONS
+      : [];
 
   const renderPropertyManagementView = useCallback(
     (items: typeof activeItems, showProgress: boolean) => (

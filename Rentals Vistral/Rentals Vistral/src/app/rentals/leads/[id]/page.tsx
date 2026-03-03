@@ -10,6 +10,7 @@ import { LeadGestionRegistroTab } from "@/components/rentals/lead-gestion-regist
 import { LeadResolutionTab } from "@/components/rentals/lead-resolution-tab";
 import { LeadClosureModal, type LeadClosureType } from "@/components/rentals/lead-closure-modal";
 import { LeadRightSidebar } from "@/components/rentals/lead-right-sidebar";
+import { LeadContactCard } from "@/components/rentals/lead-contact-card";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { Button } from "@/components/ui/button";
 import { useLead } from "@/hooks/use-lead";
@@ -295,7 +296,12 @@ export default function LeadDetailPage() {
                 </div>
               </div>
 
-              <div className="lg:col-span-1 space-y-8 relative">
+              <div className="lg:col-span-1 space-y-4 relative">
+                <LeadContactCard
+                  name={lead.name}
+                  phone={lead.phone}
+                  email={lead.email}
+                />
                 <LeadRightSidebar leadId={lead.leadsUniqueId} refetchRef={eventsRefetchRef} />
               </div>
         </div>

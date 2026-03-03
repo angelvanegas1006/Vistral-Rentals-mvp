@@ -1247,7 +1247,84 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
   return (
     <div className="space-y-6">
-      {/* Sección 1: Presentación al Cliente */}
+      {/* Sección 1: Estrategia de Precio */}
+      <Phase2SectionWidget
+        id="pricing-strategy"
+        title="Estrategia de Precio"
+        instructions={getSectionInstructions("pricing-strategy")}
+        required
+        isComplete={isSection2Complete()}
+      >
+        <div className="space-y-4">
+          <FinancialPerformanceWidget 
+            property={{
+              ...supabaseProperty,
+              announcement_price: announcementPrice ? parseFloat(announcementPrice) : supabaseProperty.announcement_price,
+            }} 
+            currentPhase="Listo para Alquilar" 
+          />
+          
+          <div className="space-y-2">
+            <Label htmlFor="announcement-price" className="text-sm font-medium">
+              Precio de Publicación <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              ref={announcementPriceInputRef}
+              id="announcement-price"
+              type="number"
+              placeholder="Ej: 1200"
+              value={announcementPrice || ""}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                handleAnnouncementPriceChange(newValue);
+              }}
+              min="0"
+              step="0.01"
+            />
+          </div>
+
+          {announcementPrice && parseFloat(announcementPrice) > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  ¿Ha aprobado el cliente este precio de publicación? <span className="text-red-500">*</span>
+                </Label>
+                {priceApproval !== null && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleClearPriceApproval();
+                    }}
+                    className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Borrar selección
+                  </Button>
+                )}
+              </div>
+              <RadioGroup
+                value={priceApproval === null ? "" : priceApproval ? "yes" : "no"}
+                onValueChange={handlePriceApprovalChange}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="approval-yes" />
+                  <Label htmlFor="approval-yes" className="cursor-pointer">Sí</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="approval-no" />
+                  <Label htmlFor="approval-no" className="cursor-pointer">No</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}
+        </div>
+      </Phase2SectionWidget>
+
+      {/* Sección 2: Presentación al Cliente */}
       <Phase2SectionWidget
         id="client-presentation"
         title="Presentación al Cliente"
@@ -1349,84 +1426,6 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                 </RadioGroup>
               </div>
             </>
-          )}
-        </div>
-      </Phase2SectionWidget>
-
-      {/* Sección 2: Estrategia de Precio */}
-      <Phase2SectionWidget
-        id="pricing-strategy"
-        title="Estrategia de Precio"
-        instructions={getSectionInstructions("pricing-strategy")}
-        required
-        isComplete={isSection2Complete()}
-      >
-        <div className="space-y-4">
-          <FinancialPerformanceWidget 
-            property={{
-              ...supabaseProperty,
-              announcement_price: announcementPrice ? parseFloat(announcementPrice) : supabaseProperty.announcement_price,
-            }} 
-            currentPhase="Listo para Alquilar" 
-          />
-          
-          <div className="space-y-2">
-            <Label htmlFor="announcement-price" className="text-sm font-medium">
-              Precio de Publicación <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              ref={announcementPriceInputRef}
-              id="announcement-price"
-              type="number"
-              placeholder="Ej: 1200"
-              value={announcementPrice || ""}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                // Permitir cadena vacía para que el usuario pueda escribir números seguidos
-                handleAnnouncementPriceChange(newValue);
-              }}
-              min="0"
-              step="0.01"
-            />
-          </div>
-
-          {announcementPrice && parseFloat(announcementPrice) > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  ¿Ha aprobado el cliente este precio de publicación? <span className="text-red-500">*</span>
-                </Label>
-                {priceApproval !== null && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleClearPriceApproval();
-                    }}
-                    className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Borrar selección
-                  </Button>
-                )}
-              </div>
-              <RadioGroup
-                value={priceApproval === null ? "" : priceApproval ? "yes" : "no"}
-                onValueChange={handlePriceApprovalChange}
-                className="flex gap-6"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="approval-yes" />
-                  <Label htmlFor="approval-yes" className="cursor-pointer">Sí</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="approval-no" />
-                  <Label htmlFor="approval-no" className="cursor-pointer">No</Label>
-                </div>
-              </RadioGroup>
-            </div>
           )}
         </div>
       </Phase2SectionWidget>

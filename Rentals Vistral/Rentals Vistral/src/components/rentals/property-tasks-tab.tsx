@@ -199,6 +199,15 @@ export function PropertyTasksTab({
       case "Listo para Alquilar":
         return [
           {
+            id: "pricing-strategy",
+            title: "Estrategia de Precio",
+            required: true,
+            fields: [
+              { id: "announcementPrice", required: true },
+              { id: "priceApproval", required: true },
+            ],
+          },
+          {
             id: "client-presentation",
             title: "Presentación al Cliente",
             required: true,
@@ -206,15 +215,6 @@ export function PropertyTasksTab({
               { id: "clientPresentationDone", required: true },
               { id: "clientPresentationDate", required: true },
               { id: "clientPresentationChannel", required: true },
-            ],
-          },
-          {
-            id: "pricing-strategy",
-            title: "Estrategia de Precio",
-            required: true,
-            fields: [
-              { id: "announcementPrice", required: true },
-              { id: "priceApproval", required: true },
             ],
           },
           {

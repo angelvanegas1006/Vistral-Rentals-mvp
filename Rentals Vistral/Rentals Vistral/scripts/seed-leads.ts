@@ -245,8 +245,32 @@ function buildLead(phase: string, indexInPhase: number, uniqueId: string): LeadI
 async function main() {
   console.log("Iniciando seed de leads (30 registros)...\n");
 
-  // 1. Borrar todos los leads existentes
-  console.log("Borrando registros existentes en la tabla leads...");
+  // 1. Borrar lead_events, leads_properties y leads (en ese orden)
+  console.log("Borrando registros existentes en lead_events...");
+  const { error: eventsDeleteError } = await supabase
+    .from("lead_events")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000");
+
+  if (eventsDeleteError) {
+    console.error("Error borrando lead_events:", eventsDeleteError.message);
+    process.exit(1);
+  }
+  console.log("lead_events borrados.");
+
+  console.log("Borrando registros existentes en leads_properties...");
+  const { error: lpDeleteError } = await supabase
+    .from("leads_properties")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000");
+
+  if (lpDeleteError) {
+    console.error("Error borrando leads_properties:", lpDeleteError.message);
+    process.exit(1);
+  }
+  console.log("leads_properties borrados.");
+
+  console.log("Borrando registros existentes en leads...");
   const { error: deleteError } = await supabase
     .from("leads")
     .delete()
@@ -256,7 +280,7 @@ async function main() {
     console.error("Error borrando leads:", deleteError.message);
     process.exit(1);
   }
-  console.log("Leads existentes borrados.\n");
+  console.log("Leads borrados.\n");
 
   // 2. Generar e insertar los 30 nuevos leads (solo en las 6 fases principales, no en terminales)
   const MAIN_PHASES = PHASES.slice(0, 6); // Excluir Interesado Perdido e Interesado Rechazado

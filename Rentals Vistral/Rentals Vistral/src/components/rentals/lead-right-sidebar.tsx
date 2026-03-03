@@ -122,7 +122,7 @@ export function LeadRightSidebar({ leadId, refetchRef }: LeadRightSidebarProps) 
   return (
     <div className="w-full lg:w-80 border-l-0 lg:border-l bg-white dark:bg-[var(--vistral-gray-900)] rounded-lg border border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-800)] shadow-sm">
       <div className="p-5">
-        <h3 className="text-sm font-semibold text-[#111827] dark:text-[#F9FAFB] mb-4">
+        <h3 className="text-base font-semibold text-foreground mb-4">
           Registro de Actividad
         </h3>
 
@@ -145,7 +145,7 @@ export function LeadRightSidebar({ leadId, refetchRef }: LeadRightSidebarProps) 
         )}
 
         {!loading && !error && events.length > 0 && (
-          <div className="max-h-[calc(100vh-22rem)] overflow-y-auto pr-1 scrollbar-thin">
+          <div className="max-h-[calc(100vh-34rem)] overflow-y-auto pr-1 scrollbar-thin">
             <div className="space-y-0">
               {events.map((event, index) => (
                 <EventItem
