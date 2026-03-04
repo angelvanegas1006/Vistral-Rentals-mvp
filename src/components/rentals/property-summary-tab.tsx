@@ -315,7 +315,7 @@ export function PropertySummaryTab({ propertyId, currentPhase, property, showInt
     
     // For renovation files, store the full array (handled separately with SmartDocumentFieldArray)
     legalArrayDocs.renovationFiles = localProperty.doc_renovation_files && Array.isArray(localProperty.doc_renovation_files)
-      ? (localProperty.doc_renovation_files as string[])
+      ? localProperty.doc_renovation_files
       : null;
 
     // Insurance documents - ALWAYS include, even when NULL
@@ -367,20 +367,20 @@ export function PropertySummaryTab({ propertyId, currentPhase, property, showInt
 
     const filterSuppliesBySearch = (supplies: typeof allDocs.supplies): typeof allDocs.supplies => {
       if (!searchLower) return supplies;
-      const filtered: Record<string, any> = {};
+      const filtered: typeof supplies = {};
       Object.keys(supplies).forEach((key) => {
-        const utility = (supplies as any)[key];
+        const utility = supplies[key as keyof typeof supplies];
         if (!utility) return;
-        const contractMatch = utility.contract?.name?.toLowerCase().includes(searchLower);
-        const billMatch = utility.bill?.name?.toLowerCase().includes(searchLower);
+        const contractMatch = utility.contract?.name.toLowerCase().includes(searchLower);
+        const billMatch = utility.bill?.name.toLowerCase().includes(searchLower);
         if (contractMatch || billMatch) {
-          filtered[key] = utility;
+          filtered[key as keyof typeof supplies] = utility;
         }
       });
-      return filtered as typeof allDocs.supplies;
+      return filtered;
     };
 
-    let result: any = { legal: [], legalArrays: { renovationFiles: null }, insurance: [], supplies: {} };
+    let result: typeof allDocs = { legal: [], legalArrays: { renovationFiles: null }, insurance: [], supplies: {} };
 
     if (documentFilter === "all") {
       result = {

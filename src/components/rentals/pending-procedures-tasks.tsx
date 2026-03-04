@@ -942,7 +942,7 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
 interface SuppliesChangeSectionProps {
   propertyId: string;
   supabaseProperty: any;
-  updateProperty: (id: string, updates: any) => Promise<boolean | void>;
+  updateProperty: (id: string, updates: any) => Promise<void>;
   isTaskCompleted: (taskType: string, phase?: string) => boolean;
   updateTask: (taskType: string, phase: string, updates: { is_completed?: boolean; task_data?: Record<string, any> }) => Promise<void>;
   PHASE: string;

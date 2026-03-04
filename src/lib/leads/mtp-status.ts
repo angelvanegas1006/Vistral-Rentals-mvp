@@ -27,6 +27,8 @@ export const MTP_STATUS_IDS = [
   "en_espera",
   "descartada",
   "no_disponible",
+  "rechazado_por_finaer",
+  "rechazado_por_propietario",
   "interesado_perdido",
   "interesado_rechazado",
 ] as const;
@@ -45,6 +47,8 @@ export const MTP_STATUS_TITLES: Record<MtpStatusId, string> = {
   en_espera: "En Espera",
   descartada: "Descartada",
   no_disponible: "No Disponible",
+  rechazado_por_finaer: "Rechazado por Finaer",
+  rechazado_por_propietario: "Rechazado por el Propietario",
   interesado_perdido: "Interesado Perdido",
   interesado_rechazado: "Interesado Rechazado",
 };
@@ -62,6 +66,8 @@ export const MTP_STATUS_RANK: Record<MtpStatusId, number> = {
   en_espera: 0,
   descartada: 0,
   no_disponible: 0,
+  rechazado_por_finaer: 0,
+  rechazado_por_propietario: 0,
   interesado_perdido: 0,
   interesado_rechazado: 0,
 };
@@ -71,6 +77,8 @@ export const MTP_EXIT_STATUS_IDS: MtpStatusId[] = [
   "en_espera",
   "descartada",
   "no_disponible",
+  "rechazado_por_finaer",
+  "rechazado_por_propietario",
   "interesado_perdido",
   "interesado_rechazado",
 ];
@@ -97,6 +105,8 @@ export const MTP_STATUS_TO_LEAD_PHASE: Record<MtpStatusId, LeadPhaseId | null> =
   en_espera: null,
   descartada: null,
   no_disponible: null,
+  rechazado_por_finaer: null,
+  rechazado_por_propietario: null,
   interesado_perdido: "interesado-perdido",
   interesado_rechazado: "interesado-rechazado",
 };

@@ -82,6 +82,7 @@ export async function POST(
         exit_comments: exit_comments?.trim() || null,
         exited_at: new Date().toISOString(),
         days_in_phase: 0,
+        phase_entered_at: new Date().toISOString(),
       })
       .eq("leads_unique_id", leadId)
       .select("leads_unique_id")

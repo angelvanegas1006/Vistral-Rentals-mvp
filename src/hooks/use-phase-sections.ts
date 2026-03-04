@@ -133,6 +133,16 @@ export function usePhaseSections(currentPhase: string) {
   // Sections for "Listo para Alquilar" phase - Fase 2
   const readyToRentSections = [
     {
+      id: "pricing-strategy",
+      title: "Estrategia de Precio",
+      instructions: "Define y aprueba el precio de salida al mercado",
+      required: true,
+      fields: [
+        { id: "announcement_price", type: "number", label: "Precio de Publicación", required: true },
+        { id: "price_approval", type: "radio", label: "¿Ha aprobado el cliente este precio de publicación?", required: true },
+      ],
+    },
+    {
       id: "client-presentation",
       title: "Presentación al Cliente",
       instructions: "Confirma el contacto inicial y alineación con el propietario",
@@ -141,16 +151,6 @@ export function usePhaseSections(currentPhase: string) {
         { id: "client_presentation_done", type: "radio", label: "¿Se ha realizado la presentación del servicio al cliente?", required: true },
         { id: "client_presentation_date", type: "date", label: "Fecha de Presentación", required: true },
         { id: "client_presentation_channel", type: "radio", label: "Canal de Comunicación", required: true },
-      ],
-    },
-    {
-      id: "pricing-strategy",
-      title: "Estrategia de Precio",
-      instructions: "Define y aprueba el precio de salida al mercado",
-      required: true,
-      fields: [
-        { id: "announcement_price", type: "number", label: "Precio de Publicación", required: true },
-        { id: "price_approval", type: "radio", label: "¿Ha aprobado el cliente este precio de publicación?", required: true },
       ],
     },
     {

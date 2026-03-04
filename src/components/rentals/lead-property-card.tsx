@@ -44,6 +44,10 @@ const MTP_STATUS_BADGE_CLASSES: Record<MtpStatusId, string> = {
     "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
   no_disponible:
     "border-gray-200 bg-gray-100 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  rechazado_por_finaer:
+    "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300",
+  rechazado_por_propietario:
+    "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300",
   interesado_perdido:
     "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
   interesado_rechazado:
@@ -70,6 +74,8 @@ const MTP_NO_ACTION_STATUSES = new Set([
   "en_espera",
   "descartada",
   "no_disponible",
+  "rechazado_por_finaer",
+  "rechazado_por_propietario",
   "interesado_perdido",
   "interesado_rechazado",
 ]);

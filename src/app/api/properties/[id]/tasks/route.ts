@@ -51,7 +51,7 @@ export async function POST(
     // Check if task exists
     const { data: existing } = await supabase
       .from("property_tasks")
-      .select("id, is_completed, task_data")
+      .select("id")
       .eq("property_id", propertyId)
       .eq("phase", phase)
       .eq("task_type", task_type)

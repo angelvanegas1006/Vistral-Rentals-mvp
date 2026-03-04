@@ -69,7 +69,7 @@ export function PropertyDocumentsTab({ propertyId, currentPhase, property }: Pro
     ];
     
     const hasMatchingCustomDoc = customFields.some(fieldName => {
-      const docs = Array.isArray((localProperty as any)[fieldName]) ? (localProperty as any)[fieldName] : [];
+      const docs = Array.isArray(localProperty[fieldName]) ? localProperty[fieldName] : [];
       return docs.some((doc: any) => matchesSearch(doc.title || ""));
     });
     

@@ -10,6 +10,7 @@ import { LeadGestionRegistroTab } from "@/components/rentals/lead-gestion-regist
 import { LeadResolutionTab } from "@/components/rentals/lead-resolution-tab";
 import { LeadClosureModal, type LeadClosureType } from "@/components/rentals/lead-closure-modal";
 import { LeadRightSidebar } from "@/components/rentals/lead-right-sidebar";
+import { LeadContactCard } from "@/components/rentals/lead-contact-card";
 import { RentalsHomeLoader } from "@/components/rentals/rentals-home-loader";
 import { Button } from "@/components/ui/button";
 import { useLead } from "@/hooks/use-lead";
@@ -106,6 +107,7 @@ export default function LeadDetailPage() {
         familyProfile: leadRow.family_profile ?? undefined,
         childrenCount: leadRow.children_count ?? undefined,
         petInfo: leadRow.pet_info ?? undefined,
+        qualificationPropertyId: leadRow.qualification_property_id ?? null,
         exitReason: leadRow.exit_reason ?? null,
         exitComments: leadRow.exit_comments ?? null,
         exitedAt: leadRow.exited_at ?? null,
@@ -213,8 +215,7 @@ export default function LeadDetailPage() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
-                className="text-amber-700 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-900/20"
+                className="text-sm text-amber-700 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-900/20"
                 onClick={() => handleOpenClosureModal("perdido")}
               >
                 <TrendingDown className="h-4 w-4 mr-1.5" />
@@ -222,8 +223,7 @@ export default function LeadDetailPage() {
               </Button>
               <Button
                 variant="outline"
-                size="sm"
-                className="text-red-700 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/20"
+                className="text-sm text-red-700 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/20"
                 onClick={() => handleOpenClosureModal("rechazado")}
               >
                 <Ban className="h-4 w-4 mr-1.5" />
@@ -295,7 +295,12 @@ export default function LeadDetailPage() {
                 </div>
               </div>
 
-              <div className="lg:col-span-1 space-y-8 relative">
+              <div className="lg:col-span-1 space-y-4 relative">
+                <LeadContactCard
+                  name={lead.name}
+                  phone={lead.phone}
+                  email={lead.email}
+                />
                 <LeadRightSidebar leadId={lead.leadsUniqueId} refetchRef={eventsRefetchRef} />
               </div>
         </div>

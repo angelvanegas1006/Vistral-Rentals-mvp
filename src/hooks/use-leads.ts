@@ -43,8 +43,8 @@ export function useLeads(options: UseLeadsOptions = {}) {
         );
       }
 
-      const { data, error: fetchError } = await query.order("days_in_phase", {
-        ascending: true,
+      const { data, error: fetchError } = await query.order("phase_entered_at", {
+        ascending: false,
       });
 
       if (fetchError) throw fetchError;

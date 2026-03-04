@@ -37,6 +37,7 @@ export const translations = {
       acquisitionAndClosing: "Captación y Cierre",
       portfolio: "Gestión De Cartera",
       leads: "Interesados",
+      team: "Equipo",
       logout: "Cerrar Sesión",
     },
 
@@ -153,6 +154,23 @@ export const translations = {
       },
     },
 
+    // Team
+    team: {
+      title: "Equipo",
+      subtitle: "Gestiona los usuarios de la plataforma",
+      addUser: "Añadir Usuario",
+      fullName: "Nombre Completo",
+      email: "Email",
+      role: "Rol",
+      createdAt: "Fecha de Creación",
+      temporaryPassword: "Contraseña Temporal",
+      creating: "Creando...",
+      createUser: "Crear Usuario",
+      userCreated: "Usuario creado correctamente",
+      userCreateError: "Error al crear el usuario",
+      noMembers: "No hay miembros registrados",
+    },
+
     // Errors
     errors: {
       generic: "Ha ocurrido un error. Por favor, inténtalo de nuevo.",
@@ -200,6 +218,7 @@ export const translations = {
       acquisitionAndClosing: "Acquisition and Closing",
       portfolio: "Portfolio Management",
       leads: "Interested",
+      team: "Team",
       logout: "Sign Out",
     },
 
@@ -314,6 +333,23 @@ export const translations = {
         daysToStart: "Days to start",
         daysToList: "Days to list",
       },
+    },
+
+    // Team
+    team: {
+      title: "Team",
+      subtitle: "Manage platform users",
+      addUser: "Add User",
+      fullName: "Full Name",
+      email: "Email",
+      role: "Role",
+      createdAt: "Created At",
+      temporaryPassword: "Temporary Password",
+      creating: "Creating...",
+      createUser: "Create User",
+      userCreated: "User created successfully",
+      userCreateError: "Error creating user",
+      noMembers: "No members registered",
     },
 
     // Errors

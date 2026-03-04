@@ -13,7 +13,8 @@ import {
   HelpCircle,
   LogOut,
   Bell,
-  Users,
+  ContactRound,
+  UsersRound,
   Menu,
   X,
   ChevronDown,
@@ -44,7 +45,7 @@ export function RentalsSidebar() {
   const sidebarRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAppAuth();
+  const { user, signOut, profile } = useAppAuth();
   const { t } = useI18n();
 
   // Detectar mobile y ajustar estado colapsado
@@ -95,13 +96,20 @@ export function RentalsSidebar() {
     {
       label: t("nav.leads"),
       href: "/rentals/leads",
-      icon: Users,
+      icon: ContactRound,
       useCustomIcon: false,
     },
   ];
 
   // Items de configuración
   const configItems = [
+    {
+      label: t("nav.team"),
+      href: "/rentals/team",
+      icon: UsersRound,
+      badge: 0,
+      comingSoon: false,
+    },
     {
       label: t("sidebar.notifications"),
       href: "/rentals/notifications",
@@ -141,12 +149,15 @@ export function RentalsSidebar() {
     if (href === "/rentals/leads") {
       return pathname?.startsWith("/rentals/leads");
     }
+    if (href === "/rentals/team") {
+      return pathname === "/rentals/team";
+    }
     return pathname?.startsWith(href + "/") || pathname === href;
   };
 
   const email = user?.email || "user@example.com";
-  const userInitial = email.charAt(0).toUpperCase();
-  const userRole = "usuario"; // TODO: Obtener del usuario real
+  const userInitial = (profile?.full_name?.charAt(0) || email.charAt(0)).toUpperCase();
+  const userRole = profile?.role || "usuario";
 
   // Renderizar item de navegación
   const renderNavItem = (
@@ -360,6 +371,11 @@ export function RentalsSidebar() {
                 );
               })}
             </nav>
+          )}
+
+          {/* Separator between platform and config */}
+          {collapsed && (
+            <div className="my-3 mx-1 border-t border-border" />
           )}
 
           {/* Settings */}

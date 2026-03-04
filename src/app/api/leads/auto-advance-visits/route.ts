@@ -71,7 +71,7 @@ export async function POST() {
       }
     }
 
-    for (const leadId of Array.from(affectedLeadIds)) {
+    for (const leadId of affectedLeadIds) {
       const { data: leadRow } = await supabase
         .from("leads")
         .select("current_phase")

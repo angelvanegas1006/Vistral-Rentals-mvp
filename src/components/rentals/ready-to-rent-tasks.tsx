@@ -11,7 +11,6 @@ import { useProperty } from "@/hooks/use-property";
 import { Upload, X, XCircle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
 import { Phase2SectionWidget } from "./phase2-section-widget";
 import { FinancialPerformanceWidget } from "@/components/property/FinancialPerformanceWidget";
 import { StatusSelector } from "./status-selector";
@@ -52,7 +51,24 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
   const lastPropertyIdRef = useRef<string | null>(null);
   const announcementPriceInputRef = useRef<HTMLInputElement>(null);
   const idealistaDescriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
-  
+  const commentSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const saveTechnicalInspectionReport = async (updatedReport: TechnicalInspectionReport) => {
+    if (!supabaseProperty?.property_unique_id) return;
+    const response = await fetch(`/api/properties/${encodeURIComponent(supabaseProperty.property_unique_id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ technical_inspection_report: updatedReport }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(errorData.error || `Update failed with status ${response.status}`);
+    }
+    window.dispatchEvent(new CustomEvent('property-updated', {
+      detail: { propertyId: supabaseProperty.property_unique_id }
+    }));
+  };
+
   // Helper para obtener las instrucciones de una sección
   const getSectionInstructions = (sectionId: string): string | undefined => {
     const section = phaseSections.find(s => s.id === sectionId);
@@ -158,6 +174,14 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       setOpenRooms([]); // Resetear el estado del Accordion cuando cambia la propiedad
     }
   }, [property.property_unique_id]);
+
+  useEffect(() => {
+    return () => {
+      if (commentSaveTimeoutRef.current) {
+        clearTimeout(commentSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Inicializar datos desde Supabase
   useEffect(() => {
@@ -595,27 +619,15 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         return updatedReport;
       });
 
-      // Save to Supabase
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from("properties")
-        .update({ technical_inspection_report: updatedReport! })
-        .eq("property_unique_id", supabaseProperty.property_unique_id);
-      
-      if (!updateError) {
-        // Disparar evento para actualizar el widget de progreso y otros componentes
-        window.dispatchEvent(new CustomEvent('property-updated', {
-          detail: { propertyId: supabaseProperty.property_unique_id }
-        }));
-      }
+      await saveTechnicalInspectionReport(updatedReport!);
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error(`Error al actualizar el estado: ${error instanceof Error ? error.message : "Error desconocido"}`);
     }
   };
 
-  // Handlers Sección 3: Comentarios
-  const handleCommentChange = async (
+  // Handlers Sección 3: Comentarios (debounced save)
+  const handleCommentChange = (
     fieldName: string,
     comment: string,
     roomIndex?: number
@@ -625,67 +637,61 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       return;
     }
 
-    try {
-      const roomTypeMap: Record<string, string> = {
-        "comment_common_areas": "common_areas",
-        "comment_entry_hallways": "entry_hallways",
-        "comment_living_room": "living_room",
-        "comment_kitchen": "kitchen",
-        "comment_exterior": "exterior",
-        "comment_garage": "garage",
-        "comment_terrace": "terrace",
-        "comment_storage": "storage",
-        "comment_bedrooms": "bedrooms",
-        "comment_bathrooms": "bathrooms",
-      };
-      
-      const roomType = roomTypeMap[fieldName];
-      if (!roomType) {
-        toast.error("Error: Tipo de estancia no reconocido");
-        return;
-      }
-
-      const room = { type: roomType, index: roomIndex };
-      let updatedReport: TechnicalInspectionReport;
-      setTechnicalInspectionReport((prev) => {
-        updatedReport = { ...prev };
-        if (room.type === "bedrooms" && room.index !== undefined) {
-          const bedrooms = [...(updatedReport.bedrooms || [])];
-          while (bedrooms.length <= room.index) {
-            bedrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
-          }
-          bedrooms[room.index] = { ...bedrooms[room.index], comment };
-          updatedReport.bedrooms = bedrooms;
-        } else if (room.type === "bathrooms" && room.index !== undefined) {
-          const bathrooms = [...(updatedReport.bathrooms || [])];
-          while (bathrooms.length <= room.index) {
-            bathrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
-          }
-          bathrooms[room.index] = { ...bathrooms[room.index], comment };
-          updatedReport.bathrooms = bathrooms;
-        } else {
-          const roomKey = room.type as keyof Omit<TechnicalInspectionReport, "bedrooms" | "bathrooms">;
-          updatedReport[roomKey] = { ...(updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] }), comment };
-        }
-        return updatedReport;
-      });
-
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from("properties")
-        .update({ technical_inspection_report: updatedReport! })
-        .eq("property_unique_id", supabaseProperty.property_unique_id);
-      
-      if (!updateError) {
-        // Disparar evento para actualizar el widget de progreso y otros componentes
-        window.dispatchEvent(new CustomEvent('property-updated', {
-          detail: { propertyId: supabaseProperty.property_unique_id }
-        }));
-      }
-    } catch (error) {
-      console.error("Error updating comment:", error);
-      toast.error(`Error al guardar el comentario: ${error instanceof Error ? error.message : "Error desconocido"}`);
+    const roomTypeMap: Record<string, string> = {
+      "comment_common_areas": "common_areas",
+      "comment_entry_hallways": "entry_hallways",
+      "comment_living_room": "living_room",
+      "comment_kitchen": "kitchen",
+      "comment_exterior": "exterior",
+      "comment_garage": "garage",
+      "comment_terrace": "terrace",
+      "comment_storage": "storage",
+      "comment_bedrooms": "bedrooms",
+      "comment_bathrooms": "bathrooms",
+    };
+    
+    const roomType = roomTypeMap[fieldName];
+    if (!roomType) {
+      toast.error("Error: Tipo de estancia no reconocido");
+      return;
     }
+
+    const room = { type: roomType, index: roomIndex };
+    let updatedReport: TechnicalInspectionReport;
+    setTechnicalInspectionReport((prev) => {
+      updatedReport = { ...prev };
+      if (room.type === "bedrooms" && room.index !== undefined) {
+        const bedrooms = [...(updatedReport.bedrooms || [])];
+        while (bedrooms.length <= room.index) {
+          bedrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+        }
+        bedrooms[room.index] = { ...bedrooms[room.index], comment };
+        updatedReport.bedrooms = bedrooms;
+      } else if (room.type === "bathrooms" && room.index !== undefined) {
+        const bathrooms = [...(updatedReport.bathrooms || [])];
+        while (bathrooms.length <= room.index) {
+          bathrooms.push({ status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] });
+        }
+        bathrooms[room.index] = { ...bathrooms[room.index], comment };
+        updatedReport.bathrooms = bathrooms;
+      } else {
+        const roomKey = room.type as keyof Omit<TechnicalInspectionReport, "bedrooms" | "bathrooms">;
+        updatedReport[roomKey] = { ...(updatedReport[roomKey] || { status: null, comment: null, affects_commercialization: null, incident_photos: [], marketing_photos: [] }), comment };
+      }
+      return updatedReport;
+    });
+
+    if (commentSaveTimeoutRef.current) {
+      clearTimeout(commentSaveTimeoutRef.current);
+    }
+    commentSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await saveTechnicalInspectionReport(updatedReport!);
+      } catch (error) {
+        console.error("Error updating comment:", error);
+        toast.error(`Error al guardar el comentario: ${error instanceof Error ? error.message : "Error desconocido"}`);
+      }
+    }, 1000);
   };
 
   // Handlers Sección 3: Afecta comercialización
@@ -744,18 +750,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         return updatedReport;
       });
 
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from("properties")
-        .update({ technical_inspection_report: updatedReport! })
-        .eq("property_unique_id", supabaseProperty.property_unique_id);
-      
-      if (!updateError) {
-        // Disparar evento para actualizar el widget de progreso y otros componentes
-        window.dispatchEvent(new CustomEvent('property-updated', {
-          detail: { propertyId: supabaseProperty.property_unique_id }
-        }));
-      }
+      await saveTechnicalInspectionReport(updatedReport!);
     } catch (error) {
       console.error("Error updating affects commercialization:", error);
       toast.error(`Error al guardar: ${error instanceof Error ? error.message : "Error desconocido"}`);
@@ -860,19 +855,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
           return updatedReport;
         });
         
-        // Save to Supabase
-        const supabase = createClient();
-        const { error: updateError } = await supabase
-          .from("properties")
-          .update({ technical_inspection_report: updatedReport! })
-          .eq("property_unique_id", supabaseProperty.property_unique_id);
-        
-        if (!updateError) {
-          // Disparar evento para actualizar el widget de progreso y otros componentes
-          window.dispatchEvent(new CustomEvent('property-updated', {
-            detail: { propertyId: supabaseProperty.property_unique_id }
-          }));
-        }
+        await saveTechnicalInspectionReport(updatedReport!);
         
         toast.success(`${files.length} foto(s) subida(s) correctamente`);
       } else {
@@ -894,19 +877,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
           return updatedReport;
         });
         
-        // Save to Supabase
-        const supabase = createClient();
-        const { error: updateError } = await supabase
-          .from("properties")
-          .update({ technical_inspection_report: updatedReport! })
-          .eq("property_unique_id", supabaseProperty.property_unique_id);
-        
-        if (!updateError) {
-          // Disparar evento para actualizar el widget de progreso y otros componentes
-          window.dispatchEvent(new CustomEvent('property-updated', {
-            detail: { propertyId: supabaseProperty.property_unique_id }
-          }));
-        }
+        await saveTechnicalInspectionReport(updatedReport!);
         
         toast.success(`${newUrls.length} foto(s) subida(s) correctamente`);
       }
@@ -1012,19 +983,7 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         return updatedReport;
       });
       
-      // Save to Supabase
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from("properties")
-        .update({ technical_inspection_report: updatedReport! })
-        .eq("property_unique_id", supabaseProperty.property_unique_id);
-      
-      if (!updateError) {
-        // Disparar evento para actualizar el widget de progreso y otros componentes
-        window.dispatchEvent(new CustomEvent('property-updated', {
-          detail: { propertyId: supabaseProperty.property_unique_id }
-        }));
-      }
+      await saveTechnicalInspectionReport(updatedReport!);
       
       toast.success("Foto eliminada correctamente");
     } catch (error) {
@@ -1247,7 +1206,84 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
   return (
     <div className="space-y-6">
-      {/* Sección 1: Presentación al Cliente */}
+      {/* Sección 1: Estrategia de Precio */}
+      <Phase2SectionWidget
+        id="pricing-strategy"
+        title="Estrategia de Precio"
+        instructions={getSectionInstructions("pricing-strategy")}
+        required
+        isComplete={isSection2Complete()}
+      >
+        <div className="space-y-4">
+          <FinancialPerformanceWidget 
+            property={{
+              ...supabaseProperty,
+              announcement_price: announcementPrice ? parseFloat(announcementPrice) : supabaseProperty.announcement_price,
+            }} 
+            currentPhase="Listo para Alquilar" 
+          />
+          
+          <div className="space-y-2">
+            <Label htmlFor="announcement-price" className="text-sm font-medium">
+              Precio de Publicación <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              ref={announcementPriceInputRef}
+              id="announcement-price"
+              type="number"
+              placeholder="Ej: 1200"
+              value={announcementPrice || ""}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                handleAnnouncementPriceChange(newValue);
+              }}
+              min="0"
+              step="0.01"
+            />
+          </div>
+
+          {announcementPrice && parseFloat(announcementPrice) > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  ¿Ha aprobado el cliente este precio de publicación? <span className="text-red-500">*</span>
+                </Label>
+                {priceApproval !== null && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleClearPriceApproval();
+                    }}
+                    className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Borrar selección
+                  </Button>
+                )}
+              </div>
+              <RadioGroup
+                value={priceApproval === null ? "" : priceApproval ? "yes" : "no"}
+                onValueChange={handlePriceApprovalChange}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="approval-yes" />
+                  <Label htmlFor="approval-yes" className="cursor-pointer">Sí</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="approval-no" />
+                  <Label htmlFor="approval-no" className="cursor-pointer">No</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}
+        </div>
+      </Phase2SectionWidget>
+
+      {/* Sección 2: Presentación al Cliente */}
       <Phase2SectionWidget
         id="client-presentation"
         title="Presentación al Cliente"
@@ -1349,84 +1385,6 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
                 </RadioGroup>
               </div>
             </>
-          )}
-        </div>
-      </Phase2SectionWidget>
-
-      {/* Sección 2: Estrategia de Precio */}
-      <Phase2SectionWidget
-        id="pricing-strategy"
-        title="Estrategia de Precio"
-        instructions={getSectionInstructions("pricing-strategy")}
-        required
-        isComplete={isSection2Complete()}
-      >
-        <div className="space-y-4">
-          <FinancialPerformanceWidget 
-            property={{
-              ...supabaseProperty,
-              announcement_price: announcementPrice ? parseFloat(announcementPrice) : supabaseProperty.announcement_price,
-            }} 
-            currentPhase="Listo para Alquilar" 
-          />
-          
-          <div className="space-y-2">
-            <Label htmlFor="announcement-price" className="text-sm font-medium">
-              Precio de Publicación <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              ref={announcementPriceInputRef}
-              id="announcement-price"
-              type="number"
-              placeholder="Ej: 1200"
-              value={announcementPrice || ""}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                // Permitir cadena vacía para que el usuario pueda escribir números seguidos
-                handleAnnouncementPriceChange(newValue);
-              }}
-              min="0"
-              step="0.01"
-            />
-          </div>
-
-          {announcementPrice && parseFloat(announcementPrice) > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  ¿Ha aprobado el cliente este precio de publicación? <span className="text-red-500">*</span>
-                </Label>
-                {priceApproval !== null && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleClearPriceApproval();
-                    }}
-                    className="h-auto px-2 py-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Borrar selección
-                  </Button>
-                )}
-              </div>
-              <RadioGroup
-                value={priceApproval === null ? "" : priceApproval ? "yes" : "no"}
-                onValueChange={handlePriceApprovalChange}
-                className="flex gap-6"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="approval-yes" />
-                  <Label htmlFor="approval-yes" className="cursor-pointer">Sí</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="approval-no" />
-                  <Label htmlFor="approval-no" className="cursor-pointer">No</Label>
-                </div>
-              </RadioGroup>
-            </div>
           )}
         </div>
       </Phase2SectionWidget>

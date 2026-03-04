@@ -42,8 +42,7 @@ interface TimelineItem {
   statusId: MtpStatusId;
   label: string;
   timestamp: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   state: "past" | "current" | "future";
 }
 
@@ -88,6 +87,20 @@ const EXIT_STATUS_CONFIG: Record<string, { icon: typeof Pause; bg: string; borde
     text: "text-gray-600 dark:text-gray-300",
     badge: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
   },
+  rechazado_por_finaer: {
+    icon: XCircle,
+    bg: "bg-rose-50 dark:bg-rose-950/30",
+    border: "border-rose-200 dark:border-rose-800/50",
+    text: "text-rose-800 dark:text-rose-200",
+    badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300",
+  },
+  rechazado_por_propietario: {
+    icon: XCircle,
+    bg: "bg-rose-50 dark:bg-rose-950/30",
+    border: "border-rose-200 dark:border-rose-800/50",
+    text: "text-rose-800 dark:text-rose-200",
+    badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300",
+  },
 };
 
 const EXIT_REASON_LABELS: Record<string, string> = {
@@ -98,6 +111,14 @@ const EXIT_REASON_LABELS: Record<string, string> = {
   interesado_aceptado_otra: "Interesado aceptado para otra propiedad",
   propiedad_en_calificacion: "Otra propiedad en calificación",
   propiedad_no_disponible: "Propiedad no disponible",
+  ingresos_insuficientes: "Ingresos insuficientes",
+  documentacion_incompleta: "Documentación incompleta",
+  historial_crediticio: "Historial crediticio negativo",
+  situacion_laboral: "Situación laboral inestable",
+  perfil_no_adecuado: "Perfil no adecuado",
+  prefiere_sin_mascotas: "Prefiere inquilino sin mascotas",
+  ingresos_justos: "Ingresos demasiado justos",
+  preferencia_otro_candidato: "Prefiere otro candidato",
 };
 
 function buildTimestampMap(events: MtpEvent[]): Record<string, string> {
@@ -342,7 +363,7 @@ export function MtpModalRegistroActividad({
                             )}
                           </div>
 
-                          {isPast && onRevert && currentStatus !== "no_disponible" && (
+                          {isPast && onRevert && !isExit && (
                             <Button
                               variant="ghost"
                               size="sm"

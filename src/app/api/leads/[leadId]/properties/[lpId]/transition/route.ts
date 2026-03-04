@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import {
   getLeadPhaseFromMtpStatuses,
   isMtpActive,
+  MTP_STATUS_RANK,
+  type MtpStatusId,
 } from "@/lib/leads/mtp-status";
 import {
   insertLeadEvent,
@@ -95,13 +97,17 @@ export async function POST(
     } else if (action === "undo") {
       simulatedStatus = currentMtp.previous_status ?? currentMtp.current_status ?? "interesado_cualificado";
     } else if (action === "revive") {
-      const prev = currentMtp.previous_status ?? "interesado_cualificado";
-      const visitDate = currentMtp.visit_date as string | null | undefined;
-      const now = new Date();
-      if (prev === "visita_agendada" && visitDate && new Date(visitDate) < now) {
-        simulatedStatus = "interesado_cualificado";
+      if (newStatus) {
+        simulatedStatus = newStatus;
       } else {
-        simulatedStatus = prev;
+        const prev = currentMtp.previous_status ?? "interesado_cualificado";
+        const visitDate = currentMtp.visit_date as string | null | undefined;
+        const now = new Date();
+        if (prev === "visita_agendada" && visitDate && new Date(visitDate) < now) {
+          simulatedStatus = "interesado_cualificado";
+        } else {
+          simulatedStatus = prev;
+        }
       }
     } else if (action === "revert") {
       simulatedStatus = newStatus;
@@ -200,12 +206,22 @@ export async function POST(
     } else if (action === "revive") {
       updatePayload.current_status = simulatedStatus;
       updatePayload.previous_status = null;
+      updatePayload.exit_reason = null;
+      updatePayload.exit_comments = null;
       if (simulatedStatus === "interesado_cualificado") {
         updatePayload.visit_date = null;
       }
     } else if (action === "revert") {
       updatePayload.previous_status = currentMtp.current_status;
       updatePayload.current_status = simulatedStatus;
+    }
+
+    // Track max_status_reached for the recovery modal's dropdown limitation
+    const newStatusRank = MTP_STATUS_RANK[(updatePayload.current_status as MtpStatusId) ?? ""] ?? 0;
+    const currentMax = (currentMtp as any).max_status_reached as string | null;
+    const currentMaxRank = MTP_STATUS_RANK[(currentMax ?? "") as MtpStatusId] ?? 0;
+    if (newStatusRank > 0 && newStatusRank > currentMaxRank) {
+      updatePayload.max_status_reached = updatePayload.current_status;
     }
 
     const { data: updatedMtp, error: updateError } = await supabase
@@ -222,7 +238,17 @@ export async function POST(
     const address = await getPropertyAddress(supabase, currentMtp.properties_unique_id);
     const statusTitle = getMtpStatusTitle(finalStatus);
 
-    if (isMtpExitStatus(finalStatus)) {
+    if (action === "revive" && !isMtpExitStatus(finalStatus)) {
+      const newVisitDate = updates.visit_date as string | undefined;
+      await insertLeadEvent(supabase, {
+        leads_unique_id: leadId,
+        properties_unique_id: currentMtp.properties_unique_id,
+        event_type: "MTP_RECOVERED",
+        title: `Propiedad recuperada: ${address}`,
+        description: `El PM recuperó la propiedad ${address} devolviéndola al estado ${statusTitle}.${newVisitDate ? ` Nueva fecha agendada: ${new Date(newVisitDate).toLocaleDateString("es-ES")}.` : ""}`,
+        new_status: finalStatus,
+      });
+    } else if (isMtpExitStatus(finalStatus)) {
       const exitReason = (updates.exit_reason as string) || "";
       await insertLeadEvent(supabase, {
         leads_unique_id: leadId,
@@ -298,12 +324,120 @@ export async function POST(
       }
     }
 
+    // Cascada Negativa: al llegar a interesado_aceptado, las MTPs de OTROS leads
+    // para la misma propiedad cambian a no_disponible
+    if (targetStatus === "interesado_aceptado") {
+      const propertyId = currentMtp.properties_unique_id;
+      const propertyAddress = await getPropertyAddress(supabase, propertyId);
+
+      const { data: otherLeadMtps } = await supabase
+        .from("leads_properties")
+        .select("id, leads_unique_id, current_status, previous_status, properties_unique_id, visit_date")
+        .eq("properties_unique_id", propertyId)
+        .neq("leads_unique_id", leadId);
+
+      const affectedLeadIds = new Set<string>();
+
+      for (const m of otherLeadMtps || []) {
+        const st = m.current_status ?? "";
+
+        if (st === "rechazado_por_finaer" || st === "rechazado_por_propietario") {
+          continue;
+        }
+
+        const wasActive = !["en_espera", "descartada", "no_disponible", "interesado_perdido", "interesado_rechazado"].includes(st);
+
+        await supabase
+          .from("leads_properties")
+          .update({
+            current_status: "no_disponible",
+            previous_status: st || null,
+            exit_reason: "propiedad_no_disponible",
+            exit_comments: `La propiedad ha sido alquilada a otro candidato.`,
+          })
+          .eq("id", m.id);
+
+        await insertLeadEvent(supabase, {
+          leads_unique_id: m.leads_unique_id,
+          properties_unique_id: m.properties_unique_id,
+          event_type: "PROPERTY_UNAVAILABLE",
+          title: `Propiedad No Disponible: ${propertyAddress}`,
+          description: `La MTP de la propiedad ${propertyAddress} pasó a 'No Disponible' debido al cierre con otro candidato.`,
+          new_status: "no_disponible",
+        });
+
+        if (wasActive) {
+          affectedLeadIds.add(m.leads_unique_id);
+
+          const notificationType = st === "visita_agendada" ? "urgent_visit_cancel" : "info_property_unavailable";
+          const notificationTitle = st === "visita_agendada"
+            ? "ACCIÓN REQUERIDA: Cancelar visita"
+            : "Aviso del Sistema: Propiedad no disponible";
+          const notificationMessage = st === "visita_agendada"
+            ? `La propiedad ${propertyAddress} ha sido alquilada a otro candidato. Debes contactar urgentemente con este interesado para cancelar la visita que teníais agendada.`
+            : `La propiedad ${propertyAddress} ya no está disponible (alquilada a otro cliente). La oportunidad ha sido archivada automáticamente.`;
+
+          await supabase.from("lead_notifications").insert({
+            leads_unique_id: m.leads_unique_id,
+            properties_unique_id: m.properties_unique_id,
+            notification_type: notificationType,
+            title: notificationTitle,
+            message: notificationMessage,
+          });
+        }
+      }
+
+      for (const affectedLeadId of affectedLeadIds) {
+        const { data: remainingMtps } = await supabase
+          .from("leads_properties")
+          .select("current_status")
+          .eq("leads_unique_id", affectedLeadId);
+
+        const remainingStatuses = (remainingMtps || []).map((m) => m.current_status as string).filter(Boolean);
+        const newPhase = getLeadPhaseFromMtpStatuses(remainingStatuses);
+
+        const hasActiveLeft = remainingStatuses.some((s) =>
+          !["en_espera", "descartada", "no_disponible", "rechazado_por_finaer", "rechazado_por_propietario", "interesado_perdido", "interesado_rechazado"].includes(s)
+        );
+
+        const leadUpdate: Record<string, unknown> = {
+          current_phase: newPhase,
+          days_in_phase: 0,
+          phase_entered_at: new Date().toISOString(),
+        };
+
+        if (!hasActiveLeft) {
+          leadUpdate.label = "recuperado";
+        }
+
+        await supabase
+          .from("leads")
+          .update(leadUpdate)
+          .eq("leads_unique_id", affectedLeadId);
+
+        if (!hasActiveLeft) {
+          const lastNotification = (otherLeadMtps || []).find(
+            (m) => m.leads_unique_id === affectedLeadId
+          );
+          const prevPhase = lastNotification?.current_status ?? "desconocido";
+          await supabase.from("lead_notifications").insert({
+            leads_unique_id: affectedLeadId,
+            properties_unique_id: propertyId,
+            notification_type: "recovery",
+            title: "Interesado reubicado",
+            message: `Este interesado ha sido recuperado porque la propiedad ${propertyAddress} ya no está disponible. Preséntale nuevas propiedades o recupera las propiedades archivadas.`,
+          });
+        }
+      }
+    }
+
     if (phaseChanged) {
       await supabase
         .from("leads")
         .update({
           current_phase: calculatedPhase,
           days_in_phase: 0,
+          phase_entered_at: new Date().toISOString(),
         })
         .eq("leads_unique_id", leadId);
     }

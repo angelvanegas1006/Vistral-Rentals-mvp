@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { RentalsLeadCard } from "./rentals-lead-card";
 import { RentalsHomeLoader } from "./rentals-home-loader";
 import { useLeads } from "@/hooks/use-leads";
+import { useLeadNotificationsSummary } from "@/hooks/use-lead-notifications-summary";
 import { mapLeadFromSupabase } from "@/lib/supabase/mappers";
 
 interface Lead {
@@ -22,8 +23,10 @@ interface Lead {
   zone?: string;
   currentPhase: string;
   daysInPhase?: number;
+  phaseEnteredAt?: string;
   isHighlighted?: boolean;
   needsUpdate?: boolean;
+  label?: string;
 }
 
 interface LeadsKanbanColumn {
@@ -104,6 +107,7 @@ export function RentalsLeadsKanbanBoard({
 }: RentalsLeadsKanbanBoardProps) {
   const router = useRouter();
   const [localColumns, setLocalColumns] = useState<LeadsKanbanColumn[]>([]);
+  const { colorMap: notificationColorMap } = useLeadNotificationsSummary();
 
   const leadPhases = LEAD_PHASE_IDS.map((id) => LEAD_PHASE_TITLES[id]);
 
@@ -191,7 +195,11 @@ export function RentalsLeadsKanbanBoard({
   const filteredColumns = useMemo(() => {
     const processLeads = (leads: Lead[], highlight: boolean) =>
       [...leads]
-        .sort((a, b) => (a.daysInPhase ?? Infinity) - (b.daysInPhase ?? Infinity))
+        .sort((a, b) => {
+          const aTime = a.phaseEnteredAt ? new Date(a.phaseEnteredAt).getTime() : 0;
+          const bTime = b.phaseEnteredAt ? new Date(b.phaseEnteredAt).getTime() : 0;
+          return bTime - aTime;
+        })
         .map((lead) => ({ ...lead, isHighlighted: highlight }));
 
     if (!searchQuery.trim()) {
@@ -293,6 +301,7 @@ export function RentalsLeadsKanbanBoard({
                       lead={lead}
                       onClick={() => handleCardClick(lead.id)}
                       searchQuery={searchQuery}
+                      notificationColor={lead.leadsUniqueId ? notificationColorMap[lead.leadsUniqueId] : undefined}
                     />
                   ))
                 )}

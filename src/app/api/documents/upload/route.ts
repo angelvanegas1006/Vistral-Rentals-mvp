@@ -377,9 +377,8 @@ export async function POST(request: NextRequest) {
         .eq("property_unique_id", propertyId)
         .single();
 
-      const propRecord = currentProperty as unknown as Record<string, unknown>;
-      const currentArray = Array.isArray(propRecord?.[fieldName])
-        ? (propRecord[fieldName] as Array<{ url: string; title?: string }>)
+      const currentArray = Array.isArray((currentProperty as Record<string, unknown>)?.[fieldName])
+        ? (currentProperty as Record<string, unknown>)[fieldName]
         : [];
 
       const newDocument = {
@@ -390,7 +389,7 @@ export async function POST(request: NextRequest) {
 
       // If oldValue is provided (editing existing file), replace it
       if (oldValue) {
-        const updatedArray = currentArray.map((doc) =>
+        const updatedArray = currentArray.map((doc: { url: string; title?: string }) =>
           doc.url === oldValue ? newDocument : doc
         );
         updateData = { [fieldName]: updatedArray };
@@ -408,16 +407,15 @@ export async function POST(request: NextRequest) {
         .eq("property_unique_id", propertyId)
         .single();
 
-      const renoRecord = currentProperty as unknown as Record<string, unknown>;
-      const currentArray = Array.isArray(renoRecord?.[fieldName])
-        ? (renoRecord[fieldName] as string[])
+      const currentArray = Array.isArray((currentProperty as Record<string, unknown>)?.[fieldName])
+        ? (currentProperty as Record<string, unknown>)[fieldName]
         : [];
 
       // If oldValue is provided (editing existing file), replace it in the array
       // Otherwise, append new URL to array
       if (oldValue && currentArray.includes(oldValue)) {
         // Replace the old URL with the new one
-        const updatedArray = currentArray.map((url) =>
+        const updatedArray = currentArray.map((url: string) =>
           url === oldValue ? documentUrl : url
         );
         updateData = { [fieldName]: updatedArray };

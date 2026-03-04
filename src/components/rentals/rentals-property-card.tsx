@@ -362,42 +362,9 @@ export function RentalsPropertyCard({
 
         {/* Dates and Days - Mostrar según la fase */}
         <div className="space-y-0.5 text-xs text-muted-foreground">
-          {/* Fase 1: Viviendas Prophero - Mostrar renoEndDate y propertyReadyDate */}
-          {property.currentPhase === "Viviendas Prophero" && (
-            <>
-              {property.renoEndDate && (() => {
-                const formattedDate = formatDate(property.renoEndDate);
-                return formattedDate && (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3 w-3 flex-shrink-0" />
-                    <span>Fecha fin de Obra: {formattedDate}</span>
-                  </div>
-                );
-              })()}
-              {property.propertyReadyDate && (() => {
-                const formattedDate = formatDate(property.propertyReadyDate);
-                return formattedDate && (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3 w-3 flex-shrink-0" />
-                    <span>Fecha de vivienda lista: {formattedDate}</span>
-                  </div>
-                );
-              })()}
-            </>
-          )}
-
-          {/* Fase 2: Listo para Alquilar - Mostrar propertyReadyDate y daysToPublishRent */}
+          {/* Fase 2: Listo para Alquilar - Mostrar solo daysToPublishRent */}
           {property.currentPhase === "Listo para Alquilar" && (
             <>
-              {property.propertyReadyDate && (() => {
-                const formattedDate = formatDate(property.propertyReadyDate);
-                return formattedDate && (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3 w-3 flex-shrink-0" />
-                    <span>Fecha de vivienda lista: {formattedDate}</span>
-                  </div>
-                );
-              })()}
               {property.daysToPublishRent !== undefined && (
                 <p>
                   <span className="font-medium">Días para publicar:</span> {property.daysToPublishRent} días
@@ -411,7 +378,10 @@ export function RentalsPropertyCard({
           {property.currentPhase !== "Viviendas Prophero" && 
            property.currentPhase !== "Listo para Alquilar" && (
             <>
-              {property.writingDate && (
+              {property.writingDate &&
+                property.currentPhase !== "Publicado" &&
+                property.currentPhase !== "Inquilino aceptado" &&
+                property.currentPhase !== "Pendiente de trámites" && (
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3 w-3 flex-shrink-0" />
                   <span>Fecha de escrituración: {formatDate(property.writingDate)}</span>

@@ -35,7 +35,7 @@ export default function RentalsKanbanPage() {
   const propertyTypes = useMemo(() => {
     const types = allProperties
       .map((p) => p.property_asset_type)
-      .filter((type): type is NonNullable<typeof type> => Boolean(type) && typeof type === "string");
+      .filter((type): type is string => Boolean(type) && typeof type === "string");
     // Usar Set para eliminar duplicados y ordenar
     return Array.from(new Set(types)).sort();
   }, [allProperties]);

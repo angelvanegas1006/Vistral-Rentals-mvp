@@ -9,10 +9,11 @@ import { cn } from "@/lib/utils";
 interface Phase2SectionWidgetProps {
   id: string;
   title: string;
-  instructions?: string; // Descripción breve de la sección
+  instructions?: string;
   required?: boolean;
   isComplete: boolean;
-  isBlocked?: boolean; // Si está bloqueada (Sección 4)
+  isBlocked?: boolean;
+  alwaysExpanded?: boolean;
   children: React.ReactNode;
 }
 
@@ -23,6 +24,7 @@ export function Phase2SectionWidget({
   required = false,
   isComplete,
   isBlocked = false,
+  alwaysExpanded = false,
   children,
 }: Phase2SectionWidgetProps) {
   // Track if we've initialized to prevent auto-collapse when completion changes later
@@ -59,8 +61,7 @@ export function Phase2SectionWidget({
     return "border-gray-200 bg-white dark:bg-gray-800";
   };
 
-  // Si está completa, usar accordion para poder colapsar/expandir
-  if (isComplete && !isBlocked) {
+  if (isComplete && !isBlocked && !alwaysExpanded) {
     return (
       <div id={`section-${id}`}>
         <Card
@@ -122,7 +123,6 @@ export function Phase2SectionWidget({
     );
   }
 
-  // Si no está completa o está bloqueada, mostrar siempre expandido
   return (
     <div id={`section-${id}`}>
       <Card
@@ -132,19 +132,25 @@ export function Phase2SectionWidget({
           isBlocked && "opacity-60"
         )}
       >
-        {/* Título y descripción - dentro del Card */}
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-start gap-3">
             {isBlocked && (
               <Lock className="h-5 w-5 flex-shrink-0 text-gray-400 dark:text-gray-500 mt-0.5" />
             )}
             <div className="flex-1">
-              <h3 className={cn(
-                "text-base font-semibold",
-                isBlocked ? "text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-gray-100"
-              )}>
-                {title}
-              </h3>
+              <div className="flex items-start justify-between">
+                <h3 className={cn(
+                  "text-base font-semibold",
+                  isBlocked ? "text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-gray-100"
+                )}>
+                  {title}
+                </h3>
+                {isComplete && !isBlocked && (
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-100 border border-gray-300 flex-shrink-0 mt-0.5 ml-3">
+                    <Check className="h-3 w-3 text-green-600 stroke-[2.5]" />
+                  </div>
+                )}
+              </div>
               {instructions && (
                 <p className={cn(
                   "text-sm mt-1",

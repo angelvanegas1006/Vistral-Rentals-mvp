@@ -65,6 +65,7 @@ export function mapLeadFromSupabase(row: LeadRow) {
     zone: row.zone || undefined,
     currentPhase: row.current_phase,
     daysInPhase: row.days_in_phase,
+    phaseEnteredAt: row.phase_entered_at || undefined,
     called: row.called || undefined,
     discarded: row.discarded || undefined,
     scheduledDate: row.scheduled_date || undefined,
@@ -74,6 +75,7 @@ export function mapLeadFromSupabase(row: LeadRow) {
     finaerStatus: row.finaer_status || undefined,
     numberOfOccupants: row.number_of_occupants || undefined,
     needsUpdate: row.needs_update,
+    label: row.label || undefined,
     // Fase 3: Recogiendo información
     nationality: row.nationality || undefined,
     identityDocType: row.identity_doc_type || undefined,
