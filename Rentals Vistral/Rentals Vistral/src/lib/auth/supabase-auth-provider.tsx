@@ -46,6 +46,11 @@ export function SupabaseAuthProvider({
   }, [supabase]);
 
   const signOut = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      /* best-effort server-side cleanup */
+    }
     await supabase.auth.signOut();
   };
 

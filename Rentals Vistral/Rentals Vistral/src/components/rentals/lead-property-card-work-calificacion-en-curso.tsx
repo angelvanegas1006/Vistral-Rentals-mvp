@@ -296,20 +296,6 @@ export function LeadPropertyCardWorkCalificacionEnCurso({
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => setResolution("descartar")}
-                  disabled={saving}
-                  className={cn(
-                    "flex items-center justify-center gap-2 rounded-[var(--vistral-radius-md)] border px-3 py-2.5 text-sm font-medium transition-colors",
-                    resolution === "descartar"
-                      ? "border-red-500 bg-red-50 text-red-700 dark:border-red-400 dark:bg-red-950 dark:text-red-300"
-                      : "border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card text-muted-foreground hover:bg-[var(--vistral-gray-50)] dark:hover:bg-[var(--vistral-gray-800)]"
-                  )}
-                >
-                  <UserX className="h-4 w-4" />
-                  Descartar Interesado
-                </button>
-                <button
-                  type="button"
                   onClick={() => setResolution("recuperar")}
                   disabled={saving}
                   className={cn(
@@ -321,6 +307,20 @@ export function LeadPropertyCardWorkCalificacionEnCurso({
                 >
                   <RotateCcw className="h-4 w-4" />
                   Recuperar Interesado
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResolution("descartar")}
+                  disabled={saving}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-[var(--vistral-radius-md)] border px-3 py-2.5 text-sm font-medium transition-colors",
+                    resolution === "descartar"
+                      ? "border-red-500 bg-red-50 text-red-700 dark:border-red-400 dark:bg-red-950 dark:text-red-300"
+                      : "border-[var(--vistral-gray-200)] dark:border-[var(--vistral-gray-700)] bg-card text-muted-foreground hover:bg-[var(--vistral-gray-50)] dark:hover:bg-[var(--vistral-gray-800)]"
+                  )}
+                >
+                  <UserX className="h-4 w-4" />
+                  Descartar Interesado
                 </button>
               </div>
 

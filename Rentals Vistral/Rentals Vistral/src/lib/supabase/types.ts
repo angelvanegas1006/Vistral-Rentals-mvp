@@ -485,6 +485,23 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["lead_notifications"]["Insert"]>;
       };
+      profiles: {
+        Row: {
+          id: string;
+          email: string;
+          full_name: string | null;
+          role: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          full_name?: string | null;
+          role?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+      };
     };
     Views: {
       [_ in never]: never;
