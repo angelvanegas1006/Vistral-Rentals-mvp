@@ -47,10 +47,11 @@ export function mapPropertyFromSupabase(row: any) {
     priceApproval: row.price_approval ?? undefined,
     // Prophero section reviews
     propheroSectionReviews: row.prophero_section_reviews ? (
-      typeof row.prophero_section_reviews === 'string' 
-        ? JSON.parse(row.prophero_section_reviews) 
+      typeof row.prophero_section_reviews === 'string'
+        ? JSON.parse(row.prophero_section_reviews)
         : row.prophero_section_reviews
     ) : undefined,
+    is_dev: row.is_dev ?? false,
   };
 }
 
@@ -86,6 +87,7 @@ export function mapLeadFromSupabase(row: LeadRow) {
     familyProfile: row.family_profile || undefined,
     childrenCount: row.children_count ?? undefined,
     petInfo: row.pet_info ?? undefined,
+    is_dev: row.is_dev ?? false,
   };
 }
 

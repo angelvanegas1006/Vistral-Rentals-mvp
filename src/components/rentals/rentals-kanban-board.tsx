@@ -7,6 +7,8 @@ import { RentalsKanbanColumn } from "./rentals-kanban-column";
 import { RentalsHomeLoader } from "./rentals-home-loader";
 import { useProperties } from "@/hooks/use-properties";
 import { mapPropertyFromSupabase } from "@/lib/supabase/mappers";
+import { useAppAuth } from "@/lib/auth/app-auth-provider";
+import { Switch } from "@/components/ui/switch";
 import type { PropheroSectionReviews, PropheroSectionReview } from "@/lib/supabase/types";
 
 // Función helper para calcular el subestado de Prophero según las normas EXACTAS:
@@ -352,6 +354,16 @@ export function RentalsKanbanBoard({
 }: RentalsKanbanBoardProps) {
   const router = useRouter();
   
+  const { isDeveloper } = useAppAuth();
+  const [showDevCards, setShowDevCards] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("dev_toggle") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("dev_toggle", String(showDevCards));
+  }, [showDevCards]);
+
   // Hooks deben estar siempre al principio, antes de cualquier return condicional
   const [isHovered, setIsHovered] = useState(false);
   const [highlightedPropertyId, setHighlightedPropertyId] = useState<string | null>(null);
@@ -377,7 +389,8 @@ export function RentalsKanbanBoard({
   } = useProperties({
     kanbanType,
     searchQuery,
-    filters, // Los filtros ahora se aplican en use-properties.ts
+    filters,
+    showDevCards: isDeveloper && showDevCards,
   });
 
   // Definir las fases según el tipo de Kanban
@@ -678,6 +691,17 @@ export function RentalsKanbanBoard({
           />
         ))}
       </div>
+
+      {isDeveloper && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg border bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-3 py-2 shadow-lg text-xs font-medium">
+          <span className="text-amber-600 dark:text-amber-400 font-mono">DEV</span>
+          <Switch
+            checked={showDevCards}
+            onCheckedChange={setShowDevCards}
+            className="data-[state=checked]:bg-amber-500"
+          />
+        </div>
+      )}
     </div>
   );
 }

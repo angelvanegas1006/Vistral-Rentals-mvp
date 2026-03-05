@@ -1,0 +1,433 @@
+# Documentación Maestra: Máquina de Estados y Automatización de Fases (Interesado - Propiedad)
+
+Esta documentación define la lógica de negocio, la base de datos y la automatización de la interfaz.
+
+**Principio Core:** La Fase del Interesado (Lead) es esclava del estado de sus Propiedades (MTPs). No existen botones manuales para mover al Interesado; el sistema lo mueve automáticamente tras una confirmación visual.
+
+---
+
+## 1. Esquema de Base de Datos (Tabla: `leads_properties`)
+
+Para que la máquina de estados y los modales inteligentes funcionen, la mini tarjeta propiedad necesita interactuar con los siguientes campos en la base de datos.
+
+### Campos Existentes
+* `id`
+* `leads_unique_id` (Relación con el Interesado)
+* `properties_unique_id` (Relación con la Propiedad)
+* `current_status` (Estado actual de la mini tarjeta propiedad)
+* `visit_date` (Fecha y hora de la visita agendada)
+* `created_at` (Timestamp de creación)
+
+### Campos Nuevos a Crear (Para gestión del embudo y excepciones)
+* `previous_status` (String) -> Para lógica de Deshacer/Revivir. Guarda el estado anterior.
+* `updated_at` (Timestamp)
+* `visit_feedback` (Text) -> Comentarios positivos del PM tras la visita.
+* `visit_completed` (Boolean, nullable) -> Respuesta a "¿Se ha realizado la visita?" en el estado Pendiente de Evaluación. `true` = visita realizada, `null` = sin responder (se resetea al reagendar).
+* `tenant_confirmed_interest` (Boolean/Timestamp) -> Registra si/cuándo el interesado dijo "me lo quedo".
+* `sent_to_finaer_at` (Timestamp) -> Cuándo se mandó la documentación a Finaer.
+* `finaer_status` (String: 'pending', 'approved', 'rejected')
+* `finaer_rejection_reason` (Text) -> Comentarios si Finaer rechaza.
+* `owner_status` (String: 'pending', 'approved', 'rejected')
+* `owner_rejection_reason` (Text) -> Comentarios si el Propietario rechaza.
+* `exit_reason` (String) -> Motivo de descarte, pausa automática o pérdida.
+* `exit_comments` (Text) -> Detalles extra escritos por el PM al descartar, o generados automáticamente por el sistema.
+
+---
+
+## 2. Definición de Estados de la Mini Tarjeta Propiedad (MTP)
+
+*(Nota: Cada cambio de estado aquí dispara el algoritmo de verificación de Fase del Interesado).*
+
+### Estado 1: Interesado Cualificado
+* **ID interno DB:** `interesado_cualificado`
+* **Descripción:** El lead es válido y está interesado en una propiedad.
+* **Campos UI (Happy Path):** Selector de Fecha y Hora (Date/Time Picker).
+* **Trigger:** PM hace clic en `[✅ Agendar Visita]`.
+* **DB:** Guarda `visit_date`, estado pasa a **Visita Agendada**.
+
+### Estado 2: Visita Agendada
+* **ID interno DB:** `visita_agendada`
+* **Descripción:** Visita fijada en el calendario. El PM no hace nada manual en el Happy Path.
+* **Campos UI (Happy Path):**
+  * **Header estilizado:** Muestra fecha y hora de la visita con icono de calendario (estilo indigo, mismo patrón visual que "Programar Visita" del Estado 1).
+  * **Botón `[📅 Reagendar Visita]`:** Abre Modal de Reagendar (antes estaba en el Kebab Menu, ahora vive inline en la sección de trabajo).
+  * **Botón `[❌ Cancelar Visita]`:** Abre Modal de Cancelación de Visita. Campos: Motivo (Select: "Interesado no disponible", "Propiedad no accesible", "Cambio de interés", "Otro motivo") + Comentarios (Textarea, opcional). La MTP pasa a estado `Descartada`. Se guardan `exit_reason` y `exit_comments` en `leads_properties`.
+* **Trigger (Happy Path):** Automático (Fecha actual >= `visit_date`).
+* **DB:** Estado pasa a **Pendiente de Evaluación**.
+* **Nota de cancelación:** Si al cancelar la visita el interesado se queda sin MTPs activas, la fase global retrocede automáticamente a **Interesado Cualificado**. En ese caso, se muestra un mensaje especial invitando al PM a explorar la Cartera de Propiedades o marcar al interesado como Perdido.
+
+### Estado 3: Pendiente de Evaluación
+* **ID interno DB:** `pendiente_de_evaluacion`
+* **Descripción:** La fecha de la visita ha pasado. El PM debe confirmar si la visita se realizó y, en caso afirmativo, evaluar al candidato.
+* **Campos UI:**
+  * **Header estilizado:** Muestra "Evaluación de la Visita" con icono de clipboard y la fecha/hora de la visita (estilo amber, mismo patrón visual que el header de Visita Agendada).
+  * **Radio Button (full-width):** *¿Se ha realizado la visita?* — Opciones: `Sí` / `No`. Los botones ocupan todo el ancho de la sección de trabajo, en una fila de 2 columnas.
+  * **Respuesta "Sí" (Happy Path):**
+    * `Textarea` para redactar "Comentarios sobre la visita".
+    * Botón `[✅ Confirmar y Avanzar]` (full-width).
+    * **Trigger:** PM rellena feedback y confirma.
+    * **DB:** Guarda `visit_feedback`, `visit_completed = true`, estado pasa a **Esperando Decisión**.
+  * **Respuesta "No":**
+    * Aparecen los mismos botones que en el estado **Visita Agendada**: `[📅 Reagendar Visita]` y `[❌ Cancelar Visita]`.
+    * **Reagendar Visita:** Abre el Modal de Reagendar. Al confirmar, la MTP pasa a estado **Visita Agendada** con la nueva fecha (se usa la API de transición con acción `revert` para guardar `previous_status = pendiente_de_evaluacion`). Se resetea `visit_completed = null`.
+    * **Cancelar Visita:** Abre el Modal de Cancelación de Visita (mismo que en Visita Agendada). La MTP pasa a estado **Descartada**. Se guardan `exit_reason` y `exit_comments`.
+* **Campo DB nuevo:** `visit_completed` (Boolean, nullable). Se guarda `true` al confirmar la visita, se resetea a `null` al reagendar.
+
+### Estado 4: Esperando Decisión
+* **ID interno DB:** `esperando_decision`
+* **Descripción:** PM aprobó la visita. Se espera confirmación de alquiler por parte del interesado.
+* **Campos UI:**
+  * **Header estilizado:** Muestra "Decisión del Interesado" con icono de ayuda (HelpCircle) y la fecha/hora de la visita (estilo purple, mismo patrón visual que los headers de estados anteriores).
+  * **Radio Button (full-width):** *¿Quiere el Interesado comenzar el proceso de Alquiler de esta propiedad?* — Opciones: `Sí` / `No`. Los botones ocupan todo el ancho de la sección de trabajo, en una fila de 2 columnas.
+  * **Respuesta "Sí" (Happy Path):**
+    * Botón `[✅ Confirmar y Avanzar]` (full-width).
+    * **Trigger:** PM confirma interés del inquilino.
+    * **DB:** Guarda `tenant_confirmed_interest = timestamp`, estado pasa a **Recogiendo Información**.
+  * **Respuesta "No":**
+    * Aparece una caja de alerta (estilo destructivo/rojo) con texto explicativo y un botón `[🗑️ Descartar Propiedad]` (full-width, variant destructive).
+    * **Descartar Propiedad:** Abre el Modal de Descarte (ver Sección 3.1). La MTP pasa a estado **Descartada**. Se guardan `exit_reason` y `exit_comments` en `leads_properties`.
+* **Nota:** La selección Sí/No es efímera (estado local del componente). A diferencia de `visit_completed` en Pendiente de Evaluación, no se persiste en DB porque "Sí" avanza inmediatamente y "No" solo revela la opción de descarte.
+
+### Estado 5: Recogiendo Información
+* **Descripción:** Recopilación de documentos (DNI, Nóminas).
+* **Campos UI (Happy Path):** Botón `[✅ Enviar a Finaer]`.
+* **Trigger:** PM hace clic en `[✅ Enviar a Finaer]`.
+* **DB:** Guarda `sent_to_finaer_at`, estado pasa a **Calificación en Curso**.
+* **Automatización:** El resto de MTPs de este lead pasan a `En Espera`. Se guarda `previous_status` y `exit_reason = 'propiedad_en_calificacion'`.
+
+### Estado 6: Calificación en Curso
+* **Descripción:** Finaer evalúa el riesgo financiero del interesado.
+* **Campos UI (Happy Path):** Pregunta UI: *¿Finaer acepta al Interesado?* (Botón: `Sí`).
+* **Happy Path:** Finaer Acepta -> Estado pasa a **Interesado Presentado**.
+* **Rechazo:** Se rellena motivo. Opciones: Descarte Total (Lead Rechazado) o Reciclaje (Lead vuelve a Fase 1).
+* **Actualización DB (Happy Path):** `finaer_status = 'approved'`, cambia `current_status` a **Interesado Presentado**.
+
+### Estado 7: Interesado Presentado
+* **Descripción:** El propietario decide si acepta al candidato.
+* **Campos UI (Happy Path):** Pregunta UI: *¿El propietario acepta al Interesado?* (Botón: `Sí`).
+* **Happy Path:** Propietario Acepta -> Estado pasa a **Interesado Aceptado**.
+* **Rechazo:** Idéntico a Finaer (Descarte Total o Reciclaje a Fase 1 con etiqueta "Rechazado por Propietario").
+* **Actualización DB (Happy Path):** `owner_status = 'approved'`, cambia `current_status` a **Interesado Aceptado**.
+
+### Estado 8: Interesado Aceptado
+* **Descripción:** Estado final de éxito. Interesado validado al 100%.
+* **Fin del flujo.**
+* **Automatización Cascada (Aceptación):**
+  * **MTPs del mismo lead:** El resto de MTPs activas de este Interesado pasan al estado `Descartada` (ya que va a alquilar la propiedad para la que fue aceptado). Se guarda `previous_status` y `exit_reason = 'interesado_aceptado_otra'`.
+  * **MTPs de otros leads para la misma propiedad:** Todas las MTPs de OTROS Interesados que apunten a esta misma propiedad pasan al estado `No Disponible`. Se guarda `previous_status` y `exit_reason = 'propiedad_no_disponible'`.
+
+---
+
+## 3. Estados de Salida / Secundarios (Destinos del Modal)
+
+Estos estados no tienen Happy Path, son destinos de las excepciones a nivel de propiedad:
+* **En Espera:** (`en_espera`) Mini tarjeta propiedad pausada **automáticamente** por el sistema cuando el Interesado decide alquilar otra propiedad (cascada al pasar a Calificación en Curso). **No existe opción manual para pausar.** Puede ser revivida.
+* **Descartada:** (`descartada`) Rechazada por incompatibilidad (precio, zona, etc.) o porque el Interesado fue aceptado para otra propiedad. Puede ser revivida.
+* **No Disponible:** (`no_disponible`) La propiedad fue alquilada a OTRA persona o dejó de estar disponible. NO puede ser revivida (la propiedad ya no está en el mercado).
+
+### Ubicación y Presentación del Archivo de Propiedades
+
+Las MTPs en estados de salida (`En Espera`, `Descartada`, `No Disponible`) se muestran en un **tab dedicado** llamado **"Archivo de Propiedades"**.
+
+* **Subtítulo del tab:** "Las viviendas descartadas, en espera o que ya no estén disponibles para este cliente aparecerán aquí."
+* **Formato de visualización:** Las propiedades archivadas se muestran como **MTPs completas** (misma tarjeta `LeadPropertyCard` que las activas), con:
+  * **Header:** Foto, dirección, precio, Status Badge del estado de salida (En Espera / Descartada / No Disponible), y Kebab Menu.
+  * **Sección de trabajo (colapsada por defecto):** Muestra el **Motivo** y **Comentarios** del archivado con diseño visual por estado (fondo coloreado según el tipo de salida). Toggle colapsado muestra "Ver motivos".
+  * **Kebab Menu:** Ver detalles, Registro de Actividad, y Recuperar (solo para En Espera y Descartada).
+
+### Mapeo de Motivos Mostrados en la Sección de Trabajo
+
+Los motivos almacenados como `exit_reason` se traducen a etiquetas legibles:
+
+#### Motivos de Descarte (coinciden con las opciones del Modal de Descarte):
+| `exit_reason` (DB) | Etiqueta UI |
+|---|---|
+| `precio` | Precio no adecuado |
+| `zona` | Zona no deseada |
+| `caracteristicas` | Características no adecuadas |
+| `otro` | Otro motivo |
+| `interesado_aceptado_otra` | Interesado aceptado para otra propiedad |
+
+#### Motivo de En Espera (automático — no existe modal manual):
+| `exit_reason` (DB) | Etiqueta UI | Comentarios por defecto |
+|---|---|---|
+| `propiedad_en_calificacion` | Otra propiedad en calificación | "Esta propiedad ha sido puesta en espera automáticamente porque el interesado ha decidido alquilar otra vivienda." |
+
+#### Motivo de No Disponible:
+| `exit_reason` (DB) | Etiqueta UI | Comentarios por defecto |
+|---|---|---|
+| `propiedad_no_disponible` | Propiedad No Disponible | "Esta propiedad ha sido archivada porque el propietario ha aceptado a otro candidato para esta vivienda." |
+
+---
+
+## 4. Relación de Fases: Interesado <> MTP (Automatización)
+
+En lugar de botones manuales, el sistema evalúa constantemente el "Rango Máximo" de las MTPs activas. Si el Rango Máximo cambia, se dispara el **Modal de Confirmación de Transición** (ver Sección 6).
+
+### 4.1. Orden de Visualización de MTPs en cada Tab
+
+#### Gestión de Propiedades (MTPs activas)
+Las MTPs activas se muestran **ordenadas por estado de más avanzado a menos avanzado**, usando `MTP_STATUS_RANK` como criterio. Esto permite al PM ver primero las propiedades que requieren atención más urgente (las más avanzadas en el embudo).
+
+| Posición | Estado | Rank |
+|----------|--------|------|
+| Arriba | Interesado Aceptado | 8 |
+| ... | ... | ... |
+| Abajo | Interesado Cualificado | 1 |
+
+#### Archivo de Propiedades (MTPs en estados de salida)
+Las MTPs archivadas se muestran **ordenadas por tiempo de desactivación: las más recientes arriba y las más antiguas abajo**. Se usa el campo `updated_at` de `leads_properties` como referencia de cuándo se desactivó la MTP (con fallback a `created_at`).
+
+**Implementación:** Sorting client-side en `src/components/rentals/lead-tasks-tab.tsx`, sin cambios en la API ni en la base de datos.
+
+### 4.2. Distribución de Tabs por Fase
+
+#### Fases 1-2: Interesado Cualificado / Visita Agendada (4 Tabs)
+
+**Tab 1: Espacio de trabajo**
+1. **Widget de Progreso General.** La única tarea para avanzar de fase es tener una MTP en el estado que provoca el cambio:
+   * *Fase 1 (Interesado Cualificado):* Tarea = tener una MTP en estado `Visita Agendada`.
+   * *Fase 2 (Visita Agendada):* Tarea = tener una MTP en estado `Recogiendo Información`.
+2. **Gestión de Propiedades (sección inline):** Grid/Lista de todas las MTPs activas con sus estados y campos de trabajo. Vive dentro del tab Espacio de trabajo como sección.
+
+**Tab 2: Cartera de Propiedades**
+Buscador para añadir nuevas propiedades al interesado.
+
+**Tab 3: Archivo de Propiedades**
+MTPs en estados de salida (`En Espera`, `Descartada`, `No Disponible`).
+
+**Tab 4: Interesado `(⚠️ Componente ya implementado)`**
+Display de la información personal/contacto del Interesado. *Reutilizar componente existente.*
+
+#### Fase 3: Recogiendo Información (5 Tabs)
+
+A partir de esta fase, la sección "Gestión de Propiedades" se **promociona a tab independiente** porque el Espacio de trabajo cambia su foco al proceso de cierre (Propiedad Seleccionada + recopilación de datos del interesado). Pueden existir varias MTPs activas simultáneamente en esta fase.
+
+**Tab 1: Espacio de trabajo (Foco en Cierre)**
+1. **Widget de Progreso General.** Las tareas incluyen la recopilación de datos personales y laborales.
+2. **Propiedad Seleccionada:** La MTP más avanzada (la que determina la fase actual). Puede haber varias MTPs en este estado; el sistema selecciona la de mayor rango.
+3. **Información Personal del Interesado** `(⚠️ Componente ya implementado)`.
+4. **Información Laboral y Financiera del Interesado** `(⚠️ Componente ya implementado)`.
+
+**Tab 2: Gestión de Propiedades**
+Grid de las MTPs activas secundarias (las que no son la Propiedad Seleccionada del Tab 1).
+
+**Tab 3: Cartera de Propiedades**
+Buscador para añadir nuevas propiedades.
+
+**Tab 4: Archivo de Propiedades**
+MTPs en estados de salida.
+
+**Tab 5: Interesado `(⚠️ Componente ya implementado)`**
+Display de la información del interesado. *Reutilizar componente existente.*
+
+#### Fases 4-5: Calificación en Curso / Interesado Presentado (4 Tabs)
+
+El tab "Gestión de Propiedades" **desaparece** porque al entrar en Calificación en Curso solo queda una MTP activa (la que se envió a Finaer); el resto pasa automáticamente a `En Espera` y se muestra en el Archivo.
+
+**Tab 1: Espacio de trabajo (Foco en Cierre)**
+1. **Widget de Progreso General.**
+2. **Propiedad Seleccionada:** La única MTP activa, mostrada automáticamente sin selector.
+   * *Fase Calificación en Curso:* La MTP muestra la pregunta "¿Finaer acepta?" con opciones Sí/No(Rechazo).
+   * *Fase Interesado Presentado:* La MTP muestra "¿El propietario acepta?" con opciones Sí/No(Rechazo).
+
+**Tab 2: Cartera de Propiedades**
+Buscador para añadir nuevas propiedades.
+
+**Tab 3: Archivo de Propiedades**
+MTPs en estados de salida (incluye las que pasaron a `En Espera` por cascada).
+
+**Tab 4: Interesado `(⚠️ Componente ya implementado)`**
+Display de la información del interesado. *Reutilizar componente existente.*
+
+#### Fase Final: Interesado Aceptado (2 Tabs — Layout Especial)
+
+**Tab 1: Registro de Gestión**
+Sustituye al espacio de trabajo. Muestra un histórico/timeline de solo lectura con toda la gestión realizada sobre las propiedades del Interesado.
+
+**Tab 2: Interesado `(⚠️ Componente ya implementado)`**
+Display de los datos personales y de contacto del interesado.
+
+### 4.3. Transiciones entre Fases
+
+#### Fase 1 -> Fase 2: Interesado Cualificado -> Visita Agendada
+* **Condición:** Al menos una MTP pasa a `Visita Agendada`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Visita Agendada.
+
+#### Fase 2 -> Fase 3: Visita Agendada -> Recogiendo Información
+* **Condición:** Al menos una MTP pasa a `Recogiendo Información`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Recogiendo Info.
+
+#### Fase 3 -> Fase 4: Recogiendo Información -> Calificación en Curso
+* **Condición:** Una MTP pasa a `Calificación en Curso`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Calificación.
+* **Efecto Cascada:** El resto de MTPs activas de este lead pasan a `En Espera` (solo puede haber una propiedad en calificación).
+* **Lógica del Espacio de Trabajo:** Pregunta UI: *¿Finaer acepta al Interesado?*
+  * **SÍ:** MTP pasa a `Interesado Presentado`. `finaer_status = 'approved'`.
+  * **NO (Rechazo):** Inputs para "Motivos" y "Comentarios". Opciones del PM:
+    * **Opción A (Descarte Total):** Lead pasa a fase `Interesado Rechazado` (Fin del flujo).
+    * **Opción B (Revivir/Reciclar):** Se lee `previous_status` de las MTPs `En Espera`. *Regla 1:* Si era `Interesado Cualificado` o `Visita Agendada` -> revive en `Interesado Cualificado` (limpia `visit_date`). *Regla 2:* Si era más avanzado -> revive en ese estado exacto. El max rank de las revividas determina la nueva fase del Lead.
+
+#### Fase 4 -> Fase 5: Calificación en Curso -> Interesado Presentado
+* **Condición:** Una MTP pasa a `Interesado Presentado`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Presentado.
+* **Lógica del Espacio de Trabajo:** Pregunta UI: *¿El propietario acepta al Interesado?*
+  * **SÍ:** MTP pasa a `Interesado Aceptado`. `owner_status = 'approved'`.
+  * **NO (Rechazo):** Trato idéntico al rechazo de Finaer (Descarte Total o Revivir/Reciclar).
+
+#### Fase 5 -> Fase Final: Interesado Presentado -> Interesado Aceptado
+* **Condición:** Una MTP pasa a `Interesado Aceptado`.
+* **Efecto:** Modal de Transición -> Mueve Lead a Fase Aceptado.
+* **Cascada de Aceptación:** (ver Estado 8 en Sección 2).
+
+---
+
+## 5. Gestión de Retroceso y Reactivación (Revert/Revive)
+
+La funcionalidad de retroceso (antes "Deshacer") se gestiona desde el modal **"Historial y Correcciones"** accesible desde el Kebab Menu de la MTP (ver `docs/leads/Historial_y_Correciones.md`). Permite revertir a cualquier estado pasado, no solo al inmediatamente anterior.
+
+La reactivación de MTPs archivadas utiliza la opción "Recuperar" del Kebab Menu.
+
+Ambas acciones utilizan la lógica de automatización global y el **Modal de Confirmación de Transición** cuando el cambio afecta a la fase global del Interesado.
+
+### 5.1. Recuperar (Revive)
+* **Ubicación:** Opción **`[♻️ Recuperar]`** dentro del **Kebab Menu** de la MTP archivada en el tab "Archivo de Propiedades". Solo visible para estados `En Espera` y `Descartada` (no para `No Disponible`, que no es recuperable).
+* **Lógica:**
+    1. PM pulsa `[♻️ Recuperar]`.
+    2. Sistema calcula estado destino (aplica regla de caducidad si es visita antigua):
+       * *Regla Caducidad:* Si (`previous_status` == 'Visita Agendada' AND `visit_date` < HOY) -> Destino = **Interesado Cualificado**.
+       * *Regla Normal:* Destino = `previous_status`.
+    3. Sistema calcula: ¿Este nuevo estado es superior a la fase actual del Lead?
+    4. **SÍ es superior:** Muestra **Modal de Confirmación de Transición (Hacia adelante)**.
+    5. **NO es superior:** Reactiva la MTP en la lista de gestión sin molestar.
+* **Ejecución (Post-Confirmación):** Actualiza `current_status` al Destino calculado. Si aplica la Regla de Caducidad, limpia `visit_date` y obliga al PM a re-agendar. Sincroniza la Fase Global del Interesado según el nuevo estado "Highest Rank".
+
+---
+
+## 6. Componente Global: Modal de Confirmación de Transición
+
+Este modal es el **único mecanismo** para mover al Interesado entre columnas. Se dispara automáticamente ante cualquier cambio de estado (Avance normal, Revertir o Recuperar) que implique un cambio de Fase Global.
+
+### Diseño Visual
+* **Título:** "Actualización de Fase del Interesado"
+* **Iconografía:** Flecha grande conectando dos estados.
+    * *Ejemplo Avance:* `[Fase 1: Cualificado]  ➡️  [Fase 2: Visita Agendada]`
+    * *Ejemplo Retroceso:* `[Fase 3: Recogiendo Info]  ⬅️  [Fase 2: Visita Agendada]` (Color de alerta/naranja).
+* **Contenido:**
+    * "La acción realizada sobre la propiedad **[Dirección]** requiere mover la tarjeta del Interesado."
+* **Mecanismo de Confirmación (Input):**
+    * **Check/Radio Button:** `[ O ]` "Confirmar cambio de fase a **[Nombre Nueva Fase]**".
+* **Botonera:**
+    * `[Cancelar]` (Cancela la acción en la MTP y no mueve nada).
+    * `[Confirmar y Mover]` (Habilitado solo al marcar el check).
+
+---
+
+## 7. Algoritmo Maestro (Para Cursor)
+
+`Observer: On MTP State Change (New, Update, Revert, Revive)`
+
+1. **Simulación:** Calcular cuál sería el `current_status` de la MTP.
+2. **Cálculo Global:** Obtener todas las MTPs activas del Lead + la simulada.
+3. **Determinar Max Rank:** ¿Cuál es la fase más avanzada resultante?
+4. **Comparación:** `if (Calculated_Phase != Lead_Current_Phase)`:
+    * **Stop Action.**
+    * **Trigger UI:** Abrir `TransitionConfirmationModal` con los datos (From -> To).
+    * **On User Confirm:**
+        * Commit del cambio en la MTP.
+        * Update `lead_current_phase`.
+        * Animar movimiento de tarjeta en Kanban.
+5. **Else (No hay cambio de fase):**
+    * Ejecutar cambio en MTP directamente.
+
+### Trigger adicional (Backend Logic) para consistencia tras Revert/Revive
+
+`Trigger: After MTP Update (Undo or Revive)`
+1. Obtener todas las MTPs activas del `lead_id`.
+2. Determinar el `max_state_rank` (el estado más avanzado de entre todas).
+3. Actualizar `lead_current_phase` = `max_state_rank`.
+
+---
+
+# Documentación Técnica: UI y Acciones de la Mini Tarjeta Propiedad
+
+Esta especificación define la estructura visual, el menú de acciones y la visualización de datos históricos de la tarjeta.
+
+---
+
+## 1. Estructura Visual de la Tarjeta
+
+### 1.1. Header (Cabecera)
+* **Distribución (Flexbox):**
+    1.  **Izquierda:** Foto + Dirección + Precio `(⚠️ Componentes ya implementados)`.
+    2.  **Centro/Derecha:** `Status Badge` (Etiqueta de Estado con color dinámico).
+    3.  **Extrema Derecha:** Botón `Kebab Menu` (Icono `⋮`).
+
+### 1.2. Body (Sección de Trabajo)
+* **Comportamiento:** Muestra los inputs/acciones dinámicos correspondientes al `current_status` actual (según definición de Fase 1).
+* **Colapsable:** La sección de trabajo es colapsable/expandible. El estado inicial depende de si el estado actual requiere acción del PM:
+  * **Desplegada por defecto (requiere acción):** `Interesado Cualificado`, `Visita Agendada`, `Pendiente de Evaluación`, `Esperando Decisión`, `Recogiendo Información`, `Calificación en Curso`, `Interesado Presentado`.
+  * **Colapsada por defecto (solo informativa):** `Interesado Aceptado`, `En Espera`, `Descartada`, `No Disponible`.
+* **Texto del toggle colapsado:**
+  * Estados activos: "Ver campos".
+  * Estados de salida (archivados): "Ver motivos".
+
+---
+
+## 2. Lógica del Menú de Acciones (Kebab Menu)
+
+Al hacer clic en el icono `⋮`, se despliega un menú flotante (`Dropdown Menu`) con las siguientes opciones:
+
+### Opciones del Menú (MTPs Activas):
+1.  **👁️ Ver detalles de propiedad** `(⚠️ Ya diseñado e implementado)`
+    * **Acción:** Abre el Modal de Detalles Completo existente.
+    * **Nota Técnica:** Reutilizar el componente `PropertyDetailsModal` (o nombre equivalente en el código actual). NO crear uno nuevo.
+2.  **📋 Historial y Correcciones**
+    * **Acción:** Abre el Modal de Historial y Correcciones (ver `docs/leads/Historial_y_Correciones.md`).
+    * **Objetivo:** Consultar el histórico de estados, los datos recogidos en cada paso, y revertir a cualquier estado pasado.
+3.  ~~**📅 Reagendar Visita**~~ *(Eliminada del Kebab Menu. Esta acción ahora vive inline en la Sección de Trabajo del estado `Visita Agendada`.)*
+4.  **🗑️ Descartar Propiedad**
+    * **Acción:** Abre Modal de Descarte (Estilo destructivo/rojo).
+
+### Opciones del Menú (MTPs Archivadas — En Espera / Descartada / No Disponible):
+1.  **👁️ Ver detalles de propiedad** — Igual que en MTPs activas.
+2.  **📋 Historial y Correcciones** — Igual que en MTPs activas.
+3.  **♻️ Recuperar**
+    * **Condición:** Solo visible en estados `En Espera` y `Descartada`. **NO aparece** en `No Disponible` (la propiedad ya no está en el mercado).
+    * **Acción:** Ejecuta la lógica de Recuperar/Revivir (ver Sección 5.1).
+
+---
+
+## 3. Definición de Modales (Acciones y Visualización)
+
+### 3.1. Modal de Descarte
+* **Campos:** Motivo (Select) + Comentarios (Textarea, opcional).
+* **Opciones del Select Motivo:**
+  * `precio` — "Precio no adecuado"
+  * `zona` — "Zona no deseada"
+  * `caracteristicas` — "Características no adecuadas"
+  * `otro` — "Otro motivo"
+* **Acción:** Cambia estado a `Descartada`. Guarda `exit_reason` y `exit_comments`.
+
+### 3.2. Modal de Reagendar
+* **Ubicación:** Se abre desde el botón "Reagendar Visita" en la **Sección de Trabajo** del estado `Visita Agendada` (ya no desde el Kebab Menu).
+* **Campos:** Justificación (Select+Text) -> Nueva Fecha (Datepicker) + Nueva Hora.
+* **Acción:** Actualiza `visit_date` y devuelve/mantiene estado en `Visita Agendada`.
+
+### 3.3. Modal de Cancelación de Visita
+* **Ubicación:** Se abre desde el botón "Cancelar Visita" en la **Sección de Trabajo** del estado `Visita Agendada`.
+* **Componente:** `src/components/rentals/mtp-modal-cancelar-visita.tsx`
+* **Campos:** Motivo (Select) + Comentarios (Textarea, opcional).
+* **Opciones del Select Motivo:**
+  * `interesado_no_disponible` — "Interesado no disponible"
+  * `propiedad_no_accesible` — "Propiedad no accesible"
+  * `cambio_interes` — "Cambio de interés del interesado"
+  * `otro` — "Otro motivo"
+* **Acción:** Cambia estado a `Descartada`. Guarda `exit_reason` y `exit_comments` en `leads_properties`.
+* **Efecto cascada:** Si el interesado se queda sin MTPs activas, la fase global retrocede automáticamente a `Interesado Cualificado` (se muestra un empty state especial con CTAs para explorar Cartera o marcar como Perdido).
+
+### 3.4. Modal de Historial y Correcciones
+
+Especificación completa en: **`docs/leads/Historial_y_Correciones.md`**
+
+Este modal muestra un timeline vertical con todos los estados de la MTP (pasados, actual y futuros) y permite revertir a cualquier estado anterior. Sustituye al antiguo banner "Anterior: [Estado] | Deshacer".

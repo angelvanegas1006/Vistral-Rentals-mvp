@@ -22,6 +22,7 @@ interface Lead {
   isHighlighted?: boolean;
   needsUpdate?: boolean;
   label?: string;
+  is_dev?: boolean;
 }
 
 interface RentalsLeadCardProps {
@@ -102,7 +103,12 @@ export function RentalsLeadCard({
       {/* Header con ID y Label */}
       {lead.leadsUniqueId && (
         <div className="flex items-start justify-between mb-2">
-          <div className="text-xs font-semibold text-muted-foreground">ID {lead.leadsUniqueId}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">ID {lead.leadsUniqueId}</span>
+            {lead.is_dev && (
+              <span className="inline-flex items-center rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] font-bold px-1.5 py-0.5 leading-none font-mono">DEV</span>
+            )}
+          </div>
           {lead.label && lead.currentPhase === "Interesado Cualificado" && (
             <span
               className={cn(

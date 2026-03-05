@@ -14,6 +14,7 @@ interface AppAuthContextType {
   role: string | null;
   loading: boolean;
   isAdmin: boolean;
+  isDeveloper: boolean;
   signOut: () => Promise<void>;
   refetchProfile: () => Promise<void>;
 }
@@ -57,7 +58,8 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, authLoading]);
 
   const role = profile?.role ?? null;
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "developer";
+  const isDeveloper = role === "developer";
 
   const value: AppAuthContextType = {
     user,
@@ -65,6 +67,7 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
     role,
     loading: authLoading || loading,
     isAdmin,
+    isDeveloper,
     signOut,
     refetchProfile: fetchProfile,
   };

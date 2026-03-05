@@ -10,6 +10,7 @@ interface UseLeadsOptions {
   phase?: string;
   searchQuery?: string;
   filters?: Record<string, any>;
+  showDevCards?: boolean;
 }
 
 export function useLeads(options: UseLeadsOptions = {}) {
@@ -31,6 +32,12 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
       const supabase = createClient();
       let query = supabase.from("leads").select("*");
+
+      if (options.showDevCards) {
+        query = query.eq("is_dev", true);
+      } else {
+        query = query.or("is_dev.is.null,is_dev.eq.false");
+      }
 
       if (options.phase) {
         query = query.eq("current_phase", options.phase);
@@ -56,7 +63,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [options.phase, options.searchQuery, options.filters]);
+  }, [options.phase, options.searchQuery, options.filters, options.showDevCards]);
 
   useEffect(() => {
     fetchLeads();

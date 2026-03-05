@@ -8,6 +8,8 @@ import { RentalsHomeLoader } from "./rentals-home-loader";
 import { useLeads } from "@/hooks/use-leads";
 import { useLeadNotificationsSummary } from "@/hooks/use-lead-notifications-summary";
 import { mapLeadFromSupabase } from "@/lib/supabase/mappers";
+import { useAppAuth } from "@/lib/auth/app-auth-provider";
+import { Switch } from "@/components/ui/switch";
 
 interface Lead {
   id: string;
@@ -27,6 +29,7 @@ interface Lead {
   isHighlighted?: boolean;
   needsUpdate?: boolean;
   label?: string;
+  is_dev?: boolean;
 }
 
 interface LeadsKanbanColumn {
@@ -108,12 +111,22 @@ export function RentalsLeadsKanbanBoard({
   const router = useRouter();
   const [localColumns, setLocalColumns] = useState<LeadsKanbanColumn[]>([]);
   const { colorMap: notificationColorMap } = useLeadNotificationsSummary();
+  const { isDeveloper } = useAppAuth();
+  const [showDevCards, setShowDevCards] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("dev_toggle") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("dev_toggle", String(showDevCards));
+  }, [showDevCards]);
 
   const leadPhases = LEAD_PHASE_IDS.map((id) => LEAD_PHASE_TITLES[id]);
 
   const { leads: allSupabaseLeads, loading: allLeadsLoading, refetch: refetchLeads } = useLeads({
     searchQuery,
     filters,
+    showDevCards: isDeveloper && showDevCards,
   });
 
   const autoAdvanceRan = useRef(false);
@@ -310,6 +323,17 @@ export function RentalsLeadsKanbanBoard({
           </React.Fragment>
         );
       })}
+
+      {isDeveloper && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg border bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-3 py-2 shadow-lg text-xs font-medium">
+          <span className="text-amber-600 dark:text-amber-400 font-mono">DEV</span>
+          <Switch
+            checked={showDevCards}
+            onCheckedChange={setShowDevCards}
+            className="data-[state=checked]:bg-amber-500"
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -26,8 +26,15 @@ export async function GET(request: NextRequest) {
     const property_type = searchParams.get("property_type");
     const area_cluster = searchParams.get("area_cluster");
     const admin_name = searchParams.get("admin_name");
+    const showDev = searchParams.get("show_dev");
 
     let query = supabase.from("properties").select("*");
+
+    if (showDev === "true") {
+      query = query.eq("is_dev", true);
+    } else {
+      query = query.or("is_dev.is.null,is_dev.eq.false");
+    }
 
     // Aplicar filtros según kanbanType
     const phaseColumn = "current_stage";

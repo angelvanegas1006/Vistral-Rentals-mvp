@@ -99,6 +99,7 @@ interface Property {
   propertyReadyDate?: string; // Fecha en que la propiedad está lista
   daysToPublishRent?: number; // Días para publicar el alquiler
   propheroSubstate?: "Pendiente de revisión" | "Pendiente de información" | null; // Subestado de Prophero
+  is_dev?: boolean;
 }
 
 interface RentalsPropertyCardProps {
@@ -240,7 +241,12 @@ export function RentalsPropertyCard({
     >
       {/* Header con ID y Tag de Subestado */}
       <div className="flex items-start justify-between mb-2">
-        <div className="text-xs font-semibold text-muted-foreground">ID {property.property_unique_id}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-semibold text-muted-foreground">ID {property.property_unique_id}</span>
+          {property.is_dev && (
+            <span className="inline-flex items-center rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] font-bold px-1.5 py-0.5 leading-none font-mono">DEV</span>
+          )}
+        </div>
         {/* Tag de subestado de Prophero - esquina superior derecha */}
         {property.currentPhase === "Viviendas Prophero" && property.propheroSubstate !== null && property.propheroSubstate !== undefined && (
           <span

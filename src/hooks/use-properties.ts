@@ -9,6 +9,7 @@ interface UsePropertiesOptions {
   kanbanType?: "captacion" | "portfolio";
   searchQuery?: string;
   filters?: Record<string, any>;
+  showDevCards?: boolean;
 }
 
 export function useProperties(options: UsePropertiesOptions = {}) {
@@ -71,6 +72,9 @@ export function useProperties(options: UsePropertiesOptions = {}) {
             ? options.filters.admin_name
             : [options.filters.admin_name];
           params.append("admin_name", managers.join(","));
+        }
+        if (options.showDevCards) {
+          params.append("show_dev", "true");
         }
 
         // Usar API route con service role key para evitar problemas de RLS
@@ -207,7 +211,7 @@ export function useProperties(options: UsePropertiesOptions = {}) {
     return () => {
       window.removeEventListener('property-updated', handlePropertyUpdate);
     };
-  }, [options.kanbanType, options.searchQuery, options.filters]);
+  }, [options.kanbanType, options.searchQuery, options.filters, options.showDevCards]);
 
   return { properties, loading, error, isSupabaseConfigured };
 }

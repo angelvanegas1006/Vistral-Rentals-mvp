@@ -268,6 +268,7 @@ export interface Database {
           finalization_notice_document_file_url: string | null;
           // Prophero section reviews (Fase 1)
           prophero_section_reviews: Json | null;
+          is_dev: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -396,6 +397,7 @@ export interface Database {
           exit_comments: string | null;
           exited_at: string | null;
           label: string | null;
+          is_dev: boolean;
           needs_update: boolean;
           phase_entered_at: string;
           created_at: string;
