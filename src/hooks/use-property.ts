@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
@@ -28,8 +29,14 @@ export function useProperty(propertyId: string) {
         }
         setError(null);
 
-        // Usar API route con service role key para evitar problemas de RLS
-        const response = await fetch(`/api/properties/${encodeURIComponent(propertyId)}`);
+        const headers: Record<string, string> = {};
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+
+        const response = await fetch(`/api/properties/${encodeURIComponent(propertyId)}`, { headers });
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));

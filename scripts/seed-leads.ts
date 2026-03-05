@@ -214,10 +214,6 @@ interface LeadInsert {
   has_guarantor: boolean;
   raw_qualification_data: Record<string, unknown>;
   label: string | null;
-  is_dev?: boolean;
-  exit_reason?: string | null;
-  exit_comments?: string | null;
-  exited_at?: string | null;
 }
 
 /**
@@ -339,46 +335,6 @@ async function main() {
   console.log("Fases cubiertas:", MAIN_PHASES.join(", "));
   if (data?.length) {
     console.log("IDs generados:", data.length);
-  }
-
-  // 3. Create 8 DEV leads (one per phase including terminal) with is_dev=true
-  console.log("\nCreando 8 DEV leads (is_dev=true) en todas las fases...");
-
-  const EXIT_REASONS_PERDIDO = ["no_contactable", "no_interesado", "encontro_otra_vivienda"];
-  const EXIT_REASONS_RECHAZADO = ["rechazado_finaer", "rechazado_propietario", "documentacion_insuficiente"];
-
-  const devLeads: LeadInsert[] = [];
-  for (let p = 0; p < PHASES.length; p++) {
-    const phase = PHASES[p];
-    const devId = `DEV-LEAD-${String(p + 1).padStart(3, "0")}`;
-    const lead = buildLead(phase, p, devId);
-    lead.is_dev = true;
-
-    if (phase === "Interesado Perdido") {
-      lead.exit_reason = random.choice(EXIT_REASONS_PERDIDO);
-      lead.exit_comments = "Lead perdido generado por seed (DEV).";
-      lead.exited_at = new Date(Date.now() - random.int(1, 10) * 86400000).toISOString();
-    } else if (phase === "Interesado Rechazado") {
-      lead.exit_reason = random.choice(EXIT_REASONS_RECHAZADO);
-      lead.exit_comments = "Lead rechazado generado por seed (DEV).";
-      lead.exited_at = new Date(Date.now() - random.int(1, 10) * 86400000).toISOString();
-    }
-
-    devLeads.push(lead);
-  }
-
-  const { data: devData, error: devError } = await supabase.from("leads").insert(devLeads).select("id");
-
-  if (devError) {
-    console.error("Error insertando DEV leads:", devError.message);
-    console.error("Detalle:", devError);
-    process.exit(1);
-  }
-
-  console.log(`Insertados ${devLeads.length} DEV leads.`);
-  console.log("Fases DEV cubiertas:", PHASES.join(", "));
-  if (devData?.length) {
-    console.log("DEV IDs generados:", devData.length);
   }
 
   console.log("\nSeed de leads completado correctamente.");

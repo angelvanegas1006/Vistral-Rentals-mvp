@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
@@ -23,7 +23,7 @@ export function SupabaseAuthProvider({
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     // Get initial session
@@ -51,7 +51,13 @@ export function SupabaseAuthProvider({
     } catch {
       /* best-effort server-side cleanup */
     }
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error during Supabase sign out:", error);
+    }
+    // Always clear local auth state so UI does not get stuck
+    setSession(null);
+    setUser(null);
   };
 
   return (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { VistralLogo } from "@/components/vistral-logo";
 import {
@@ -44,7 +44,6 @@ export function RentalsSidebar() {
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
-  const router = useRouter();
   const { user, signOut, profile } = useAppAuth();
   const { t } = useI18n();
 
@@ -64,8 +63,12 @@ export function RentalsSidebar() {
   }, []);
 
   const handleLogout = async () => {
-    await signOut();
-    router.push("/login");
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error during sign out:", error);
+    }
+    window.location.href = "/login";
   };
 
   const handleMobileToggle = () => {

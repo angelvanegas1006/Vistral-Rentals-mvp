@@ -16,6 +16,9 @@
     "seed": "npx tsx scripts/seed-properties.ts",
     "seed-leads": "npx tsx scripts/seed-leads.ts",
     "seed-leads-properties": "npx tsx scripts/seed-leads-properties.ts",
+    "seed-dev": "npx tsx scripts/seed-dev-properties.ts",
+    "seed-dev-leads": "npx tsx scripts/seed-dev-leads.ts",
+    "seed-dev-leads-properties": "npx tsx scripts/seed-dev-leads-properties.ts",
     "check-columns": "npx tsx scripts/check-properties-columns.ts",
     "update-rental-fields": "npx tsx scripts/update-rental-fields.ts"
   },

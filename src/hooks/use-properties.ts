@@ -77,7 +77,6 @@ export function useProperties(options: UsePropertiesOptions = {}) {
           params.append("show_dev", "true");
         }
 
-        // Usar API route con service role key para evitar problemas de RLS
         const response = await fetch(`/api/properties?${params.toString()}`);
         
         if (!response.ok) {

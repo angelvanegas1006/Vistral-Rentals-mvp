@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getCallerRole, isDeveloperRole } from "@/lib/auth/server-dev-check";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -67,6 +68,16 @@ export async function GET(
       );
     }
 
+    if (data.is_dev) {
+      const role = await getCallerRole(request);
+      if (!isDeveloperRole(role)) {
+        return NextResponse.json(
+          { error: "Property not found" },
+          { status: 404 }
+        );
+      }
+    }
+
     return NextResponse.json({ property: data });
   } catch (error: any) {
     console.error("Error fetching property:", error);
@@ -112,7 +123,22 @@ export async function PUT(
     }
     const body = await request.json();
 
-    // Actualizar propiedad por property_unique_id
+    const { data: existing } = await supabase
+      .from("properties")
+      .select("is_dev")
+      .eq("property_unique_id", propertyId)
+      .maybeSingle();
+
+    if (existing?.is_dev) {
+      const role = await getCallerRole(request);
+      if (!isDeveloperRole(role)) {
+        return NextResponse.json(
+          { error: "No autorizado" },
+          { status: 403 }
+        );
+      }
+    }
+
     const { data, error } = await supabase
       .from("properties")
       .update({

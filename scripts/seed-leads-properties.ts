@@ -430,10 +430,11 @@ function generateMtpsForLeads(
 async function main() {
   console.log("Iniciando seed de leads_properties (coherente con fases)...\n");
 
-  // 1. Obtener todos los leads con su current_phase y is_dev
+  // 1. Obtener todos los leads (solo normales, is_dev=false)
   const { data: allLeads, error: leadsError } = await supabase
     .from("leads")
-    .select("leads_unique_id, current_phase, is_dev")
+    .select("leads_unique_id, current_phase")
+    .or("is_dev.is.null,is_dev.eq.false")
     .order("leads_unique_id");
 
   if (leadsError) {
@@ -446,52 +447,31 @@ async function main() {
     process.exit(0);
   }
 
-  // Separate normal leads from dev leads
-  const normalLeads = allLeads.filter((l) => !l.is_dev);
-  const devLeads = allLeads.filter((l) => l.is_dev);
-
-  // 2. Obtener propiedades en fase "Publicado" (normal + dev por separado)
-  const { data: normalProps, error: normalPropsError } = await supabase
+  // 2. Obtener propiedades normales en fase "Publicado"
+  const { data: publishedProps, error: propsError } = await supabase
     .from("properties")
     .select("property_unique_id")
     .eq("current_stage", "Publicado")
     .or("is_dev.is.null,is_dev.eq.false");
 
-  if (normalPropsError) {
-    console.error("Error obteniendo propiedades normales:", normalPropsError.message);
+  if (propsError) {
+    console.error("Error obteniendo propiedades:", propsError.message);
     process.exit(1);
   }
 
-  const { data: devProps, error: devPropsError } = await supabase
-    .from("properties")
-    .select("property_unique_id")
-    .eq("current_stage", "Publicado")
-    .eq("is_dev", true);
-
-  if (devPropsError) {
-    console.error("Error obteniendo propiedades DEV:", devPropsError.message);
-    process.exit(1);
-  }
-
-  const normalPublishedIds = (normalProps ?? [])
+  const publishedIds = (publishedProps ?? [])
     .map((p) => p.property_unique_id)
     .filter((id): id is string => id != null && id !== "");
 
-  const devPublishedIds = (devProps ?? [])
-    .map((p) => p.property_unique_id)
-    .filter((id): id is string => id != null && id !== "");
+  console.log(`Leads: ${allLeads.length}`);
+  console.log(`Propiedades Publicado: ${publishedIds.length}\n`);
 
-  console.log(`Leads normales: ${normalLeads.length}`);
-  console.log(`Leads DEV: ${devLeads.length}`);
-  console.log(`Propiedades Publicado (normales): ${normalPublishedIds.length}`);
-  console.log(`Propiedades Publicado (DEV): ${devPublishedIds.length}\n`);
-
-  if (normalPublishedIds.length < 3) {
-    console.log("Se necesitan al menos 3 propiedades publicadas normales para el seed.");
+  if (publishedIds.length < 3) {
+    console.log("Se necesitan al menos 3 propiedades publicadas para el seed.");
     process.exit(0);
   }
 
-  // 3. Borrar lead_events y leads_properties existentes
+  // 3. Borrar lead_events y leads_properties existentes (solo normales)
   const allLeadIds = allLeads.map((l) => l.leads_unique_id);
 
   console.log("Borrando lead_events existentes...");
@@ -514,22 +494,11 @@ async function main() {
     console.warn("Advertencia al limpiar leads_properties:", deleteError.message);
   }
 
-  // 4. Generate MTPs for normal leads (using normal properties)
-  console.log("\nGenerando MTPs para leads normales...");
-  const normalRecords = generateMtpsForLeads(normalLeads, normalPublishedIds);
+  // 4. Generate MTPs
+  console.log("\nGenerando MTPs...");
+  const allRecords = generateMtpsForLeads(allLeads, publishedIds);
 
-  // 5. Generate MTPs for dev leads (using dev properties only)
-  let devRecords: MtpRecord[] = [];
-  if (devLeads.length > 0 && devPublishedIds.length > 0) {
-    console.log("Generando MTPs para leads DEV...");
-    devRecords = generateMtpsForLeads(devLeads, devPublishedIds);
-  } else if (devLeads.length > 0) {
-    console.log("No hay propiedades DEV publicadas, saltando MTPs para leads DEV.");
-  }
-
-  const allRecords = [...normalRecords, ...devRecords];
-
-  // 6. Insert
+  // 5. Insert
   const { data: inserted, error: insertError } = await supabase
     .from("leads_properties")
     .insert(allRecords)
@@ -541,7 +510,7 @@ async function main() {
     process.exit(1);
   }
 
-  // 7. Verification pass: non-terminal leads with no active MTPs → "Interesado Cualificado"
+  // 6. Verification pass: non-terminal leads with no active MTPs → "Interesado Cualificado"
   const EXIT_STATUSES = new Set([
     "en_espera", "descartada", "no_disponible",
     "interesado_perdido", "interesado_rechazado",
@@ -578,13 +547,13 @@ async function main() {
     }
   }
 
-  // 8. Summary
+  // 7. Summary
   const statusCounts: Record<string, number> = {};
   for (const r of allRecords) {
     statusCounts[r.current_status] = (statusCounts[r.current_status] ?? 0) + 1;
   }
 
-  console.log(`\nInsertados ${allRecords.length} registros en leads_properties (${normalRecords.length} normales + ${devRecords.length} DEV).`);
+  console.log(`\nInsertados ${allRecords.length} registros en leads_properties.`);
   console.log("\nDistribución de estados:");
   for (const [status, count] of Object.entries(statusCounts).sort()) {
     console.log(`  ${status}: ${count}`);

@@ -503,15 +503,13 @@ type PropertyOverrides = {
   rentMax?: number;
   city?: string;
   districts?: readonly string[];
-  is_dev?: boolean;
-  customPropertyUniqueId?: string;
 };
 
 /**
  * Create a single property with all files
  */
 async function createProperty(index: number, overrides?: PropertyOverrides): Promise<void> {
-  const propertyUniqueId = overrides?.customPropertyUniqueId ?? `PROP-${String(index + 1).padStart(3, '0')}`;
+  const propertyUniqueId = `PROP-${String(index + 1).padStart(3, '0')}`;
   const systemId = randomUUID();
   
   const currentStage = overrides?.stage ?? ALL_STAGES[index % ALL_STAGES.length];
@@ -597,7 +595,7 @@ async function createProperty(index: number, overrides?: PropertyOverrides): Pro
     client_custom_other_documents: [],
     custom_technical_documents: [],
     property_custom_other_documents: [],
-    is_dev: overrides?.is_dev ?? false,
+    is_dev: false,
   };
   
   console.log(`\n📦 Creating ${propertyUniqueId} (Stage: ${currentStage})...`);
@@ -749,50 +747,11 @@ async function main() {
       if (distribution[stageIndex] === 0) stageIndex++;
     }
     
-    // Step 4: Create 10 DEV properties (is_dev=true)
-    console.log('\n🔧 Creating 10 DEV properties (is_dev=true)...\n');
-
-    // 4a. 6 DEV properties in "Publicado" (2 per price group)
-    let devIndex = 1;
-    for (let g = 0; g < PUBLISHED_GROUPS.length; g++) {
-      const group = PUBLISHED_GROUPS[g];
-      for (let i = 0; i < 2; i++) {
-        await createProperty(globalIndex++, {
-          stage: 'Publicado',
-          bedrooms: group.bedrooms,
-          rentMin: group.rentMin,
-          rentMax: group.rentMax,
-          city: group.city,
-          districts: group.districts,
-          is_dev: true,
-          customPropertyUniqueId: `DEV-PROP-${String(devIndex).padStart(3, '0')}`,
-        });
-        devIndex++;
-      }
-    }
-
-    // 4b. 1 DEV property per remaining Captación y Cierre stage
-    const DEV_OTHER_STAGES = [
-      'Viviendas Prophero',
-      'Listo para Alquilar',
-      'Inquilino aceptado',
-      'Pendiente de trámites',
-    ];
-    for (const stage of DEV_OTHER_STAGES) {
-      await createProperty(globalIndex++, {
-        stage,
-        is_dev: true,
-        customPropertyUniqueId: `DEV-PROP-${String(devIndex).padStart(3, '0')}`,
-      });
-      devIndex++;
-    }
-
-    // Step 5: Summary
+    // Step 4: Summary
     console.log('\n📊 Summary:');
     console.log(`✅ Storage buckets cleaned`);
     console.log(`✅ Database cleaned`);
-    console.log(`✅ Created 48 normal properties (15 Publicado + 33 in other phases)`);
-    console.log(`✅ Created 10 DEV properties (6 Publicado + 4 other Captación y Cierre stages)`);
+    console.log(`✅ Created 48 properties (15 Publicado + 33 in other phases)`);
     console.log(`✅ All stages covered: ${ALL_STAGES.join(', ')}`);
     console.log('\n🎉 Seeding completed successfully!');
     
