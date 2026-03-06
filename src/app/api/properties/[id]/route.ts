@@ -1,28 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getCallerRole, isDeveloperRole } from "@/lib/auth/server-dev-check";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    const supabase = createServiceClient();
 
     // Extract property ID from params or URL as fallback
     let propertyId = params?.id;
@@ -95,19 +80,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    const supabase = createServiceClient();
 
     // Extract property ID from params or URL as fallback
     let propertyId = params?.id;

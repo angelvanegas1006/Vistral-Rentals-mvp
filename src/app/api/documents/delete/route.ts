@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 
 // Field to bucket mapping (same as upload route)
 const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
@@ -296,23 +296,7 @@ export async function DELETE(request: NextRequest) {
 
     const { bucket } = mapping;
 
-    // Create Supabase client with service role key (bypasses RLS)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    const supabase = createServiceClient();
 
     // Step 1: Update database
     // Check if this is a JSONB array field, custom document field, or single text field

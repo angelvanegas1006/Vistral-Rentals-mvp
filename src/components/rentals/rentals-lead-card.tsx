@@ -57,15 +57,16 @@ export function RentalsLeadCard({
 
   const notificationStyles = notificationColor && !isHighlighted
     ? {
-        red: "border-l-4 border-l-red-500 dark:border-l-red-400",
-        yellow: "border-l-4 border-l-amber-500 dark:border-l-amber-400",
-        blue: "border-l-4 border-l-blue-500 dark:border-l-blue-400",
+        red: "border-l-4 border-l-red-500 bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-l-red-400 dark:border-red-800",
+        yellow: "border-l-4 border-l-amber-500 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-l-amber-400 dark:border-amber-800",
+        blue: "border-l-4 border-l-blue-500 bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-l-blue-400 dark:border-blue-800",
       }[notificationColor]
     : null;
 
   return (
     <div
       data-lead-id={lead.id}
+
       onClick={handleClick}
       className={cn(
         // Estilos base - mismo tamaño que tarjetas de Captación/Cierre

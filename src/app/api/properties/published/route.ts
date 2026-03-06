@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * GET /api/properties/published
@@ -28,16 +25,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  */
 export async function GET(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createServiceClient();
 
     const { searchParams } = new URL(request.url);
     const city = searchParams.get("city");

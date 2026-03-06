@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * GET /api/leads/visits-calendar?start=ISO&end=ISO
@@ -11,10 +8,6 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  */
 export async function GET(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: "Missing Supabase credentials" }, { status: 500 });
-    }
-
     const { searchParams } = new URL(request.url);
     const start = searchParams.get("start");
     const end = searchParams.get("end");
@@ -23,9 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "start and end query params required" }, { status: 400 });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createServiceClient();
 
     let query = supabase
       .from("leads_properties")

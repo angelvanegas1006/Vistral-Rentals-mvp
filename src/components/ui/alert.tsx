@@ -77,7 +77,7 @@ interface AlertWithIconProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof alertVariants> {
   title?: string
-  description?: string
+  description?: React.ReactNode
   showIcon?: boolean
   onClose?: () => void
 }

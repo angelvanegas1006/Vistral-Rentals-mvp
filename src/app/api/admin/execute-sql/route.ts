@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Temporary admin route to execute SQL scripts
@@ -27,16 +27,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    const supabase = createServiceClient();
 
-    // Execute SQL using Supabase REST API
-    // Note: Supabase doesn't support direct SQL execution via JS client
-    // We need to use the REST API with pg_query or create a function
     const response = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
       method: "POST",
       headers: {

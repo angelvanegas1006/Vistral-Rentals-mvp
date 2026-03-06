@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-function getServiceClient() {
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error("Missing Supabase credentials");
-  }
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
-
 export async function GET() {
   try {
-    const supabase = getServiceClient();
+    const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from("profiles")
@@ -39,7 +27,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getServiceClient();
+    const supabase = createServiceClient();
     const body = await request.json();
     const { email, password, full_name } = body;
 

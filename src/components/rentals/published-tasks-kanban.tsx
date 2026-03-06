@@ -1,330 +1,254 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Phone } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragStartEvent,
-  DragEndEvent,
-  useDroppable,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-
-interface Lead {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  called?: "Si" | "No";
-  discarded?: "Si" | "No";
-  scheduledDate?: string;
-  visitDate?: string;
-  qualified?: "Si" | "No";
-}
+  MTP_ACTIVE_STATUSES,
+  MTP_INACTIVE_STATUSES,
+  type InterestedLeadItem,
+  type MtpStatusDisplay,
+} from "@/lib/leads/mtp-display";
 
 interface PublishedTasksKanbanProps {
-  unguidedLeads: Lead[];
-  scheduledLeads: Lead[];
-  visitedLeads: Lead[];
-  discardedLeads: Lead[];
-  onUnguidedLeadsChange: (leads: Lead[]) => void;
-  onScheduledLeadsChange: (leads: Lead[]) => void;
-  onVisitedLeadsChange: (leads: Lead[]) => void;
-  onDiscardedLeadsChange: (leads: Lead[]) => void;
-  onAddLead: (list: "unguided" | "scheduled" | "visited" | "discarded") => void;
+  interested: InterestedLeadItem[];
+  onNavigateToLead: (leadUuid: string) => void;
 }
 
-// Componente de tarjeta ordenable
-function SortableLeadCard({
+interface KanbanRow {
+  statuses: MtpStatusDisplay["id"][];
+  bg: string;
+}
+
+const ACTIVE_ROWS: KanbanRow[] = [
+  {
+    statuses: ["interesado_cualificado", "visita_agendada"],
+    bg: "bg-blue-50/70 dark:bg-blue-950/20",
+  },
+  {
+    statuses: ["pendiente_de_evaluacion", "esperando_decision"],
+    bg: "bg-indigo-50/70 dark:bg-indigo-950/20",
+  },
+  {
+    statuses: ["recogiendo_informacion", "calificacion_en_curso"],
+    bg: "bg-amber-50/70 dark:bg-amber-950/20",
+  },
+  {
+    statuses: ["interesado_presentado"],
+    bg: "bg-teal-50/70 dark:bg-teal-950/20",
+  },
+];
+
+const INACTIVE_ROWS: KanbanRow[] = [
+  {
+    statuses: ["rechazado_por_finaer", "rechazado_por_propietario"],
+    bg: "bg-red-50/70 dark:bg-red-950/20",
+  },
+  {
+    statuses: ["interesado_rechazado", "interesado_perdido"],
+    bg: "bg-pink-50/50 dark:bg-pink-950/15",
+  },
+  {
+    statuses: ["descartada", "en_espera"],
+    bg: "bg-gray-50/70 dark:bg-gray-900/30",
+  },
+];
+
+const ACTIVE_MAP = new Map(MTP_ACTIVE_STATUSES.map((s) => [s.id, s]));
+const INACTIVE_MAP = new Map(MTP_INACTIVE_STATUSES.map((s) => [s.id, s]));
+
+function MiniLeadCard({
   lead,
-  onClick,
+  dotColor,
+  onNavigate,
 }: {
-  lead: Lead;
-  onClick: () => void;
+  lead: InterestedLeadItem;
+  dotColor: string;
+  onNavigate: () => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: lead.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  // Convertir Lead a formato de RentalsLeadCard
-  const leadCardData = {
-    id: lead.id,
-    name: lead.name,
-    phone: lead.phone,
-    email: lead.email || "",
-    interestedProperty: undefined,
-    zone: undefined,
-    currentPhase: "",
-    daysInPhase: 0,
-    isHighlighted: false,
-    needsUpdate: false,
-  };
-
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes}
-      {...listeners}
-      className="cursor-grab active:cursor-grabbing"
-    >
-      <div className="bg-card border-2 border-border rounded-lg p-4 shadow-sm hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.15)] dark:hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.6)] transition-all duration-200">
-        <div className="space-y-2">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-foreground truncate">{lead.name}</h4>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                <Phone className="h-3 w-3" />
-                {lead.phone}
-              </p>
-            </div>
-          </div>
-          {lead.email && (
-            <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
-          )}
-        </div>
-      </div>
+    <div className="flex items-center gap-2 bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] rounded-md px-3 py-2 shadow-sm">
+      <div className={cn("h-2 w-2 rounded-full shrink-0", dotColor)} />
+      <span className="text-sm text-foreground truncate flex-1">
+        {lead.leadName}
+      </span>
+      <button
+        type="button"
+        onClick={onNavigate}
+        className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 shrink-0"
+      >
+        Ver más
+        <ExternalLink className="h-3 w-3" />
+      </button>
     </div>
   );
 }
 
-// Componente de columna droppable
-function DroppableColumn({
-  columnId,
-  title,
+function StatusColumn({
+  display,
   leads,
-  onAddLead,
-  children,
+  onNavigateToLead,
 }: {
-  columnId: string;
-  title: string;
-  leads: Lead[];
-  onAddLead: () => void;
-  children: React.ReactNode;
+  display: MtpStatusDisplay;
+  leads: InterestedLeadItem[];
+  onNavigateToLead: (leadUuid: string) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: columnId,
-  });
-
   return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "flex flex-col h-full min-w-[260px] md:min-w-[280px] w-[260px] md:w-[280px] flex-shrink-0",
-        isOver && "bg-accent/50"
+    <div className="bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] rounded-lg p-3 flex-1 min-w-0">
+      <div className="flex items-center gap-2 mb-2">
+        <div
+          className={cn("h-2.5 w-2.5 rounded-full shrink-0", display.dotColor)}
+        />
+        <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide flex-1 truncate">
+          {display.label}
+        </h4>
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+            leads.length > 0
+              ? cn(display.badgeBg, display.badgeText)
+              : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+          )}
+        >
+          {leads.length}
+        </span>
+      </div>
+
+      {leads.length === 0 ? (
+        <p className="text-xs text-muted-foreground/60 py-1">
+          Sin interesados
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {leads.map((lead) => (
+            <MiniLeadCard
+              key={`${lead.leadId}-${display.id}`}
+              lead={lead}
+              dotColor={display.dotColor}
+              onNavigate={() => onNavigateToLead(lead.leadUuid)}
+            />
+          ))}
+        </div>
       )}
-    >
-      {/* Header */}
-      <div className="mb-3 md:mb-4">
-        <div className="flex items-center justify-between">
-          <h3 className={cn(
-            "font-semibold text-foreground",
-            columnId === "visited" ? "text-sm md:text-base" : "text-base md:text-lg"
-          )}>
-            {title}
-          </h3>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium px-2 py-0.5">
-              {leads.length}
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onAddLead}
-              className="h-8 w-8 p-0"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+    </div>
+  );
+}
+
+function KanbanRows({
+  rows,
+  statusMap,
+  interested,
+  onNavigateToLead,
+}: {
+  rows: KanbanRow[];
+  statusMap: Map<string, MtpStatusDisplay>;
+  interested: InterestedLeadItem[];
+  onNavigateToLead: (leadUuid: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      {rows.map((row, rowIdx) => (
+        <div
+          key={rowIdx}
+          className={cn("rounded-lg p-3", row.bg)}
+        >
+          <div className="flex gap-3">
+            {row.statuses.map((statusId) => {
+              const display = statusMap.get(statusId);
+              if (!display) return null;
+              const leads = interested.filter(
+                (i) => i.mtpStatus === statusId
+              );
+              return (
+                <StatusColumn
+                  key={statusId}
+                  display={display}
+                  leads={leads}
+                  onNavigateToLead={onNavigateToLead}
+                />
+              );
+            })}
           </div>
         </div>
-      </div>
-
-      {/* Contenedor de leads con scroll */}
-      <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
-        {children}
-      </div>
+      ))}
     </div>
   );
 }
 
 export function PublishedTasksKanban({
-  unguidedLeads,
-  scheduledLeads,
-  visitedLeads,
-  discardedLeads,
-  onUnguidedLeadsChange,
-  onScheduledLeadsChange,
-  onVisitedLeadsChange,
-  onDiscardedLeadsChange,
-  onAddLead,
+  interested,
+  onNavigateToLead,
 }: PublishedTasksKanbanProps) {
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [inactiveOpen, setInactiveOpen] = useState(false);
 
-  // Sensores para drag & drop
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+  const activeTotal = useMemo(
+    () =>
+      interested.filter((i) =>
+        MTP_ACTIVE_STATUSES.some((s) => s.id === i.mtpStatus)
+      ).length,
+    [interested]
   );
 
-  // Mapeo de columnas
-  const columns = [
-    { id: "unguided", title: "Interesados sin gestionar", leads: unguidedLeads, onChange: onUnguidedLeadsChange },
-    { id: "scheduled", title: "Interesados Agendados", leads: scheduledLeads, onChange: onScheduledLeadsChange },
-    { id: "visited", title: "Visita Hecha / Pend. Doc.", leads: visitedLeads, onChange: onVisitedLeadsChange },
-    { id: "discarded", title: "Descartados", leads: discardedLeads, onChange: onDiscardedLeadsChange },
-  ];
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveId(null);
-
-    if (!over) return;
-
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    // Encontrar la columna origen y destino
-    let sourceColumn = columns.find((col) => col.leads.some((l) => l.id === activeId));
-    let targetColumn = columns.find((col) => col.id === overId || col.leads.some((l) => l.id === overId));
-
-    // Si el destino es una columna (no un lead), usar esa columna
-    if (columns.find((col) => col.id === overId)) {
-      targetColumn = columns.find((col) => col.id === overId);
-    } else {
-      // Si el destino es un lead, encontrar su columna
-      targetColumn = columns.find((col) => col.leads.some((l) => l.id === overId));
-    }
-
-    if (!sourceColumn || !targetColumn) return;
-
-    const sourceIndex = sourceColumn.leads.findIndex((l) => l.id === activeId);
-    const lead = sourceColumn.leads[sourceIndex];
-
-    if (sourceColumn.id === targetColumn.id) {
-      // Reordenar dentro de la misma columna
-      const newLeads = arrayMove(sourceColumn.leads, sourceIndex, sourceColumn.leads.findIndex((l) => l.id === overId) || 0);
-      sourceColumn.onChange(newLeads);
-    } else {
-      // Mover entre columnas
-      const newSourceLeads = sourceColumn.leads.filter((l) => l.id !== activeId);
-      const newTargetLeads = [...targetColumn.leads, lead];
-      
-      sourceColumn.onChange(newSourceLeads);
-      targetColumn.onChange(newTargetLeads);
-    }
-  };
-
-  // Obtener el lead activo para el overlay
-  const activeLead = activeId
-    ? columns
-        .flatMap((col) => col.leads)
-        .find((lead) => lead.id === activeId)
-    : null;
+  const inactiveTotal = useMemo(
+    () =>
+      interested.filter((i) =>
+        MTP_INACTIVE_STATUSES.some((s) => s.id === i.mtpStatus)
+      ).length,
+    [interested]
+  );
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex gap-3 h-full min-w-max overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent -ml-1 pl-1">
-        {columns.map((column) => (
-          <SortableContext
-            key={column.id}
-            id={column.id}
-            items={column.leads.map((lead) => lead.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <DroppableColumn
-              columnId={column.id}
-              title={column.title}
-              leads={column.leads}
-              onAddLead={() => onAddLead(column.id as "unguided" | "scheduled" | "visited" | "discarded")}
-            >
-              {column.leads.length === 0 ? (
-                <div className="bg-card dark:bg-[#000000] border border-border rounded-lg p-6 md:border-0 md:bg-transparent text-center">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    No hay interesados
-                  </p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">
-                    Los interesados aparecerán aquí
-                  </p>
-                </div>
-              ) : (
-                column.leads.map((lead) => (
-                  <SortableLeadCard
-                    key={lead.id}
-                    lead={lead}
-                    onClick={() => {
-                      // TODO: Navegar a detalle del lead si es necesario
-                    }}
-                  />
-                ))
-              )}
-            </DroppableColumn>
-          </SortableContext>
-        ))}
+    <div className="space-y-6">
+      {/* Activos */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <h4 className="text-sm font-semibold text-foreground">
+            Interesados Activos
+          </h4>
+          <Badge variant="secondary" className="text-xs">
+            {activeTotal}
+          </Badge>
+        </div>
+        <KanbanRows
+          rows={ACTIVE_ROWS}
+          statusMap={ACTIVE_MAP}
+          interested={interested}
+          onNavigateToLead={onNavigateToLead}
+        />
       </div>
 
-      {/* Overlay para mostrar la tarjeta mientras se arrastra */}
-      <DragOverlay>
-        {activeLead ? (
-          <div className="opacity-90 rotate-2 bg-card border-2 border-border rounded-lg p-4 shadow-lg w-[280px]">
-            <div className="space-y-2">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-semibold text-foreground truncate">{activeLead.name}</h4>
-                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {activeLead.phone}
-                  </p>
-                </div>
-              </div>
-              {activeLead.email && (
-                <p className="text-xs text-muted-foreground truncate">{activeLead.email}</p>
-              )}
-            </div>
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+      {/* Inactivos (colapsable) */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setInactiveOpen(!inactiveOpen)}
+          className="flex items-center gap-2 mb-3 group cursor-pointer"
+        >
+          {inactiveOpen ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+          <h4 className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+            Interesados Inactivos
+          </h4>
+          <Badge
+            variant="secondary"
+            className="text-xs bg-gray-100 dark:bg-gray-800"
+          >
+            {inactiveTotal}
+          </Badge>
+        </button>
+        {inactiveOpen && (
+          <KanbanRows
+            rows={INACTIVE_ROWS}
+            statusMap={INACTIVE_MAP}
+            interested={interested}
+            onNavigateToLead={onNavigateToLead}
+          />
+        )}
+      </div>
+    </div>
   );
 }

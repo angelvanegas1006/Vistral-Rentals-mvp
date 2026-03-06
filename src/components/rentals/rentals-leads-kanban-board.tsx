@@ -123,7 +123,7 @@ export function RentalsLeadsKanbanBoard({
 
   const leadPhases = LEAD_PHASE_IDS.map((id) => LEAD_PHASE_TITLES[id]);
 
-  const { leads: allSupabaseLeads, loading: allLeadsLoading, refetch: refetchLeads } = useLeads({
+  const { leads: allSupabaseLeads, loading: allLeadsLoading, refetch: refetchLeads, isConnected } = useLeads({
     searchQuery,
     filters,
     showDevCards: isDeveloper && showDevCards,
@@ -154,7 +154,7 @@ export function RentalsLeadsKanbanBoard({
   }, [refetchLeads]);
 
   const supabaseColumns = useMemo(() => {
-    if (!allSupabaseLeads || allSupabaseLeads.length === 0) return null;
+    if (!isConnected || allLeadsLoading) return null;
 
     const columnsMap: Record<string, Lead[]> = {};
     const phaseNameMap: Record<string, string> = {
@@ -187,7 +187,7 @@ export function RentalsLeadsKanbanBoard({
       title: LEAD_PHASE_TITLES[phaseId],
       leads: columnsMap[phaseId] || [],
     }));
-  }, [allSupabaseLeads]);
+  }, [allSupabaseLeads, isConnected, allLeadsLoading]);
 
   const columns = useMemo(() => {
     if (providedColumns) return providedColumns;
@@ -227,6 +227,7 @@ export function RentalsLeadsKanbanBoard({
           return (
             lead.name.toLowerCase().includes(query) ||
             lead.phone.toLowerCase().includes(query) ||
+            lead.leadsUniqueId?.toLowerCase().includes(query) ||
             lead.interestedProperty?.address.toLowerCase().includes(query) ||
             lead.interestedProperty?.city?.toLowerCase().includes(query) ||
             lead.zone?.toLowerCase().includes(query)

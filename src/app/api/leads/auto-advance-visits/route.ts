@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getLeadPhaseFromMtpStatuses } from "@/lib/leads/mtp-status";
 import { insertLeadEvent, getPropertyAddress } from "@/lib/leads/lead-events";
 
 export const dynamic = "force-dynamic";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 /**
  * POST /api/leads/auto-advance-visits
@@ -15,14 +12,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  */
 export async function POST() {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("[auto-advance] Missing SUPABASE_URL or SERVICE_ROLE_KEY");
-      return NextResponse.json({ error: "Missing Supabase credentials" }, { status: 500 });
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createServiceClient();
 
     const nowIso = new Date().toISOString();
 

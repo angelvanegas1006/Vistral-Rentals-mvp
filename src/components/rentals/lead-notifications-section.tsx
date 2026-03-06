@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { AlertWithIcon } from "@/components/ui/alert";
+import { LEAD_NOTIFICATIONS_CHANGED } from "@/hooks/use-lead-notifications-summary";
 import { Card } from "@/components/ui/card";
 import { Bell, Loader2 } from "lucide-react";
+import { renderNotificationMessage, getNotificationCardClassName } from "@/lib/notifications/render-message";
 
 interface LeadNotification {
   id: string;
@@ -18,6 +20,8 @@ interface LeadNotification {
 
 const NOTIFICATION_VARIANT_MAP: Record<string, "danger" | "warning" | "info"> = {
   urgent_visit_cancel: "danger",
+  auto_recovery: "warning",
+  phase_auto_move: "warning",
   info_property_unavailable: "warning",
   recovery: "info",
 };
@@ -53,11 +57,14 @@ export function LeadNotificationsSection({ leadId, refreshKey }: LeadNotificatio
     async (notificationId: string) => {
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
       try {
-        await fetch(`/api/leads/${encodeURIComponent(leadId)}/notifications`, {
+        const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}/notifications`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ notificationId }),
         });
+        if (res.ok) {
+          window.dispatchEvent(new CustomEvent(LEAD_NOTIFICATIONS_CHANGED));
+        }
       } catch {
         fetchNotifications();
       }
@@ -97,8 +104,9 @@ export function LeadNotificationsSection({ leadId, refreshKey }: LeadNotificatio
           <AlertWithIcon
             key={n.id}
             variant={NOTIFICATION_VARIANT_MAP[n.notification_type] ?? "info"}
+            className={getNotificationCardClassName(n.notification_type)}
             title={n.title}
-            description={n.message}
+            description={renderNotificationMessage(n.message)}
             onClose={() => handleDismiss(n.id)}
           />
         ))}

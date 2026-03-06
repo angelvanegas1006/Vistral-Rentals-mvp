@@ -24,6 +24,7 @@ import { KanbanIcon } from "@/components/icons/kanban-icon";
 import { ChevronRightIcon } from "@/components/icons/chevron-right-icon";
 import { useAppAuth } from "@/hooks/use-app-auth";
 import { useI18n } from "@/hooks/use-i18n";
+import { useLeadNotificationsSummary } from "@/hooks/use-lead-notifications-summary";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -46,6 +47,7 @@ export function RentalsSidebar() {
   const pathname = usePathname();
   const { user, signOut, profile } = useAppAuth();
   const { t } = useI18n();
+  const { totalCount: notificationCount } = useLeadNotificationsSummary();
 
   // Detectar mobile y ajustar estado colapsado
   useEffect(() => {
@@ -117,7 +119,7 @@ export function RentalsSidebar() {
       label: t("sidebar.notifications"),
       href: "/rentals/notifications",
       icon: Bell,
-      badge: 0, // TODO: Obtener de estado real
+      badge: notificationCount,
       comingSoon: false,
     },
     {

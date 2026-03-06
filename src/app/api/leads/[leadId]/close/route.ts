@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 import { MTP_EXIT_STATUS_IDS } from "@/lib/leads/mtp-status";
 import { insertLeadEvent } from "@/lib/leads/lead-events";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const CLOSURE_TYPE_TO_PHASE: Record<string, string> = {
   perdido: "Interesado Perdido",
@@ -26,13 +23,6 @@ export async function POST(
   { params }: { params: Promise<{ leadId: string }> }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
@@ -69,9 +59,7 @@ export async function POST(
     const newPhase = CLOSURE_TYPE_TO_PHASE[closure_type];
     const newMtpStatus = CLOSURE_TYPE_TO_MTP_STATUS[closure_type];
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createServiceClient();
 
     // 1. Update the lead: phase, exit fields, exited_at
     const { data: updatedLead, error: leadError } = await supabase

@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const EXIT_STATUSES = ["en_espera", "descartada", "no_disponible"];
+const TERMINAL_STATUSES = ["interesado_aceptado", "no_disponible"];
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createServiceClient();
     const propertyId = params.id;
 
     const { data: mtps, error: mtpError } = await supabase
       .from("leads_properties")
       .select("leads_unique_id, current_status")
       .eq("properties_unique_id", propertyId)
-      .not("current_status", "in", `(${EXIT_STATUSES.join(",")})`);
+      .not("current_status", "in", `(${TERMINAL_STATUSES.join(",")})`);
 
     if (mtpError) throw mtpError;
     if (!mtps || mtps.length === 0) {
@@ -29,20 +26,27 @@ export async function GET(
 
     const { data: leads, error: leadsError } = await supabase
       .from("leads")
-      .select("leads_unique_id, name")
+      .select("id, leads_unique_id, name")
       .in("leads_unique_id", leadIds);
 
     if (leadsError) throw leadsError;
 
-    const nameMap = new Map(
-      (leads || []).map((l) => [l.leads_unique_id, l.name])
+    const leadMap = new Map(
+      (leads || []).map((l) => [
+        l.leads_unique_id,
+        { uuid: l.id, name: l.name },
+      ])
     );
 
-    const interested = mtps.map((m) => ({
-      leadId: m.leads_unique_id,
-      leadName: nameMap.get(m.leads_unique_id) || "Sin nombre",
-      mtpStatus: m.current_status || "interesado_cualificado",
-    }));
+    const interested = mtps.map((m) => {
+      const lead = leadMap.get(m.leads_unique_id);
+      return {
+        leadId: m.leads_unique_id,
+        leadUuid: lead?.uuid || "",
+        leadName: lead?.name || "Sin nombre",
+        mtpStatus: m.current_status || "interesado_cualificado",
+      };
+    });
 
     return NextResponse.json({ interested });
   } catch (error) {

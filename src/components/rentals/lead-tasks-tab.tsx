@@ -246,9 +246,13 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
     },
   });
 
+  const pendingConfirmRef = useRef(false);
+  const pendingRecoveryRef = useRef<{ rejectedMtpId: string; rejectionType: "finaer" | "propietario"; reason: string } | null>(null);
+
   const handleTransition = useCallback(
     async (lpId: string, newStatus: string, action: "advance" | "undo" | "revive", updates: Record<string, unknown>) => {
       const result = await transition(lpId, newStatus, action, updates);
+      pendingConfirmRef.current = !result?.completed;
       return result;
     },
     [transition]
@@ -403,15 +407,15 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
 
   // ---------- Recover lead handler ----------
 
-  const handleRecoverLead = useCallback(async (context?: { rejectedMtpId: string; rejectionType: "finaer" | "propietario"; reason: string }) => {
+  const executeRecovery = useCallback(async (context: { rejectedMtpId: string; rejectionType: "finaer" | "propietario"; reason: string }) => {
     try {
       const res = await fetch(`/api/leads/${encodeURIComponent(lead.leadsUniqueId)}/recover`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          rejectedMtpId: context?.rejectedMtpId,
-          rejectionType: context?.rejectionType,
-          reason: context?.reason,
+          rejectedMtpId: context.rejectedMtpId,
+          rejectionType: context.rejectionType,
+          reason: context.reason,
         }),
       });
       const data = await res.json();
@@ -419,13 +423,22 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
         toast.error(data.error || "Error al recuperar interesado");
         return;
       }
-      toast.success(`Interesado recuperado. ${data.revivedCount ?? 0} propiedad(es) reactivada(s).`);
+      toast.success("Interesado recuperado.");
       await refetchLeadProperties();
       await onLeadRefetch?.();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error al recuperar interesado");
     }
   }, [lead.leadsUniqueId, refetchLeadProperties, onLeadRefetch]);
+
+  const handleRecoverLead = useCallback(async (context?: { rejectedMtpId: string; rejectionType: "finaer" | "propietario"; reason: string }) => {
+    if (!context) return;
+    if (pendingConfirmRef.current) {
+      pendingRecoveryRef.current = context;
+      return;
+    }
+    await executeRecovery(context);
+  }, [executeRecovery]);
 
   // ---------- Shared renders ----------
 
@@ -893,13 +906,31 @@ export function LeadTasksTab({ lead, onLeadRefetch, activeView = "tasks", onTabC
       {pendingConfirmation && (
         <TransitionConfirmationModal
           open={!!pendingConfirmation}
-          onOpenChange={(open) => !open && cancelTransition()}
+          onOpenChange={(open) => {
+            if (!open) {
+              pendingRecoveryRef.current = null;
+              pendingConfirmRef.current = false;
+              cancelTransition();
+            }
+          }}
           fromPhase={pendingConfirmation.fromPhase}
           toPhase={pendingConfirmation.toPhase}
           propertyAddress={pendingConfirmation.propertyAddress}
           direction={pendingConfirmation.direction}
-          onConfirm={confirmTransition}
-          onCancel={cancelTransition}
+          onConfirm={async () => {
+            await confirmTransition();
+            pendingConfirmRef.current = false;
+            const ctx = pendingRecoveryRef.current;
+            if (ctx) {
+              pendingRecoveryRef.current = null;
+              await executeRecovery(ctx);
+            }
+          }}
+          onCancel={() => {
+            pendingRecoveryRef.current = null;
+            pendingConfirmRef.current = false;
+            cancelTransition();
+          }}
         />
       )}
 

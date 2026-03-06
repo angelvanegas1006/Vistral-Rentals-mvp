@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { visitId: string } }
 ) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createServiceClient();
     const visitId = params.visitId;
     const body = await request.json();
 
@@ -47,7 +44,7 @@ export async function DELETE(
   { params }: { params: { visitId: string } }
 ) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createServiceClient();
     const visitId = params.visitId;
 
     const { error } = await supabase

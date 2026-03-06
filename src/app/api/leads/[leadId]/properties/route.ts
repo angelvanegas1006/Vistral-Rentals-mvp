@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getLeadPhaseFromMtpStatuses } from "@/lib/leads/mtp-status";
 import { insertLeadEvent, getPropertyAddress } from "@/lib/leads/lead-events";
 
 export const dynamic = "force-dynamic";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 /**
  * GET /api/leads/[leadId]/properties
@@ -18,13 +15,6 @@ export async function GET(
   { params }: { params: Promise<{ leadId: string }> }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
@@ -33,12 +23,7 @@ export async function GET(
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    const supabase = createServiceClient();
 
     // Auto-advance: Visita Agendada -> Pendiente de Evaluación cuando visit_date <= now
     const { data: allVisitaAgendada, error: advanceQueryError } = await supabase
@@ -180,13 +165,6 @@ export async function POST(
   { params }: { params: Promise<{ leadId: string }> }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
@@ -205,9 +183,7 @@ export async function POST(
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createServiceClient();
 
     // Check for duplicate
     const { data: existing } = await supabase

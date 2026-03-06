@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   getLeadPhaseFromMtpStatuses,
   isMtpActive,
@@ -13,9 +13,6 @@ import {
   isPhaseBackward,
   getPropertyAddress,
 } from "@/lib/leads/lead-events";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 type LeadsPropertyRow = {
   id: string;
@@ -37,13 +34,6 @@ export async function POST(
   { params }: { params: Promise<{ leadId: string; lpId: string }> }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
     const { leadId, lpId } = await params;
     if (!leadId?.trim() || !lpId?.trim()) {
       return NextResponse.json(
@@ -65,9 +55,7 @@ export async function POST(
       updates?: Record<string, unknown>;
     } = body;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createServiceClient();
 
     // 1. Obtener MTP actual
     const { data: mtp, error: mtpError } = await supabase
@@ -324,6 +312,10 @@ export async function POST(
       }
     }
 
+    // TODO: Cascada Positiva (4.3 Sub-B): cuando una propiedad vuelve de "Alquilada" a "Disponible",
+    // buscar MTPs en no_disponible → pasarlas a en_espera y notificar (property_resurrection).
+    // Ver docs/leads/notificacuiones.md
+
     // Cascada Negativa: al llegar a interesado_aceptado, las MTPs de OTROS leads
     // para la misma propiedad cambian a no_disponible
     if (targetStatus === "interesado_aceptado") {
@@ -336,16 +328,20 @@ export async function POST(
         .eq("properties_unique_id", propertyId)
         .neq("leads_unique_id", leadId);
 
+      console.log(`[cascade-neg] property=${propertyId} otherMtps=${(otherLeadMtps || []).length}`);
+
       const affectedLeadIds = new Set<string>();
 
       for (const m of otherLeadMtps || []) {
         const st = m.current_status ?? "";
 
         if (st === "rechazado_por_finaer" || st === "rechazado_por_propietario") {
+          console.log(`[cascade-neg] skip lead=${m.leads_unique_id} status=${st}`);
           continue;
         }
 
-        const wasActive = !["en_espera", "descartada", "no_disponible", "interesado_perdido", "interesado_rechazado"].includes(st);
+        const wasActive = !["descartada", "no_disponible", "interesado_perdido", "interesado_rechazado"].includes(st);
+        console.log(`[cascade-neg] mtp=${m.id} lead=${m.leads_unique_id} status=${st} wasActive=${wasActive}`);
 
         await supabase
           .from("leads_properties")
@@ -360,9 +356,9 @@ export async function POST(
         await insertLeadEvent(supabase, {
           leads_unique_id: m.leads_unique_id,
           properties_unique_id: m.properties_unique_id,
-          event_type: "PROPERTY_UNAVAILABLE",
-          title: `Propiedad No Disponible: ${propertyAddress}`,
-          description: `La MTP de la propiedad ${propertyAddress} pasó a 'No Disponible' debido al cierre con otro candidato.`,
+          event_type: "MTP_ARCHIVED",
+          title: `Propiedad Archivada: ${propertyAddress}`,
+          description: `Estado: No Disponible. Motivo: Otro interesado ha sido aceptado.`,
           new_status: "no_disponible",
         });
 
@@ -374,20 +370,34 @@ export async function POST(
             ? "ACCIÓN REQUERIDA: Cancelar visita"
             : "Aviso del Sistema: Propiedad no disponible";
           const notificationMessage = st === "visita_agendada"
-            ? `La propiedad ${propertyAddress} ha sido alquilada a otro candidato. Debes contactar urgentemente con este interesado para cancelar la visita que teníais agendada.`
-            : `La propiedad ${propertyAddress} ya no está disponible (alquilada a otro cliente). La oportunidad ha sido archivada automáticamente.`;
+            ? `🚨 **ACCIÓN REQUERIDA:** La propiedad ${propertyAddress} ya no está disponible. Contacta urgentemente al interesado para CANCELAR la visita.`
+            : `⚠️ **Aviso del Sistema:** La propiedad ${propertyAddress} ya no está disponible (alquilada a otro cliente). La oportunidad ha sido archivada automáticamente.`;
 
-          await supabase.from("lead_notifications").insert({
+          const { error: notifError } = await supabase.from("lead_notifications").insert({
             leads_unique_id: m.leads_unique_id,
             properties_unique_id: m.properties_unique_id,
             notification_type: notificationType,
             title: notificationTitle,
             message: notificationMessage,
+            is_read: false,
           });
+          if (notifError) {
+            console.error(`[cascade-neg] ${notificationType} insert failed for lead=${m.leads_unique_id}:`, notifError);
+          } else {
+            console.log(`[cascade-neg] ${notificationType} inserted for lead=${m.leads_unique_id}`);
+          }
         }
       }
 
       for (const affectedLeadId of affectedLeadIds) {
+        const { data: affectedLead } = await supabase
+          .from("leads")
+          .select("current_phase")
+          .eq("leads_unique_id", affectedLeadId)
+          .single();
+        const previousPhase = (affectedLead?.current_phase as string) || "Interesado Cualificado";
+        const normalizedPreviousPhase = phaseMap[previousPhase] ?? previousPhase;
+
         const { data: remainingMtps } = await supabase
           .from("leads_properties")
           .select("current_status")
@@ -400,11 +410,18 @@ export async function POST(
           !["en_espera", "descartada", "no_disponible", "rechazado_por_finaer", "rechazado_por_propietario", "interesado_perdido", "interesado_rechazado"].includes(s)
         );
 
+        const cascadePhaseChanged = newPhase !== normalizedPreviousPhase;
+
+        console.log(`[cascade-neg] lead=${affectedLeadId} prevPhase=${previousPhase} normalized=${normalizedPreviousPhase} newPhase=${newPhase} hasActiveLeft=${hasActiveLeft} phaseChanged=${cascadePhaseChanged}`);
+
         const leadUpdate: Record<string, unknown> = {
           current_phase: newPhase,
-          days_in_phase: 0,
-          phase_entered_at: new Date().toISOString(),
         };
+
+        if (cascadePhaseChanged) {
+          leadUpdate.days_in_phase = 0;
+          leadUpdate.phase_entered_at = new Date().toISOString();
+        }
 
         if (!hasActiveLeft) {
           leadUpdate.label = "recuperado";
@@ -416,16 +433,50 @@ export async function POST(
           .eq("leads_unique_id", affectedLeadId);
 
         if (!hasActiveLeft) {
-          const lastNotification = (otherLeadMtps || []).find(
-            (m) => m.leads_unique_id === affectedLeadId
-          );
-          const prevPhase = lastNotification?.current_status ?? "desconocido";
-          await supabase.from("lead_notifications").insert({
+          const { error: recoveryNotifError } = await supabase.from("lead_notifications").insert({
             leads_unique_id: affectedLeadId,
             properties_unique_id: propertyId,
-            notification_type: "recovery",
-            title: "Interesado reubicado",
-            message: `Este interesado ha sido recuperado porque la propiedad ${propertyAddress} ya no está disponible. Preséntale nuevas propiedades o recupera las propiedades archivadas.`,
+            notification_type: "auto_recovery",
+            title: "Recuperación Automática",
+            message: `⚠️ **Recuperación Automática:** El interesado ha vuelto a la casilla de salida porque su única opción activa (${propertyAddress}) fue asignada a otro perfil. Presenta nuevas opciones o descártalo.`,
+            is_read: false,
+          });
+          if (recoveryNotifError) {
+            console.error(`[cascade-neg] auto_recovery insert failed for lead=${affectedLeadId}:`, recoveryNotifError);
+          } else {
+            console.log(`[cascade-neg] auto_recovery inserted for lead=${affectedLeadId}`);
+          }
+
+          await insertLeadEvent(supabase, {
+            leads_unique_id: affectedLeadId,
+            properties_unique_id: propertyId,
+            event_type: "PHASE_CHANGE_BACKWARD",
+            title: `Recuperación automática`,
+            description: `El interesado ha vuelto a ${newPhase} porque su única opción activa (${propertyAddress}) fue asignada a otro perfil.`,
+            new_status: "no_disponible",
+          });
+        } else if (cascadePhaseChanged) {
+          const { error: moveNotifError } = await supabase.from("lead_notifications").insert({
+            leads_unique_id: affectedLeadId,
+            properties_unique_id: propertyId,
+            notification_type: "phase_auto_move",
+            title: "Movimiento Automático de Fase",
+            message: `⚠️ **Aviso del Sistema:** Esta tarjeta se ha movido automáticamente de la fase ${normalizedPreviousPhase} a ${newPhase} porque la propiedad ${propertyAddress} ya no está disponible.`,
+            is_read: false,
+          });
+          if (moveNotifError) {
+            console.error(`[cascade-neg] phase_auto_move insert failed for lead=${affectedLeadId}:`, moveNotifError);
+          } else {
+            console.log(`[cascade-neg] phase_auto_move inserted for lead=${affectedLeadId}`);
+          }
+
+          await insertLeadEvent(supabase, {
+            leads_unique_id: affectedLeadId,
+            properties_unique_id: propertyId,
+            event_type: "PHASE_CHANGE_BACKWARD",
+            title: `Retroceso a: ${newPhase}`,
+            description: `El interesado retrocede de ${normalizedPreviousPhase} a ${newPhase} porque la propiedad ${propertyAddress} ya no está disponible.`,
+            new_status: "no_disponible",
           });
         }
       }

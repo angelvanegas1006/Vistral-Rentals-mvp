@@ -5,7 +5,7 @@
  * Uses only is_dev=true leads and is_dev=true "Publicado" properties.
  *
  * This script ONLY touches dev data:
- *   - Deletes leads_properties for DEV leads
+ *   - Deletes lead_notifications, lead_events, leads_properties for DEV leads
  *   - Creates new MTPs linking dev leads to dev properties
  *
  * USAGE:  npm run seed-dev-leads-properties
@@ -310,6 +310,9 @@ async function main() {
 
   // 3. Delete existing DEV leads_properties
   const devLeadIds = devLeads.map((l) => l.leads_unique_id);
+
+  console.log("Borrando lead_notifications de DEV leads...");
+  await supabase.from("lead_notifications").delete().in("leads_unique_id", devLeadIds);
 
   console.log("Borrando lead_events de DEV leads...");
   await supabase.from("lead_events").delete().in("leads_unique_id", devLeadIds);

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 /**
  * GET /api/leads/[leadId]/properties/[lpId]/events
@@ -15,13 +12,6 @@ export async function GET(
   { params }: { params: Promise<{ leadId: string; lpId: string }> }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
     const { leadId, lpId } = await params;
     if (!leadId?.trim() || !lpId?.trim()) {
       return NextResponse.json(
@@ -30,9 +20,7 @@ export async function GET(
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createServiceClient();
 
     const { data: mtp, error: mtpError } = await supabase
       .from("leads_properties")

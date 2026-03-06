@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getLeadPhaseFromMtpStatuses, isMtpActive } from "@/lib/leads/mtp-status";
+import { createServiceClient } from "@/lib/supabase/service";
 import { insertLeadEvent, getPropertyAddress } from "@/lib/leads/lead-events";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const REJECTION_REASON_LABELS: Record<string, string> = {
   ingresos_insuficientes: "Ingresos insuficientes",
@@ -18,16 +14,17 @@ const REJECTION_REASON_LABELS: Record<string, string> = {
   otro: "Otro motivo",
 };
 
+const RECOVERY_PHASE = "Interesado Cualificado";
+
 /**
  * POST /api/leads/[leadId]/recover
  * Recovers a lead after Finaer/Owner rejection:
- *  - Sets lead phase back to "Interesado Cualificado"
+ *  - Sets lead phase to "Interesado Cualificado"
  *  - Sets label to "recuperado"
- *  - Revives en_espera MTPs (from calificacion cascade) to their previous_status
  *  - Generates a recovery notification
- *  - Recalculates the global phase
+ *  - Archived MTPs are NOT revived — they stay as-is
  *
- * Body: { rejectedMtpId?: string, reason?: string }
+ * Body: { rejectedMtpId?: string, rejectionType?: string, reason?: string }
  */
 export async function POST(
   request: NextRequest,
@@ -46,69 +43,21 @@ export async function POST(
       reason?: string;
     };
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    // 1. Find en_espera MTPs caused by calificacion cascade
-    const { data: enEsperaMtps } = await supabase
-      .from("leads_properties")
-      .select("id, current_status, previous_status, properties_unique_id, visit_date")
-      .eq("leads_unique_id", leadId)
-      .eq("current_status", "en_espera");
-
+    const supabase = createServiceClient();
     const now = new Date();
 
-    // 2. Revive each en_espera MTP
-    for (const m of enEsperaMtps || []) {
-      let targetStatus = m.previous_status ?? "interesado_cualificado";
-
-      if (targetStatus === "visita_agendada" && m.visit_date && new Date(m.visit_date) < now) {
-        targetStatus = "interesado_cualificado";
-      }
-
-      await supabase
-        .from("leads_properties")
-        .update({
-          current_status: targetStatus,
-          previous_status: null,
-          exit_reason: null,
-          exit_comments: null,
-        })
-        .eq("id", m.id);
-
-      const addr = await getPropertyAddress(supabase, m.properties_unique_id);
-      await insertLeadEvent(supabase, {
-        leads_unique_id: leadId,
-        properties_unique_id: m.properties_unique_id,
-        event_type: "MTP_RECOVERED",
-        title: `Propiedad recuperada: ${addr}`,
-        description: `El PM recuperó la propiedad ${addr} devolviéndola al estado ${targetStatus}.`,
-        new_status: targetStatus,
-      });
-    }
-
-    // 3. Recalculate lead phase from all MTPs
-    const { data: allMtps } = await supabase
-      .from("leads_properties")
-      .select("current_status")
-      .eq("leads_unique_id", leadId);
-
-    const allStatuses = (allMtps || []).map((m) => m.current_status as string).filter(Boolean);
-    const newPhase = getLeadPhaseFromMtpStatuses(allStatuses);
-
-    // 4. Update lead: phase, label, reset phase timer
+    // 1. Update lead: phase to Interesado Cualificado, label recuperado, reset timer
     await supabase
       .from("leads")
       .update({
-        current_phase: newPhase,
+        current_phase: RECOVERY_PHASE,
         label: "recuperado",
         days_in_phase: 0,
         phase_entered_at: now.toISOString(),
       })
       .eq("leads_unique_id", leadId);
 
-    // 5. Log phase change event
+    // 2. Log phase change event
     let rejectedAddress = "";
     if (rejectedMtpId) {
       const { data: rejectedMtp } = await supabase
@@ -125,20 +74,20 @@ export async function POST(
       leads_unique_id: leadId,
       event_type: "PHASE_CHANGE_BACKWARD",
       title: `Interesado recuperado`,
-      description: `El PM ha recuperado al interesado${rejectedAddress ? ` tras el rechazo en ${rejectedAddress}` : ""}. Fase actual: ${newPhase}.${reason ? ` Motivo: ${reason}.` : ""}`,
+      description: `El PM ha recuperado al interesado${rejectedAddress ? ` tras el rechazo en ${rejectedAddress}` : ""}. Fase actual: ${RECOVERY_PHASE}.${reason ? ` Motivo: ${reason}.` : ""}`,
       new_status: null,
     });
 
-    // 6. Create recovery notification with rejection details
+    // 3. Create recovery notification with rejection details
     const reasonLabel = reason ? (REJECTION_REASON_LABELS[reason] ?? reason) : null;
     let notificationMessage: string;
 
-    if (rejectionType === "finaer") {
-      notificationMessage = `Este interesado fue rechazado por Finaer.${reasonLabel ? ` Motivo: ${reasonLabel}.` : ""} Preséntale nuevas oportunidades o recupera sus propiedades archivadas/inactivas.`;
-    } else if (rejectionType === "propietario") {
-      notificationMessage = `Este interesado fue rechazado por el Propietario.${reasonLabel ? ` Motivo: ${reasonLabel}.` : ""} Preséntale nuevas oportunidades o recupera sus propiedades archivadas/inactivas.`;
+    const rejectionPhaseLabel = rejectionType === "finaer" ? "Finaer" : rejectionType === "propietario" ? "Propietario" : null;
+
+    if (rejectionPhaseLabel) {
+      notificationMessage = `ℹ️ **Lead Recuperado:** Has reactivado a este interesado tras ser rechazado en ${rejectionPhaseLabel}.${reasonLabel ? ` Motivo: ${reasonLabel}.` : ""} Preséntale nuevas opciones o recupera propiedades archivadas.`;
     } else {
-      notificationMessage = `Este interesado ha sido recuperado. Preséntale nuevas propiedades o recupera las propiedades archivadas.`;
+      notificationMessage = `ℹ️ **Lead Recuperado:** Has reactivado a este interesado. Preséntale nuevas opciones o recupera propiedades archivadas.`;
     }
 
     await supabase.from("lead_notifications").insert({
@@ -147,12 +96,12 @@ export async function POST(
       notification_type: "recovery",
       title: "Interesado recuperado",
       message: notificationMessage,
+      is_read: false,
     });
 
     return NextResponse.json({
       success: true,
-      newPhase,
-      revivedCount: (enEsperaMtps || []).length,
+      newPhase: RECOVERY_PHASE,
     });
   } catch (error: unknown) {
     console.error("Error recovering lead:", error);

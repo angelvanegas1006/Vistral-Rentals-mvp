@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 import { insertLeadEvent, type LeadEventType } from "@/lib/leads/lead-events";
 
 export const dynamic = "force-dynamic";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-function getSupabase() {
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: {
-      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
-    },
-  });
-}
 
 /**
  * GET /api/leads/[leadId]/events
@@ -25,13 +13,6 @@ export async function GET(
   { params }: { params: Promise<{ leadId: string }> }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
@@ -40,7 +21,7 @@ export async function GET(
       );
     }
 
-    const supabase = getSupabase();
+    const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from("lead_events")
@@ -59,7 +40,8 @@ export async function GET(
 }
 
 const VALID_EVENT_TYPES: LeadEventType[] = [
-  "PROPERTY_ADDED", "MTP_UPDATE", "PHASE_CHANGE", "PHASE_CHANGE_BACKWARD", "MTP_ARCHIVED",
+  "PROPERTY_ADDED", "MTP_UPDATE", "PHASE_CHANGE", "PHASE_CHANGE_BACKWARD",
+  "MTP_ARCHIVED", "MTP_RECOVERED", "PROPERTY_UNAVAILABLE",
 ];
 
 /**
@@ -72,13 +54,6 @@ export async function POST(
   { params }: { params: Promise<{ leadId: string }> }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
@@ -104,7 +79,7 @@ export async function POST(
       );
     }
 
-    const supabase = getSupabase();
+    const supabase = createServiceClient();
 
     await insertLeadEvent(supabase, {
       leads_unique_id: leadId,

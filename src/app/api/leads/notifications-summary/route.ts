@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+export const dynamic = "force-dynamic";
 
 const NOTIFICATION_PRIORITY: Record<string, number> = {
   urgent_visit_cancel: 1,
+  auto_recovery: 2,
+  phase_auto_move: 2,
   info_property_unavailable: 2,
   recovery: 3,
 };
@@ -17,13 +18,11 @@ const NOTIFICATION_PRIORITY: Record<string, number> = {
  */
 export async function GET() {
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from("lead_notifications")
-      .select("leads_unique_id, notification_type")
+      .select("leads_unique_id, notification_type, is_read")
       .eq("is_read", false);
 
     if (error) throw error;
@@ -40,7 +39,10 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ summary: summaryMap });
+    return NextResponse.json(
+      { summary: summaryMap, totalCount: (data ?? []).length },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (error: unknown) {
     console.error("Error fetching notifications summary:", error);
     const message = error instanceof Error ? error.message : "Error fetching notifications summary";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -56,7 +56,15 @@ export function LeadPropertyCardWorkInteresadoPresentado({
   onRecoverLead,
   onOpenClosureModal,
 }: LeadPropertyCardWorkInteresadoPresentadoProps) {
-  const [answer, setAnswer] = useState<boolean | null>(null);
+  const deriveAnswer = (status: string | null): boolean | null => {
+    if (status === "approved") return true;
+    if (status === "rejected") return false;
+    return null;
+  };
+
+  const [answer, setAnswer] = useState<boolean | null>(
+    deriveAnswer(leadsProperty.owner_status)
+  );
   const [saving, setSaving] = useState(false);
 
   const [rejectionReason, setRejectionReason] = useState<string>(
@@ -69,6 +77,37 @@ export function LeadPropertyCardWorkInteresadoPresentado({
   const [resolution, setResolution] = useState<"descartar" | "recuperar" | null>(null);
 
   const isRejectionComplete = !!rejectionReason && !!rejectionComments.trim();
+
+  const saveDraft = useCallback(async (fields: Record<string, unknown>) => {
+    try {
+      await fetch(`/api/leads-properties/${leadsProperty.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+    } catch {
+      // Silent – draft persistence is best-effort
+    }
+  }, [leadsProperty.id]);
+
+  const handleAnswerChange = useCallback((value: boolean) => {
+    setAnswer(value);
+    saveDraft({ owner_status: value ? "approved" : "rejected" });
+  }, [saveDraft]);
+
+  const handleRejectionReasonChange = useCallback((value: string) => {
+    setRejectionReason(value);
+    saveDraft({ owner_rejection_reason: value, exit_reason: value });
+  }, [saveDraft]);
+
+  const commentsTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const handleCommentsChange = useCallback((value: string) => {
+    setRejectionComments(value);
+    clearTimeout(commentsTimerRef.current);
+    commentsTimerRef.current = setTimeout(() => {
+      saveDraft({ exit_comments: value || null });
+    }, 600);
+  }, [saveDraft]);
 
   const handleApproved = useCallback(async () => {
     setSaving(true);
@@ -111,13 +150,14 @@ export function LeadPropertyCardWorkInteresadoPresentado({
           onUpdated?.();
           if (resolution === "descartar") {
             onOpenClosureModal?.();
-          } else if (resolution === "recuperar") {
-            onRecoverLead?.({
-              rejectedMtpId: leadsProperty.id,
-              rejectionType: "propietario",
-              reason: rejectionReason,
-            });
           }
+        }
+        if (resolution === "recuperar") {
+          onRecoverLead?.({
+            rejectedMtpId: leadsProperty.id,
+            rejectionType: "propietario",
+            reason: rejectionReason,
+          });
         }
       }
     } catch (e) {
@@ -161,7 +201,7 @@ export function LeadPropertyCardWorkInteresadoPresentado({
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => setAnswer(true)}
+            onClick={() => handleAnswerChange(true)}
             disabled={saving}
             className={cn(
               "flex items-center justify-center gap-2 rounded-[var(--vistral-radius-md)] border px-3 py-2.5 text-sm font-medium transition-colors",
@@ -175,7 +215,7 @@ export function LeadPropertyCardWorkInteresadoPresentado({
           </button>
           <button
             type="button"
-            onClick={() => setAnswer(false)}
+            onClick={() => handleAnswerChange(false)}
             disabled={saving}
             className={cn(
               "flex items-center justify-center gap-2 rounded-[var(--vistral-radius-md)] border px-3 py-2.5 text-sm font-medium transition-colors",
@@ -216,7 +256,7 @@ export function LeadPropertyCardWorkInteresadoPresentado({
               </label>
               <Select
                 value={rejectionReason}
-                onValueChange={setRejectionReason}
+                onValueChange={handleRejectionReasonChange}
               >
                 <SelectTrigger className="w-full bg-white dark:bg-[var(--vistral-gray-900)]">
                   <SelectValue placeholder="Selecciona un motivo..." />
@@ -238,7 +278,7 @@ export function LeadPropertyCardWorkInteresadoPresentado({
               <Textarea
                 placeholder="Detalles adicionales sobre el rechazo..."
                 value={rejectionComments}
-                onChange={(e) => setRejectionComments(e.target.value)}
+                onChange={(e) => handleCommentsChange(e.target.value)}
                 rows={3}
                 className="bg-white dark:bg-[var(--vistral-gray-900)]"
               />

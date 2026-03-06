@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type MutableRefObject } from "react";
-import { Plus, RefreshCw, ArrowRight, ArrowLeft, Archive, Loader2 } from "lucide-react";
+import { Plus, RefreshCw, ArrowRight, ArrowLeft, Archive, Loader2, XCircle, RotateCcw } from "lucide-react";
 import { useLeadEvents } from "@/hooks/use-lead-events";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/types";
@@ -41,6 +41,16 @@ const EVENT_CONFIG: Record<
     icon: Archive,
     dotClass: "bg-gray-100 dark:bg-gray-800",
     iconClass: "text-gray-500 dark:text-gray-400",
+  },
+  MTP_RECOVERED: {
+    icon: RotateCcw,
+    dotClass: "bg-blue-100 dark:bg-blue-900",
+    iconClass: "text-blue-600 dark:text-blue-400",
+  },
+  PROPERTY_UNAVAILABLE: {
+    icon: XCircle,
+    dotClass: "bg-red-100 dark:bg-red-900",
+    iconClass: "text-red-600 dark:text-red-400",
   },
 };
 
