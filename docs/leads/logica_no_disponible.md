@@ -17,8 +17,9 @@ El sistema evalúa cada MTP afectada y aplica una de las siguientes lógicas:
 ### Regla B: Única MTP Activa (Casos 1 y 5)
 Aplica si la MTP afectada era la única oportunidad activa del Interesado (ya fuera en fases tempranas o en "Calificación en Curso" o "Interesado Presentado" donde el resto se habían pausado).
 * **MTP:** Cambia a estado `No Disponible`.
-* **Lead (Interesado):** * Retrocede a la fase inicial `Interesado Cualificado` (Casilla de salida).
-  * Se le asigna visualmente la etiqueta permanente `[ 🔄 Recuperado ]`.
+* **Lead (Interesado):** Retrocede a la fase inicial `Interesado Cualificado` (Casilla de salida).
+  * **Etiqueta `[ 🔄 Recuperado ]`:** Solo se asigna si el Interesado estaba en una fase **más avanzada** que `Interesado Cualificado` (es decir, hubo un retroceso real de fase). Si el Interesado ya estaba en `Interesado Cualificado` cuando perdió su última MTP activa, **no** se asigna la etiqueta, ya que no ha habido retroceso.
+  * **Notificación de recuperación automática:** Solo se genera cuando se asigna la etiqueta `Recuperado` (retroceso real). En caso contrario, las notificaciones individuales por MTP ya informan al PM.
 
 ### Regla C: Múltiples MTPs Activas (Casos 3 y 4)
 Aplica si el Interesado tiene otras propiedades activas en juego.

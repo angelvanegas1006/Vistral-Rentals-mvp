@@ -39,7 +39,7 @@ export function usePropertyRental({ propertyId }: UsePropertyRentalOptions) {
       setRental(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al cargar datos del alquiler"));
-      console.error("Error fetching rental:", err);
+      console.error("[Fetch Rental Error]:", err);
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ export function usePropertyRental({ propertyId }: UsePropertyRentalOptions) {
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Error al actualizar datos del alquiler");
       setError(error);
-      console.error("Error updating rental:", err);
+      console.error("[Update Rental Error]:", err);
       throw error;
     } finally {
       setUpdating(false);

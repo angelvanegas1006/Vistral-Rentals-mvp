@@ -18,10 +18,10 @@ export function useLeadEvents(leadId: string | undefined) {
       const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}/events`);
       if (!res.ok) throw new Error("Error al cargar eventos");
       const json = await res.json();
-      setEvents(json.events ?? []);
+      setEvents(json.data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al cargar eventos"));
-      console.error("Error fetching lead events:", err);
+      console.error("[Fetch Lead Events Error]:", err);
     }
   }, [leadId]);
 
@@ -38,10 +38,10 @@ export function useLeadEvents(leadId: string | undefined) {
         const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}/events`);
         if (!res.ok) throw new Error("Error al cargar eventos");
         const json = await res.json();
-        setEvents(json.events ?? []);
+        setEvents(json.data ?? []);
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Error al cargar eventos"));
-        console.error("Error fetching lead events:", err);
+        console.error("[Fetch Lead Events Error]:", err);
       } finally {
         setLoading(false);
       }

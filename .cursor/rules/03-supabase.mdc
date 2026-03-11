@@ -1,0 +1,139 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-03-11
+glob: ["**/lib/supabase/**", "**/app/api/**"]
+description: "Supabase client patterns, types, and environment configuration"
+---
+
+# Vistral Lab - Supabase Rules
+
+## Client Setup
+
+### Browser Client
+
+**File:** `src/lib/supabase/client.ts`
+
+**Usage:** Only in `"use client"` components
+
+```typescript
+import { createClient } from '@/lib/supabase/client'
+
+// ✅ CORRECT
+"use client"
+export function ClientComponent() {
+  const supabase = createClient()
+  // Use client here - uses anon key, respects RLS
+}
+```
+
+**NEVER:**
+- Use browser client in Server Components
+- Access service role key from browser client
+
+### Server Client
+
+**File:** `src/lib/supabase/server.ts`
+
+**Usage:** Server Components, Server Actions
+
+```typescript
+import { createClient } from '@/lib/supabase/server'
+
+// ✅ CORRECT - Server Component or Server Action
+export async function ServerComponent() {
+  const supabase = await createClient()
+  // Uses cookies for session, respects RLS
+}
+```
+
+### Service Client (Bypass RLS)
+
+**File:** `src/lib/supabase/service.ts`
+
+**Usage:** API routes ONLY - bypasses Row Level Security
+
+```typescript
+import { createServiceClient } from '@/lib/supabase/service'
+
+// ✅ CORRECT - API Route only
+export async function GET() {
+  const supabase = createServiceClient()
+  // Bypasses RLS - use with caution
+}
+```
+
+**NEVER:**
+- Use service client in client components
+- Use service client in hooks
+- Expose service role key
+
+## Types
+
+**File:** `src/lib/supabase/types.ts`
+
+**Usage:**
+```typescript
+import type { Database } from '@/lib/supabase/types'
+
+// Type tables
+type Property = Database['public']['Tables']['properties']['Row']
+type Lead = Database['public']['Tables']['leads']['Row']
+type LeadProperty = Database['public']['Tables']['leads_properties']['Row']
+```
+
+**Best practices:**
+- Always type Supabase clients with `Database`
+- Use table types instead of `any`
+- Regenerate types after schema changes
+
+## Mappers
+
+**File:** `src/lib/supabase/mappers.ts`
+
+Use mappers to transform raw Supabase data into application-level types.
+
+## Environment Variables
+
+**Public (client-safe):**
+- `NEXT_PUBLIC_SUPABASE_URL` - Project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Anonymous key
+
+**Private (server-only):**
+- `SUPABASE_SERVICE_ROLE_KEY` - Service role (NEVER expose to client)
+
+**Configuration Helper:**
+**File:** `src/lib/config/environment.ts`
+
+```typescript
+import { config } from '@/lib/config/environment'
+
+// ✅ CORRECT
+const url = config.supabase.url
+const anonKey = config.supabase.anonKey
+
+// ❌ WRONG
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL // Use config helper
+```
+
+**Helper functions:**
+- `getSupabaseProjectName()` - Extract project name from URL
+- `isDemoMode()` from `lib/utils` - Check if running without real credentials
+
+## Demo Mode
+
+**Detection:** `isDemoMode()` in `lib/utils.ts`
+
+**Behavior:**
+- Returns `true` if `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY` missing/invalid
+- Use mock data instead of real API calls
+- Clear UI indication of demo mode
+
+## Testing Expectations
+
+When working with Supabase:
+- Verify RLS policies are tested
+- Check error handling for network failures
+- Test with demo mode enabled
+- Verify types match database schema
+- Suggest manual testing of auth flows

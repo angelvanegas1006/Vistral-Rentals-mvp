@@ -40,7 +40,7 @@ export async function POST(
     const { leadId } = await params;
     if (!leadId) {
       return NextResponse.json(
-        { error: "Missing leadId" },
+        { success: false, error: "Missing leadId" },
         { status: 400 }
       );
     }
@@ -55,7 +55,7 @@ export async function POST(
 
     if (fetchError || !leadRow) {
       return NextResponse.json(
-        { error: "Failed to fetch lead" },
+        { success: false, error: "Failed to fetch lead" },
         { status: 500 }
       );
     }
@@ -84,9 +84,9 @@ export async function POST(
       .eq("id", leadId);
 
     if (updateError) {
-      console.error("Clear laboral obligatory DB error:", updateError);
+      console.error("[Clear Laboral Obligatory DB Error]:", updateError);
       return NextResponse.json(
-        { error: `Failed to update database: ${updateError.message}` },
+        { success: false, error: `Failed to update database: ${updateError.message}` },
         { status: 500 }
       );
     }
@@ -96,9 +96,10 @@ export async function POST(
       message: "Obligatory documents cleared",
     });
   } catch (error) {
-    console.error("Clear laboral obligatory error:", error);
+    console.error("[Clear Laboral Obligatory Error]:", error);
     return NextResponse.json(
       {
+        success: false,
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
       },

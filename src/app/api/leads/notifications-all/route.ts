@@ -29,12 +29,12 @@ export async function GET(_request: NextRequest) {
       lead_name: row.leads?.name ?? "Interesado",
     }));
 
-    return NextResponse.json({ notifications });
+    return NextResponse.json({ success: true, data: notifications });
   } catch (error: unknown) {
-    console.error("Error fetching all notifications:", error);
+    console.error("[Fetch All Notifications Error]:", error);
     const message =
       error instanceof Error ? error.message : "Error fetching notifications";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const { notificationId } = await request.json();
     if (!notificationId) {
-      return NextResponse.json({ error: "notificationId is required" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "notificationId is required" }, { status: 400 });
     }
 
     const supabase = createServiceClient();
@@ -60,14 +60,14 @@ export async function PATCH(request: NextRequest) {
     if (error) throw error;
 
     if (!updated || updated.length === 0) {
-      return NextResponse.json({ error: "Notification not found or already read", updated: 0 }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Notification not found or already read" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, updated: updated.length });
+    return NextResponse.json({ success: true, data: { updated: updated.length } });
   } catch (error: unknown) {
-    console.error("Error updating notification:", error);
+    console.error("[Update Notification Error]:", error);
     const message =
       error instanceof Error ? error.message : "Error updating notification";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

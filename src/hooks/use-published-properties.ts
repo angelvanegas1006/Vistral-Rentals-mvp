@@ -154,7 +154,7 @@ export function usePublishedProperties(
       }
 
       const json = await res.json();
-      setProperties(json.properties ?? []);
+      setProperties(json.data ?? []);
       if (json.filterOptions) {
         setFilterOptions(json.filterOptions);
       }

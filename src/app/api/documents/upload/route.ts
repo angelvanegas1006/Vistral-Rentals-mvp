@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
 
     if (!file || !fieldName || !propertyId) {
       return NextResponse.json(
-        { error: "Missing required fields: file, fieldName, propertyId" },
+        { success: false, error: "Missing required fields: file, fieldName, propertyId" },
         { status: 400 }
       );
     }
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
     const mapping = FIELD_MAPPINGS[fieldName];
     if (!mapping) {
       return NextResponse.json(
-        { error: `Unknown field name: ${fieldName}` },
+        { success: false, error: `Unknown field name: ${fieldName}` },
         { status: 400 }
       );
     }
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       return NextResponse.json(
-        { error: `Failed to upload file: ${uploadError.message}` },
+        { success: false, error: `Failed to upload file: ${uploadError.message}` },
         { status: 500 }
       );
     }
@@ -333,6 +333,7 @@ export async function POST(request: NextRequest) {
       await supabase.storage.from(bucket).remove([storagePath]);
       return NextResponse.json(
         {
+          success: false,
           error: `Failed to create signed URL: ${signedUrlError?.message || "Unknown error"}`,
         },
         { status: 500 }
@@ -437,7 +438,7 @@ export async function POST(request: NextRequest) {
       const roomMapping = fieldToRoomMap[fieldName];
       if (!roomMapping) {
         return NextResponse.json(
-          { error: `Unknown photo field: ${fieldName}` },
+          { success: false, error: `Unknown photo field: ${fieldName}` },
           { status: 400 }
         );
       }
@@ -451,7 +452,7 @@ export async function POST(request: NextRequest) {
 
       if (!currentProperty) {
         return NextResponse.json(
-          { error: "Property not found" },
+          { success: false, error: "Property not found" },
           { status: 404 }
         );
       }
@@ -476,7 +477,7 @@ export async function POST(request: NextRequest) {
         const roomIdx = parseInt(roomIndex, 10);
         if (isNaN(roomIdx)) {
           return NextResponse.json(
-            { error: "Invalid roomIndex" },
+            { success: false, error: "Invalid roomIndex" },
             { status: 400 }
           );
         }
@@ -534,7 +535,7 @@ export async function POST(request: NextRequest) {
       // Try to clean up uploaded file
       await supabase.storage.from(bucket).remove([storagePath]);
       return NextResponse.json(
-        { error: `Failed to update database: ${updateError.message}` },
+        { success: false, error: `Failed to update database: ${updateError.message}` },
         { status: 500 }
       );
     }
@@ -546,7 +547,7 @@ export async function POST(request: NextRequest) {
       await detectAndResetPropheroSection(propertyId, updateData);
     } catch (error) {
       // No fallar la request si hay error en la detección de cambios
-      console.error("Error detecting prophero field changes:", error);
+      console.error("[Detect Prophero Field Changes Error]:", error);
     }
 
     // Step 4: Cleanup old file (if replacing)
@@ -560,9 +561,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, url: documentUrl });
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error("[Upload Error]:", error);
     return NextResponse.json(
       {
+        success: false,
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
       },

@@ -27,7 +27,7 @@ export function useCreateLead() {
       return data.id;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al crear lead"));
-      console.error("Error creating lead:", err);
+      console.error("[Create Lead Error]:", err);
       return null;
     } finally {
       setLoading(false);

@@ -1,0 +1,137 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-03-11
+glob: ["**/*"]
+alwaysApply: true
+description: "How to collaborate effectively with Cursor AI"
+---
+
+# Vistral Lab - AI Collaboration Rules
+
+## How to Ask Cursor for Help
+
+### Good Prompts (Get Better Results)
+
+**Be Specific:**
+```
+❌ "Add a form"
+✅ "Create a form to edit property address with react-hook-form and Zod validation"
+```
+
+**Provide Context:**
+```
+❌ "Add a filter"
+✅ "I need to add a 'status' filter to the kanban board. Currently we have filters in leads-filters-dialog.tsx"
+```
+
+**Include Constraints:**
+```
+❌ "Add delete functionality"
+✅ "Add a delete button for properties, but only admin role should see it. Use the canDeleteProperty permission function from lib/auth/permissions.ts"
+```
+
+**Reference Existing Patterns:**
+```
+✅ "Create a new component similar to lead-property-card-work-interesado-presentado.tsx but for a new status"
+✅ "Use the same pattern as use-leads hook but for loading notifications"
+```
+
+### Bad Prompts (Confusing Results)
+
+```
+❌ "Make it better"
+❌ "Fix this"
+❌ "Improve the UI"
+❌ "Add a filter" (no context)
+❌ "Add delete button, change colors, fix login bug, and add analytics" (too many things)
+```
+
+## When Building New Features
+
+### 1. Start with Specs
+```
+Create a new page for lead history timeline
+
+Requirements:
+- Route: /rentals/leads/[id]/history
+- Shows chronological list of lead events
+- Each event shows: date, user, action, changes
+- Use the Lead type from lib/supabase/types.ts
+```
+
+### 2. Then Iterate
+```
+✅ "Add validation to the form - address is required, price must be positive"
+✅ "Add loading states while data is fetching"
+✅ "Add error handling with toast notifications"
+✅ "Make the component responsive for mobile"
+```
+
+### 3. Reference Existing Code
+```
+✅ "Use the same styling as rentals-lead-card.tsx"
+✅ "Follow the error handling pattern from use-leads.ts"
+```
+
+## When Debugging
+
+### Tell Cursor 3 Things:
+
+1. **What you expected**
+2. **What actually happened**
+3. **Error message (if any)**
+
+**Good debugging prompt:**
+```
+I expected the form to save the lead and show a success toast.
+
+What actually happens: The form submits but nothing happens. No success message, no error.
+
+Console shows: "Cannot read property 'id' of undefined"
+
+The code is in src/components/rentals/lead-property-card-work-interesado-presentado.tsx
+```
+
+## Best Practices for Vibe Coding
+
+### 1. Commit Before Big Changes
+```bash
+git add .
+git commit -m "wip: before refactoring filters"
+```
+
+### 2. Test Incrementally
+
+After each Cursor change:
+1. Save all files
+2. Check the UI
+3. Test the functionality
+4. Fix issues before moving on
+
+### 3. Debug with Context
+```
+"Walk me through what this code does step by step"
+"Why might this error be happening?"
+"What's the data flow from the form to Supabase?"
+```
+
+## Quick Reference
+
+### Good Prompt Template
+```
+[Action] [What] [Where] with [Requirements]
+
+Examples:
+"Create a form for editing leads in lead-summary-tab.tsx with validation for required fields"
+"Add a filter dropdown to leads-filters-dialog.tsx with options for lead status"
+```
+
+### Debugging Template
+```
+Problem: [What's broken]
+Expected: [What should happen]
+Actual: [What actually happens]
+Error: [Copy error message]
+Location: [File and function name]
+```

@@ -45,7 +45,7 @@ export function usePropertyTasks({ propertyId, phase }: UsePropertyTasksOptions)
       setTasks(data || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al cargar tareas"));
-      console.error("Error fetching tasks:", err);
+      console.error("[Fetch Tasks Error]:", err);
     } finally {
       setLoading(false);
     }
@@ -161,7 +161,7 @@ export function usePropertyTasks({ propertyId, phase }: UsePropertyTasksOptions)
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Error al actualizar tarea");
       setError(error);
-      console.error("Error updating task:", err);
+      console.error("[Update Task Error]:", err);
       throw error;
     } finally {
       setUpdating(false);

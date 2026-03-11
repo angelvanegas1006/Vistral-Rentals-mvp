@@ -19,9 +19,9 @@ export async function GET(
 
     return NextResponse.json({ tenant: data });
   } catch (error) {
-    console.error("Error fetching tenant:", error);
+    console.error("[Fetch Tenant Error]:", error);
     return NextResponse.json(
-      { error: "Error al obtener datos del inquilino" },
+      { success: false, error: "Error al obtener datos del inquilino" },
       { status: 500 }
     );
   }
@@ -94,9 +94,9 @@ export async function PUT(
 
     return NextResponse.json({ tenant: result });
   } catch (error) {
-    console.error("Error updating tenant:", error);
+    console.error("[Update Tenant Error]:", error);
     return NextResponse.json(
-      { error: "Error al actualizar datos del inquilino" },
+      { success: false, error: "Error al actualizar datos del inquilino" },
       { status: 500 }
     );
   }

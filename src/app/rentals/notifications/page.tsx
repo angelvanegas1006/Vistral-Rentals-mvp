@@ -68,7 +68,7 @@ export default function NotificationsPage() {
       const res = await fetch("/api/leads/notifications-all");
       const data = await res.json();
       if (res.ok) {
-        setNotifications(data.notifications ?? []);
+        setNotifications(data.data ?? []);
       }
     } catch {
       // silently fail

@@ -26,9 +26,9 @@ export async function GET(
 
     return NextResponse.json({ tasks: data || [] });
   } catch (error) {
-    console.error("Error fetching tasks:", error);
+    console.error("[Fetch Tasks Error]:", error);
     return NextResponse.json(
-      { error: "Error al obtener tareas" },
+      { success: false, error: "Error al obtener tareas" },
       { status: 500 }
     );
   }
@@ -105,9 +105,9 @@ export async function POST(
 
     return NextResponse.json({ task: result });
   } catch (error) {
-    console.error("Error updating task:", error);
+    console.error("[Update Task Error]:", error);
     return NextResponse.json(
-      { error: "Error al actualizar tarea" },
+      { success: false, error: "Error al actualizar tarea" },
       { status: 500 }
     );
   }
@@ -126,7 +126,7 @@ export async function DELETE(
 
     if (!phase || !task_type) {
       return NextResponse.json(
-        { error: "phase y task_type son requeridos" },
+        { success: false, error: "phase y task_type son requeridos" },
         { status: 400 }
       );
     }
@@ -142,9 +142,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting task:", error);
+    console.error("[Delete Task Error]:", error);
     return NextResponse.json(
-      { error: "Error al eliminar tarea" },
+      { success: false, error: "Error al eliminar tarea" },
       { status: 500 }
     );
   }

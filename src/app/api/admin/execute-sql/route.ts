@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { config } from "@/lib/config/environment";
 
 /**
  * Temporary admin route to execute SQL scripts
@@ -12,17 +13,17 @@ export async function POST(request: NextRequest) {
 
     if (!sql) {
       return NextResponse.json(
-        { error: "SQL query is required" },
+        { success: false, error: "SQL query is required" },
         { status: 400 }
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseUrl = config.supabase.url;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(
-        { error: "Server configuration error: Missing Supabase credentials" },
+        { success: false, error: "Server configuration error: Missing Supabase credentials" },
         { status: 500 }
       );
     }
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
       // For ALTER TABLE, we need to use the management API or SQL editor
       return NextResponse.json(
         {
+          success: false,
           error: "Direct SQL execution not available via API",
           message: "Please execute the SQL script manually in Supabase Dashboard > SQL Editor",
           sql,
@@ -55,9 +57,10 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("SQL execution error:", error);
+    console.error("[SQL Execution Error]:", error);
     return NextResponse.json(
       {
+        success: false,
         error: error instanceof Error ? error.message : "Unknown error occurred",
         message: "Please execute the SQL script manually in Supabase Dashboard > SQL Editor",
       },

@@ -77,11 +77,11 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ properties: data || [] });
+    return NextResponse.json({ success: true, data: data || [] });
   } catch (error) {
-    console.error("Error fetching properties:", error);
+    console.error("[Fetch Properties Error]:", error);
     return NextResponse.json(
-      { error: "Error al obtener propiedades" },
+      { success: false, error: "Error al obtener propiedades" },
       { status: 500 }
     );
   }

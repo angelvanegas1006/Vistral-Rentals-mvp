@@ -27,9 +27,9 @@ export async function GET(
     console.log("API Route - Request URL:", request.url);
 
     if (!propertyId || propertyId.trim() === "") {
-      console.error("Property ID is missing or empty. Params:", params, "URL:", request.url);
+      console.error("[Missing Property ID]:", "Params:", params, "URL:", request.url);
       return NextResponse.json(
-        { error: "Property ID is required", receivedParams: params, url: request.url },
+        { success: false, error: "Property ID is required" },
         { status: 400 }
       );
     }
@@ -42,13 +42,13 @@ export async function GET(
       .maybeSingle();
 
     if (error) {
-      console.error("Supabase error:", error);
+      console.error("[Supabase Query Error]:", error);
       throw error;
     }
 
     if (!data) {
       return NextResponse.json(
-        { error: "Property not found" },
+        { success: false, error: "Property not found" },
         { status: 404 }
       );
     }
@@ -57,19 +57,19 @@ export async function GET(
       const role = await getCallerRole(request);
       if (!isDeveloperRole(role)) {
         return NextResponse.json(
-          { error: "Property not found" },
+          { success: false, error: "Property not found" },
           { status: 404 }
         );
       }
     }
 
-    return NextResponse.json({ property: data });
+    return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error("Error fetching property:", error);
+    console.error("[Fetch Property Error]:", error);
     const errorMessage = error?.message || error?.code || "Error al obtener propiedad";
-    const statusCode = error?.code === "PGRST116" ? 404 : 500; // PGRST116 = no rows returned
+    const statusCode = error?.code === "PGRST116" ? 404 : 500;
     return NextResponse.json(
-      { error: errorMessage },
+      { success: false, error: errorMessage },
       { status: statusCode }
     );
   }
@@ -106,7 +106,7 @@ export async function PUT(
       const role = await getCallerRole(request);
       if (!isDeveloperRole(role)) {
         return NextResponse.json(
-          { error: "No autorizado" },
+          { success: false, error: "No autorizado" },
           { status: 403 }
         );
       }
@@ -124,11 +124,11 @@ export async function PUT(
 
     if (error) throw error;
 
-    return NextResponse.json({ property: data });
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error updating property:", error);
+    console.error("[Update Property Error]:", error);
     return NextResponse.json(
-      { error: "Error al actualizar propiedad" },
+      { success: false, error: "Error al actualizar propiedad" },
       { status: 500 }
     );
   }

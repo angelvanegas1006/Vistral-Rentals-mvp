@@ -158,7 +158,7 @@ export function MtpModalRegistroActividad({
       );
       if (res.ok) {
         const data = await res.json();
-        setEvents(data.events ?? []);
+        setEvents(data.data ?? []);
       }
     } catch {
       // silent — fallback to leads_properties timestamps

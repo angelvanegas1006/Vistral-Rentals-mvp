@@ -13,7 +13,7 @@ export async function PATCH(
     const { id } = await params;
     if (!id?.trim()) {
       return NextResponse.json(
-        { error: "leads_properties id is required" },
+        { success: false, error: "leads_properties id is required" },
         { status: 400 }
       );
     }
@@ -60,7 +60,7 @@ export async function PATCH(
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        { error: "No valid fields to update" },
+        { success: false, error: "No valid fields to update" },
         { status: 400 }
       );
     }
@@ -75,14 +75,14 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("Error updating leads_properties:", error);
+      console.error("[Update Leads Properties Error]:", error);
       throw error;
     }
 
     return NextResponse.json({ success: true, data });
   } catch (error: unknown) {
-    console.error("Error in PATCH leads-properties:", error);
+    console.error("[PATCH Leads Properties Error]:", error);
     const message = error instanceof Error ? error.message : "Error al actualizar";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

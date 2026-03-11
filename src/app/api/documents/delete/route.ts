@@ -280,7 +280,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!fieldName || !propertyId || !fileUrl) {
       return NextResponse.json(
-        { error: "Missing required fields: fieldName, propertyId, fileUrl" },
+        { success: false, error: "Missing required fields: fieldName, propertyId, fileUrl" },
         { status: 400 }
       );
     }
@@ -289,7 +289,7 @@ export async function DELETE(request: NextRequest) {
     const mapping = FIELD_MAPPINGS[fieldName];
     if (!mapping) {
       return NextResponse.json(
-        { error: `Unknown field name: ${fieldName}` },
+        { success: false, error: `Unknown field name: ${fieldName}` },
         { status: 400 }
       );
     }
@@ -312,7 +312,7 @@ export async function DELETE(request: NextRequest) {
 
       if (!currentProperty) {
         return NextResponse.json(
-          { error: "Property not found" },
+          { success: false, error: "Property not found" },
           { status: 404 }
         );
       }
@@ -355,7 +355,7 @@ export async function DELETE(request: NextRequest) {
       const roomMapping = fieldToRoomMap[fieldName];
       if (!roomMapping) {
         return NextResponse.json(
-          { error: `Unknown photo field: ${fieldName}` },
+          { success: false, error: `Unknown photo field: ${fieldName}` },
           { status: 400 }
         );
       }
@@ -369,7 +369,7 @@ export async function DELETE(request: NextRequest) {
 
       if (!currentProperty) {
         return NextResponse.json(
-          { error: "Property not found" },
+          { success: false, error: "Property not found" },
           { status: 404 }
         );
       }
@@ -394,7 +394,7 @@ export async function DELETE(request: NextRequest) {
         const roomIdx = typeof roomIndex === "string" ? parseInt(roomIndex, 10) : roomIndex;
         if (isNaN(roomIdx)) {
           return NextResponse.json(
-            { error: "Invalid roomIndex" },
+            { success: false, error: "Invalid roomIndex" },
             { status: 400 }
           );
         }
@@ -432,7 +432,7 @@ export async function DELETE(request: NextRequest) {
 
       if (!currentProperty) {
         return NextResponse.json(
-          { error: "Property not found" },
+          { success: false, error: "Property not found" },
           { status: 404 }
         );
       }
@@ -457,7 +457,7 @@ export async function DELETE(request: NextRequest) {
 
     if (updateError) {
       return NextResponse.json(
-        { error: `Failed to update database: ${updateError.message}` },
+        { success: false, error: `Failed to update database: ${updateError.message}` },
         { status: 500 }
       );
     }
@@ -470,7 +470,7 @@ export async function DELETE(request: NextRequest) {
         .remove([storagePath]);
 
       if (deleteError) {
-        console.error(`Failed to delete file from storage: ${deleteError.message}`);
+        console.error("[Delete Storage File Error]:", deleteError.message);
         // Don't fail the request if storage deletion fails
         // The database has been updated successfully
       }
@@ -483,9 +483,10 @@ export async function DELETE(request: NextRequest) {
       message: "Document deleted successfully" 
     });
   } catch (error) {
-    console.error("Delete error:", error);
+    console.error("[Delete Error]:", error);
     return NextResponse.json(
       {
+        success: false,
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
       },

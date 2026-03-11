@@ -59,7 +59,7 @@ export function usePropertyVisits({
       setVisits(data || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al cargar visitas"));
-      console.error("Error fetching visits:", err);
+      console.error("[Fetch Visits Error]:", err);
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export function usePropertyVisits({
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Error al crear visita");
       setError(error);
-      console.error("Error creating visit:", err);
+      console.error("[Create Visit Error]:", err);
       throw error;
     } finally {
       setUpdating(false);
@@ -128,7 +128,7 @@ export function usePropertyVisits({
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Error al actualizar visita");
       setError(error);
-      console.error("Error updating visit:", err);
+      console.error("[Update Visit Error]:", err);
       throw error;
     } finally {
       setUpdating(false);
@@ -152,7 +152,7 @@ export function usePropertyVisits({
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Error al eliminar visita");
       setError(error);
-      console.error("Error deleting visit:", err);
+      console.error("[Delete Visit Error]:", err);
       throw error;
     } finally {
       setUpdating(false);

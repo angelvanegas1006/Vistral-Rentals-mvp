@@ -50,9 +50,9 @@ export async function GET(
 
     return NextResponse.json({ interested });
   } catch (error) {
-    console.error("Error fetching interested leads:", error);
+    console.error("[Fetch Interested Leads Error]:", error);
     return NextResponse.json(
-      { error: "Error al obtener interesados" },
+      { success: false, error: "Error al obtener interesados" },
       { status: 500 }
     );
   }

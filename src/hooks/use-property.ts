@@ -41,12 +41,12 @@ export function useProperty(propertyId: string) {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
-          console.error(`Error fetching property ${propertyId}:`, errorMessage);
+          console.error(`[Fetch Property ${propertyId} Error]:`, errorMessage);
           throw new Error(errorMessage);
         }
 
         const result = await response.json();
-        const data = result.property;
+        const data = result.data;
 
         if (!data) {
           console.error(`Property ${propertyId} not found in response`);
@@ -56,7 +56,7 @@ export function useProperty(propertyId: string) {
         setProperty(data);
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Error al cargar propiedad"));
-        console.error("Error fetching property:", err);
+        console.error("[Fetch Property Error]:", err);
       } finally {
         if (!skipLoading) {
           setLoading(false);

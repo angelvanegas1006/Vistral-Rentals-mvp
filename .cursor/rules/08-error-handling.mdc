@@ -1,0 +1,249 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-03-11
+glob: ["**/*.ts", "**/*.tsx"]
+alwaysApply: true
+description: "Error handling patterns that Cursor should suggest automatically"
+---
+
+# Vistral Lab - Error Handling Rules
+
+## ALWAYS Include Error Handling
+
+**Pattern for ALL async operations:**
+```typescript
+// ✅ CORRECT - Cursor should suggest this
+try {
+  const result = await someOperation()
+  return { success: true, data: result }
+} catch (error) {
+  console.error('[Context] Operation failed:', error)
+  toast.error('Something went wrong. Please try again.')
+  return { success: false, error }
+}
+```
+
+**NEVER do this:**
+```typescript
+// ❌ WRONG - Silent failure
+const result = await someOperation()
+// What if it failed?
+```
+
+## API Routes - MANDATORY Pattern
+
+**Every API route MUST have:**
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase/service'
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = createServiceClient()
+
+    // 1. Parse and validate body
+    const body = await request.json()
+
+    // 2. Your logic here
+    const result = await yourLogic(body)
+
+    // 3. Return success
+    return NextResponse.json({
+      success: true,
+      data: result
+    })
+
+  } catch (error) {
+    // 4. ALWAYS catch and log with context
+    console.error('[API Error]:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    )
+  }
+}
+```
+
+**Status codes to use:**
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request (validation error)
+- `401` - Unauthorized (no session)
+- `403` - Forbidden (wrong role)
+- `404` - Not Found
+- `500` - Internal Server Error
+
+## User-Facing Errors
+
+**ALWAYS show user feedback:**
+```typescript
+import { toast } from 'sonner'
+
+// ✅ On success
+toast.success('Property created successfully')
+
+// ✅ On error
+toast.error('Failed to create property')
+
+// ✅ Loading state
+const toastId = toast.loading('Creating property...')
+// ... later
+toast.success('Done!', { id: toastId })
+```
+
+**NEVER do this:**
+```typescript
+// ❌ WRONG - User has no idea what happened
+async function saveProperty() {
+  await supabase.from('properties').insert(data)
+}
+
+// ❌ WRONG - Use toast instead
+alert('Error occurred')
+```
+
+## Supabase Error Handling
+
+**Pattern for Supabase calls:**
+```typescript
+const { data, error } = await supabase
+  .from('properties')
+  .select('*')
+
+if (error) {
+  console.error('[Supabase Error]:', error.message)
+  toast.error('Failed to load properties')
+  return null
+}
+
+return data
+```
+
+**For mutations (insert/update/delete):**
+```typescript
+async function updateProperty(id: string, updates: any) {
+  try {
+    const { data, error } = await supabase
+      .from('properties')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    toast.success('Property updated')
+    return data
+  } catch (error) {
+    console.error('[Update Property Error]:', error)
+    toast.error('Failed to update property')
+    return null
+  }
+}
+```
+
+## Context in Error Messages
+
+**ALWAYS include context:**
+```typescript
+// ✅ GOOD - We know what failed
+console.error('[Create Property Error]:', error)
+console.error('[Load User Error]:', error)
+console.error('[Delete Task Error]:', error)
+
+// ❌ BAD - No context
+console.error(error)
+console.log('error:', error)
+```
+
+**Format:**
+- Use brackets: `[Context]:`
+- Be specific: `[Create Property Error]:` not `[Error]:`
+- Include relevant IDs: `[Load Property ${propertyId} Error]:`
+
+## Forbidden Patterns
+
+**NEVER do these:**
+```typescript
+// ❌ Silent failures
+await supabase.from('properties').insert(data)
+fetch('/api/endpoint')
+
+// ❌ Generic errors with no context
+catch (error) {
+  console.log(error)
+}
+
+// ❌ No user feedback
+async function saveData() {
+  const result = await save()
+}
+
+// ❌ Swallowing errors
+catch (error) {
+  // Nothing here
+}
+
+// ❌ Using alert() for errors
+alert('Error occurred') // Use toast instead
+```
+
+## Loading States
+
+**Always show loading state for async operations:**
+```typescript
+const [isLoading, setIsLoading] = useState(false)
+
+async function handleSave() {
+  setIsLoading(true)
+  try {
+    await saveData()
+    toast.success('Saved!')
+  } catch (error) {
+    toast.error('Failed to save')
+  } finally {
+    setIsLoading(false) // ALWAYS in finally
+  }
+}
+
+return (
+  <Button onClick={handleSave} disabled={isLoading}>
+    {isLoading ? 'Saving...' : 'Save'}
+  </Button>
+)
+```
+
+## Form Error Handling
+
+**With react-hook-form:**
+```typescript
+const form = useForm({ ... })
+
+async function onSubmit(data: FormData) {
+  try {
+    const result = await submitData(data)
+    toast.success('Form submitted')
+    form.reset()
+  } catch (error) {
+    console.error('[Form Submit Error]:', error)
+    toast.error('Failed to submit form')
+    form.setError('root', {
+      message: 'Submission failed. Please try again.'
+    })
+  }
+}
+```
+
+## Testing Checklist
+
+When Cursor suggests code, it should include:
+- [ ] Try/catch for async operations
+- [ ] User feedback (toast.success / toast.error)
+- [ ] Context in console.error messages
+- [ ] Loading states for buttons/forms
+- [ ] Proper HTTP status codes in API routes
+- [ ] Error handling in Supabase calls

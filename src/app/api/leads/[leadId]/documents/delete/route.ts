@@ -45,7 +45,7 @@ export async function DELETE(
     const { leadId } = await params;
     if (!leadId) {
       return NextResponse.json(
-        { error: "Missing leadId" },
+        { success: false, error: "Missing leadId" },
         { status: 400 }
       );
     }
@@ -63,7 +63,7 @@ export async function DELETE(
 
     if (!fileUrl) {
       return NextResponse.json(
-        { error: "Missing required field: fileUrl" },
+        { success: false, error: "Missing required field: fileUrl" },
         { status: 400 }
       );
     }
@@ -79,9 +79,9 @@ export async function DELETE(
         .eq("id", leadId);
 
       if (updateError) {
-        console.error("Lead doc delete DB error:", updateError);
+        console.error("[Lead Doc Delete DB Error]:", updateError);
         return NextResponse.json(
-          { error: `Failed to update database: ${updateError.message}` },
+          { success: false, error: `Failed to update database: ${updateError.message}` },
           { status: 500 }
         );
       }
@@ -105,7 +105,7 @@ export async function DELETE(
 
       if (fetchError || !leadRow) {
         return NextResponse.json(
-          { error: "Failed to fetch lead" },
+          { success: false, error: "Failed to fetch lead" },
           { status: 500 }
         );
       }
@@ -131,9 +131,9 @@ export async function DELETE(
         .eq("id", leadId);
 
       if (updateError) {
-        console.error("Lead laboral doc delete DB error:", updateError);
+        console.error("[Lead Laboral Doc Delete DB Error]:", updateError);
         return NextResponse.json(
-          { error: `Failed to update database: ${updateError.message}` },
+          { success: false, error: `Failed to update database: ${updateError.message}` },
           { status: 500 }
         );
       }
@@ -149,13 +149,14 @@ export async function DELETE(
     }
 
     return NextResponse.json(
-      { error: `Unknown fieldType: ${fieldType}` },
+      { success: false, error: `Unknown fieldType: ${fieldType}` },
       { status: 400 }
     );
   } catch (error) {
-    console.error("Lead document delete error:", error);
+    console.error("[Lead Document Delete Error]:", error);
     return NextResponse.json(
       {
+        success: false,
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
       },

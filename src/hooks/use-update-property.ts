@@ -61,7 +61,7 @@ export function useUpdateProperty() {
       console.log("✅ Propiedad actualizada correctamente:", {
         fields: Object.keys(filteredUpdates),
         ...(filteredUpdates.tenant_supplies_toggles ? {
-          togglesSaved: result.property?.tenant_supplies_toggles,
+          togglesSaved: result.data?.tenant_supplies_toggles,
         } : {}),
       });
 
@@ -73,7 +73,7 @@ export function useUpdateProperty() {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al actualizar propiedad"));
-      console.error("Error updating property:", err);
+      console.error("[Update Property Error]:", err);
       return false;
     } finally {
       setLoading(false);

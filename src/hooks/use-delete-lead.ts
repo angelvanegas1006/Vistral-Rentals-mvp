@@ -23,7 +23,7 @@ export function useDeleteLead() {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al eliminar lead"));
-      console.error("Error deleting lead:", err);
+      console.error("[Delete Lead Error]:", err);
       return false;
     } finally {
       setLoading(false);

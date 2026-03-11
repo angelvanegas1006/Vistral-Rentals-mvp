@@ -1,0 +1,152 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-03-11
+glob: ["**/*"]
+alwaysApply: false
+description: "Pre-deployment checklist and rollback procedures"
+---
+
+# Vistral Lab - Deployment Safety Rules
+
+## Pre-Deploy Checklist
+
+**Before saying "ready to deploy", ALWAYS verify:**
+
+### 1. Build Check
+
+**Run this command:**
+```bash
+npm run build
+```
+
+**Look for:**
+- [ ] No TypeScript errors
+- [ ] No missing dependencies
+- [ ] No circular dependencies
+- [ ] Build completes successfully
+
+**Common build errors:**
+- `Module not found` → Run `npm install`
+- `Type error` → Run `npx tsc --noEmit` to see all errors
+- `Cannot find module '@/...'` → Check tsconfig paths
+
+### 2. Environment Variables
+
+**Verify:**
+- [ ] All new env vars are documented
+- [ ] No secrets in code (use `NEXT_PUBLIC_` prefix for client-safe vars)
+- [ ] `NEXT_PUBLIC_` prefix is correct (public vars ONLY)
+- [ ] Vercel has all required env vars configured
+
+### 3. Console Cleanup
+
+**Remove:**
+- [ ] No `console.log` in production code
+- [ ] No commented code blocks
+- [ ] No `TODO` comments for critical items
+- [ ] No `debugger` statements
+
+**Exception:** `console.error` is OK (for error tracking)
+
+### 4. Database Changes
+
+**If you modified the database:**
+- [ ] Migration tested locally
+- [ ] RLS policies tested
+- [ ] Seed data works (if applicable)
+- [ ] Backup created (Supabase Dashboard)
+
+## Deployment Steps
+
+### 1. Test Production Build Locally
+
+```bash
+npm run build
+npm start
+# Open http://localhost:3000
+```
+
+**Test these:**
+- [ ] Can login
+- [ ] Main feature works
+- [ ] Forms submit correctly
+- [ ] Data loads
+- [ ] No console errors in browser
+
+### 2. Commit and Push
+
+```bash
+git add .
+git commit -m "feat: description of change"
+git push origin main
+```
+
+### 3. Vercel Auto-Deploys
+
+**Monitor deployment:**
+1. Go to Vercel dashboard
+2. Check "Deployments" tab
+3. Watch build logs
+
+### 4. Verify Production
+
+**After deployment succeeds:**
+- [ ] Open production URL
+- [ ] Can login
+- [ ] Main feature works
+- [ ] No console errors
+- [ ] Mobile view looks good
+
+## Rollback (If Something Breaks)
+
+### Via Vercel Dashboard (2 minutes)
+
+1. Go to **Vercel Dashboard**
+2. Click **Deployments** tab
+3. Find previous working deployment (green checkmark)
+4. Click **"..."** menu
+5. Click **"Promote to Production"**
+6. Confirm
+
+## Common Deploy Issues
+
+### Build Fails with TypeScript Errors
+
+```bash
+npx tsc --noEmit
+# Fix all errors, then commit and push
+```
+
+### Build Fails with Missing Dependencies
+
+```bash
+npm install <missing-package>
+git add package.json package-lock.json
+git commit -m "fix: add missing dependency"
+git push
+```
+
+### Works Locally but Not in Vercel
+
+**Possible causes:**
+1. **Environment variables missing** - Check Vercel Settings
+2. **Case-sensitive paths (Linux vs Windows):**
+```typescript
+// ❌ WRONG (works on Windows, breaks on Linux)
+import Button from '@/components/ui/Button'
+
+// ✅ CORRECT
+import { Button } from '@/components/ui/button'
+```
+3. **Database not working** - Verify Supabase URL/anon key in Vercel
+
+## Emergency Procedures
+
+### If Production is Down
+
+1. **Immediately rollback** (see Rollback section)
+2. **Post in Slack** (#vistral-lab): "Production rolled back due to [issue]"
+3. **Fix locally**
+4. **Test thoroughly**
+5. **Deploy again**

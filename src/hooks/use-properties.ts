@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { isDemoMode } from "@/lib/utils";
+import { config } from "@/lib/config/environment";
 import type { Database, PropheroSectionReviews, PropheroSectionReview } from "@/lib/supabase/types";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
@@ -20,19 +22,12 @@ export function useProperties(options: UsePropertiesOptions = {}) {
 
   useEffect(() => {
     async function fetchProperties() {
-      // Verificar que las variables de entorno estén configuradas
-      const hasConfig = !!(
-        process.env.NEXT_PUBLIC_SUPABASE_URL && 
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      );
+      const hasConfig = !isDemoMode();
       
       setIsSupabaseConfigured(hasConfig);
 
       if (!hasConfig) {
-        console.warn("⚠️ Supabase no está configurado. Variables de entorno:", {
-          url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "✅ Existe" : "❌ No existe",
-          key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Existe" : "❌ No existe",
-        });
+        console.warn("[Supabase Config] Supabase no está configurado. Usando datos mock.");
         setLoading(false);
         setProperties([]);
         return;
@@ -43,7 +38,7 @@ export function useProperties(options: UsePropertiesOptions = {}) {
         setError(null);
 
         console.log("🔌 Intentando conectar a Supabase...", {
-          url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          url: config.supabase.url,
           kanbanType: options.kanbanType,
         });
 
@@ -84,7 +79,8 @@ export function useProperties(options: UsePropertiesOptions = {}) {
           throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
 
-        const { properties: data } = await response.json();
+        const result = await response.json();
+        const data = result.data;
 
         console.log("✅ Propiedades obtenidas de Supabase:", data?.length || 0, "propiedades");
         
@@ -188,7 +184,7 @@ export function useProperties(options: UsePropertiesOptions = {}) {
         setProperties(data || []);
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Error al cargar propiedades"));
-        console.error("Error fetching properties:", err);
+        console.error("[Fetch Properties Error]:", err);
       } finally {
         setLoading(false);
       }

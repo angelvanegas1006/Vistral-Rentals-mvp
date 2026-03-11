@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { Lock } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
 import { cn } from "@/lib/utils";
@@ -41,7 +42,7 @@ export function ChangePasswordModal({
     e.preventDefault();
     
     if (newPassword !== confirmPassword) {
-      alert("Las contraseñas no coinciden");
+      toast.error("Las contraseñas no coinciden");
       return;
     }
 
@@ -53,7 +54,7 @@ export function ChangePasswordModal({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      alert("Contraseña cambiada exitosamente");
+      toast.success("Contraseña cambiada exitosamente");
     }, 1000);
   };
 

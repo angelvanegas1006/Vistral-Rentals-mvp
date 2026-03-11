@@ -19,9 +19,9 @@ export async function GET(
 
     return NextResponse.json({ rental: data });
   } catch (error) {
-    console.error("Error fetching rental:", error);
+    console.error("[Fetch Rental Error]:", error);
     return NextResponse.json(
-      { error: "Error al obtener datos del alquiler" },
+      { success: false, error: "Error al obtener datos del alquiler" },
       { status: 500 }
     );
   }
@@ -85,9 +85,9 @@ export async function PUT(
 
     return NextResponse.json({ rental: result });
   } catch (error) {
-    console.error("Error updating rental:", error);
+    console.error("[Update Rental Error]:", error);
     return NextResponse.json(
-      { error: "Error al actualizar datos del alquiler" },
+      { success: false, error: "Error al actualizar datos del alquiler" },
       { status: 500 }
     );
   }

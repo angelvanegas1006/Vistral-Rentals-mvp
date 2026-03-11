@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileText, Upload, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { DocumentUploadModal } from "@/components/rentals/document-upload-modal";
 import { DocumentPreviewModal } from "@/components/rentals/document-preview-modal";
@@ -123,15 +124,15 @@ export function DocumentSection({
       
       setUploadModalOpen({ open: false, fieldName: null, isCustom: false });
     } catch (error) {
-      console.error("Failed to upload document:", error);
-      alert(`Error al subir el documento: ${error instanceof Error ? error.message : "Error desconocido"}`);
+      console.error("[Upload Document Error]:", error);
+      toast.error(`Error al subir el documento: ${error instanceof Error ? error.message : "Error desconocido"}`);
     }
   };
 
   // Handle custom document upload
   const handleCustomUpload = async (file: File, customTitle: string) => {
     if (!customTitle.trim()) {
-      alert("Por favor ingresa un título para el documento");
+      toast.error("Por favor ingresa un título para el documento");
       return;
     }
 
@@ -166,8 +167,8 @@ export function DocumentSection({
       
       setUploadModalOpen({ open: false, fieldName: null, isCustom: false });
     } catch (error) {
-      console.error("Failed to upload custom document:", error);
-      alert(`Error al subir el documento: ${error instanceof Error ? error.message : "Error desconocido"}`);
+      console.error("[Upload Custom Document Error]:", error);
+      toast.error(`Error al subir el documento: ${error instanceof Error ? error.message : "Error desconocido"}`);
     }
   };
 
@@ -203,8 +204,8 @@ export function DocumentSection({
       
       setDeleteConfirmDialog({ open: false, label: "", fieldName: null, isCustom: false });
     } catch (error) {
-      console.error("Failed to delete document:", error);
-      alert(`Error al eliminar el documento: ${error instanceof Error ? error.message : "Error desconocido"}`);
+      console.error("[Delete Document Error]:", error);
+      toast.error(`Error al eliminar el documento: ${error instanceof Error ? error.message : "Error desconocido"}`);
     }
   };
 
@@ -503,7 +504,7 @@ export function DocumentSection({
           onUpload={(file, customTitle) => {
             if (uploadModalOpen.isCustom) {
               if (!customTitle) {
-                alert("Por favor ingresa un título para el documento");
+                toast.error("Por favor ingresa un título para el documento");
                 return;
               }
               handleCustomUpload(file, customTitle);

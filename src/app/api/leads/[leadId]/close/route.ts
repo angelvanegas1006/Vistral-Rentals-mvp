@@ -26,7 +26,7 @@ export async function POST(
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
-        { error: "leadId is required" },
+        { success: false, error: "leadId is required" },
         { status: 400 }
       );
     }
@@ -44,14 +44,14 @@ export async function POST(
 
     if (!closure_type || !CLOSURE_TYPE_TO_PHASE[closure_type]) {
       return NextResponse.json(
-        { error: "closure_type must be 'perdido' or 'rechazado'" },
+        { success: false, error: "closure_type must be 'perdido' or 'rechazado'" },
         { status: 400 }
       );
     }
 
     if (!exit_reason?.trim()) {
       return NextResponse.json(
-        { error: "exit_reason is required" },
+        { success: false, error: "exit_reason is required" },
         { status: 400 }
       );
     }
@@ -78,7 +78,7 @@ export async function POST(
 
     if (leadError || !updatedLead) {
       return NextResponse.json(
-        { error: leadError?.message ?? "Lead no encontrado" },
+        { success: false, error: leadError?.message ?? "Lead no encontrado" },
         { status: 404 }
       );
     }
@@ -140,8 +140,8 @@ export async function POST(
       closedMtps: mtpsToClose.length,
     });
   } catch (error: unknown) {
-    console.error("Error in lead close:", error);
+    console.error("[Lead Close Error]:", error);
     const message = error instanceof Error ? error.message : "Error al cerrar el lead";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

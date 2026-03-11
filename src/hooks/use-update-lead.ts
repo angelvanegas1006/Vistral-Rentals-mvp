@@ -33,7 +33,7 @@ export function useUpdateLead() {
         .select();
 
       if (updateError) {
-        console.error("Error de Supabase al actualizar lead:", updateError);
+        console.error("[Supabase Update Lead Error]:", updateError);
         throw updateError;
       }
 
@@ -41,7 +41,7 @@ export function useUpdateLead() {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al actualizar lead"));
-      console.error("Error updating lead:", err);
+      console.error("[Update Lead Error]:", err);
       return false;
     } finally {
       setLoading(false);

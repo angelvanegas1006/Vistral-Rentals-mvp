@@ -37,7 +37,7 @@ export async function POST(
     const { leadId, lpId } = await params;
     if (!leadId?.trim() || !lpId?.trim()) {
       return NextResponse.json(
-        { error: "leadId and lpId are required" },
+        { success: false, error: "leadId and lpId are required" },
         { status: 400 }
       );
     }
@@ -67,7 +67,7 @@ export async function POST(
 
     if (mtpError || !mtp) {
       return NextResponse.json(
-        { error: "Mini tarjeta propiedad no encontrada" },
+        { success: false, error: "Mini tarjeta propiedad no encontrada" },
         { status: 404 }
       );
     }
@@ -101,7 +101,7 @@ export async function POST(
       simulatedStatus = newStatus;
       if (!simulatedStatus) {
         return NextResponse.json(
-          { error: "newStatus is required for revert action" },
+          { success: false, error: "newStatus is required for revert action" },
           { status: 400 }
         );
       }
@@ -109,7 +109,7 @@ export async function POST(
 
     if (!simulatedStatus) {
       return NextResponse.json(
-        { error: "newStatus is required for advance action" },
+        { success: false, error: "newStatus is required for advance action" },
         { status: 400 }
       );
     }
@@ -145,7 +145,7 @@ export async function POST(
 
     if (leadError || !lead) {
       return NextResponse.json(
-        { error: "Lead no encontrado" },
+        { success: false, error: "Lead no encontrado" },
         { status: 404 }
       );
     }
@@ -423,7 +423,7 @@ export async function POST(
           leadUpdate.phase_entered_at = new Date().toISOString();
         }
 
-        if (!hasActiveLeft) {
+        if (!hasActiveLeft && cascadePhaseChanged) {
           leadUpdate.label = "recuperado";
         }
 
@@ -432,7 +432,7 @@ export async function POST(
           .update(leadUpdate)
           .eq("leads_unique_id", affectedLeadId);
 
-        if (!hasActiveLeft) {
+        if (!hasActiveLeft && cascadePhaseChanged) {
           const { error: recoveryNotifError } = await supabase.from("lead_notifications").insert({
             leads_unique_id: affectedLeadId,
             properties_unique_id: propertyId,
@@ -499,8 +499,8 @@ export async function POST(
       leadPhase: phaseChanged ? calculatedPhase : undefined,
     });
   } catch (error: unknown) {
-    console.error("Error in transition:", error);
+    console.error("[Transition Error]:", error);
     const message = error instanceof Error ? error.message : "Error en transición";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

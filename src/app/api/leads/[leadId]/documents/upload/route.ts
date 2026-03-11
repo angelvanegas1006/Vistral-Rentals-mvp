@@ -48,7 +48,7 @@ export async function POST(
     const { leadId } = await params;
     if (!leadId) {
       return NextResponse.json(
-        { error: "Missing leadId" },
+        { success: false, error: "Missing leadId" },
         { status: 400 }
       );
     }
@@ -60,7 +60,7 @@ export async function POST(
 
     if (!file || !leadsUniqueId) {
       return NextResponse.json(
-        { error: "Missing required fields: file, leadsUniqueId" },
+        { success: false, error: "Missing required fields: file, leadsUniqueId" },
         { status: 400 }
       );
     }
@@ -87,9 +87,9 @@ export async function POST(
         });
 
       if (uploadError) {
-        console.error("Lead doc upload storage error:", uploadError);
+        console.error("[Lead Doc Upload Storage Error]:", uploadError);
         return NextResponse.json(
-          { error: `Failed to upload file: ${uploadError.message}` },
+          { success: false, error: `Failed to upload file: ${uploadError.message}` },
           { status: 500 }
         );
       }
@@ -103,6 +103,7 @@ export async function POST(
         await supabase.storage.from(BUCKET).remove([storagePath]);
         return NextResponse.json(
           {
+            success: false,
             error: `Failed to create signed URL: ${signedUrlError?.message || "Unknown error"}`,
           },
           { status: 500 }
@@ -118,9 +119,9 @@ export async function POST(
 
       if (updateError) {
         await supabase.storage.from(BUCKET).remove([storagePath]);
-        console.error("Lead doc upload DB error:", updateError);
+        console.error("[Lead Doc Upload DB Error]:", updateError);
         return NextResponse.json(
-          { error: `Failed to update database: ${updateError.message}` },
+          { success: false, error: `Failed to update database: ${updateError.message}` },
           { status: 500 }
         );
       }
@@ -147,6 +148,7 @@ export async function POST(
       if (!isObligatory && !isComplementary) {
         return NextResponse.json(
           {
+            success: false,
             error:
               "For laboral_financial: provide fieldKey (obligatory) or docType+docTitle (complementary)",
           },
@@ -170,9 +172,9 @@ export async function POST(
         });
 
       if (uploadError) {
-        console.error("Lead laboral doc upload storage error:", uploadError);
+        console.error("[Lead Laboral Doc Upload Storage Error]:", uploadError);
         return NextResponse.json(
-          { error: `Failed to upload file: ${uploadError.message}` },
+          { success: false, error: `Failed to upload file: ${uploadError.message}` },
           { status: 500 }
         );
       }
@@ -186,6 +188,7 @@ export async function POST(
         await supabase.storage.from(BUCKET).remove([storagePath]);
         return NextResponse.json(
           {
+            success: false,
             error: `Failed to create signed URL: ${signedUrlError?.message || "Unknown error"}`,
           },
           { status: 500 }
@@ -204,7 +207,7 @@ export async function POST(
       if (fetchError || !leadRow) {
         await supabase.storage.from(BUCKET).remove([storagePath]);
         return NextResponse.json(
-          { error: "Failed to fetch lead" },
+          { success: false, error: "Failed to fetch lead" },
           { status: 500 }
         );
       }
@@ -226,9 +229,9 @@ export async function POST(
 
         if (updateError) {
           await supabase.storage.from(BUCKET).remove([storagePath]);
-          console.error("Lead laboral doc upload DB error:", updateError);
+          console.error("[Lead Laboral Doc Upload DB Error]:", updateError);
           return NextResponse.json(
-            { error: `Failed to update database: ${updateError.message}` },
+            { success: false, error: `Failed to update database: ${updateError.message}` },
             { status: 500 }
           );
         }
@@ -256,9 +259,9 @@ export async function POST(
 
         if (updateError) {
           await supabase.storage.from(BUCKET).remove([storagePath]);
-          console.error("Lead laboral doc upload DB error:", updateError);
+          console.error("[Lead Laboral Doc Upload DB Error]:", updateError);
           return NextResponse.json(
-            { error: `Failed to update database: ${updateError.message}` },
+            { success: false, error: `Failed to update database: ${updateError.message}` },
             { status: 500 }
           );
         }
@@ -268,13 +271,14 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { error: `Unknown folder: ${folder}` },
+      { success: false, error: `Unknown folder: ${folder}` },
       { status: 400 }
     );
   } catch (error) {
-    console.error("Lead document upload error:", error);
+    console.error("[Lead Document Upload Error]:", error);
     return NextResponse.json(
       {
+        success: false,
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
       },

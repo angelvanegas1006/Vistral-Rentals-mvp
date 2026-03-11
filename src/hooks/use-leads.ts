@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isDemoMode } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/types";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
@@ -20,7 +21,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
   const [isConnected, setIsConnected] = useState(false);
 
   const fetchLeads = useCallback(async () => {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (isDemoMode()) {
       console.warn("Supabase no está configurado. Usando datos mock.");
       setIsConnected(false);
       setLoading(false);
@@ -42,7 +43,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         });
         const res = await fetch(`/api/leads/filter-by-mtp?${params}`);
         if (!res.ok) {
-          console.error("MTP filter API error:", res.status);
+          console.error("[MTP Filter API Error]:", res.status);
           setLeads([]);
           return;
         }
@@ -88,7 +89,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
       setLeads(data || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al cargar leads"));
-      console.error("Error fetching leads:", err);
+      console.error("[Fetch Leads Error]:", err);
     } finally {
       setLoading(false);
     }

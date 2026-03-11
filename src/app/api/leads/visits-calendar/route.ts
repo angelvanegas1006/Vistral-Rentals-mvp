@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const end = searchParams.get("end");
 
     if (!start || !end) {
-      return NextResponse.json({ error: "start and end query params required" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "start and end query params required" }, { status: 400 });
     }
 
     const supabase = createServiceClient();
@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ visits });
   } catch (error: unknown) {
-    console.error("Error fetching lead visits for calendar:", error);
+    console.error("[Fetch Visits Calendar Error]:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal error" },
+      { success: false, error: error instanceof Error ? error.message : "Internal error" },
       { status: 500 }
     );
   }

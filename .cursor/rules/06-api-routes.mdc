@@ -1,0 +1,168 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-03-11
+glob: ["**/app/api/**"]
+description: "API route structure, security, responses, and service role usage"
+---
+
+# Vistral Lab - API Routes Rules
+
+## Route Structure
+
+### Location
+
+**Directory:** `src/app/api/`
+
+**Organization by domain:**
+- `src/app/api/leads/` - Lead management endpoints
+- `src/app/api/properties/` - Property endpoints
+- `src/app/api/documents/` - Document upload/delete
+- `src/app/api/visits/` - Visit management
+- `src/app/api/team/` - Team/user management
+- `src/app/api/admin/` - Admin-only endpoints
+
+### Route Handler Pattern
+
+**File naming:** `route.ts` (Next.js App Router convention)
+
+**Export HTTP methods:**
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  return NextResponse.json({ success: true, data: "..." })
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json()
+  return NextResponse.json({ success: true, data: result })
+}
+```
+
+## Security
+
+### Session Verification
+
+**API routes in this project use `createServiceClient` which bypasses RLS.**
+**Always verify the caller has appropriate access:**
+
+```typescript
+import { createServiceClient } from '@/lib/supabase/service'
+import { NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = createServiceClient()
+
+    // Protected logic here
+
+    return NextResponse.json({ success: true, data: result })
+  } catch (error) {
+    console.error('[API Error]:', error)
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+### Service Role Usage
+
+**ONLY in API routes (`src/app/api/**`):**
+
+```typescript
+import { createServiceClient } from '@/lib/supabase/service'
+
+export async function POST(request: NextRequest) {
+  const supabase = createServiceClient()
+  // Admin operation bypassing RLS
+}
+```
+
+**NEVER:**
+- Use service role in client components
+- Expose service role key to client
+
+## Responses
+
+### Consistent Response Format
+
+**Success:**
+```typescript
+return NextResponse.json({
+  success: true,
+  data: { /* response data */ }
+}, { status: 200 })
+```
+
+**Error:**
+```typescript
+return NextResponse.json({
+  success: false,
+  error: "Error message"
+}, { status: 400 }) // 400, 401, 403, 404, 500
+```
+
+### HTTP Status Codes
+
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request (validation errors)
+- `401` - Unauthorized (no session)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found
+- `500` - Internal Server Error
+
+### Error Handling
+
+```typescript
+export async function POST(request: NextRequest) {
+  try {
+    // API logic
+    return NextResponse.json({ success: true, data: result })
+  } catch (error) {
+    console.error("[API Error]:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
+    )
+  }
+}
+```
+
+## Request Parsing
+
+**JSON body:**
+```typescript
+const body = await request.json()
+```
+
+**Query parameters:**
+```typescript
+const { searchParams } = new URL(request.url)
+const id = searchParams.get('id')
+```
+
+**Dynamic route params:**
+```typescript
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params
+}
+```
+
+## Testing Expectations
+
+When creating/modifying API routes:
+- Test error handling
+- Check response format consistency (`{ success, data/error }`)
+- Verify HTTP status codes
+- Test with invalid inputs
+- Suggest manual testing with browser dev tools or curl

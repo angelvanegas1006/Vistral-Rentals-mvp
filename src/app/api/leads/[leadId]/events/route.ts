@@ -16,7 +16,7 @@ export async function GET(
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
-        { error: "leadId (leads_unique_id) is required" },
+        { success: false, error: "leadId (leads_unique_id) is required" },
         { status: 400 }
       );
     }
@@ -31,11 +31,11 @@ export async function GET(
 
     if (error) throw error;
 
-    return NextResponse.json({ events: data ?? [] });
+    return NextResponse.json({ success: true, data: data ?? [] });
   } catch (error: unknown) {
-    console.error("Error fetching lead events:", error);
+    console.error("[Fetch Lead Events Error]:", error);
     const message = error instanceof Error ? error.message : "Error al cargar eventos";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
@@ -67,14 +67,14 @@ export async function POST(
 
     if (!event_type || !title || !description) {
       return NextResponse.json(
-        { error: "event_type, title, and description are required" },
+        { success: false, error: "event_type, title, and description are required" },
         { status: 400 }
       );
     }
 
     if (!VALID_EVENT_TYPES.includes(event_type)) {
       return NextResponse.json(
-        { error: `Invalid event_type. Must be one of: ${VALID_EVENT_TYPES.join(", ")}` },
+        { success: false, error: `Invalid event_type. Must be one of: ${VALID_EVENT_TYPES.join(", ")}` },
         { status: 400 }
       );
     }
@@ -90,10 +90,10 @@ export async function POST(
       new_status: new_status ?? null,
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    console.error("Error creating lead event:", error);
+    console.error("[Create Lead Event Error]:", error);
     const message = error instanceof Error ? error.message : "Error al crear evento";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

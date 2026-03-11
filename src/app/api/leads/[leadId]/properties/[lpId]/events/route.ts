@@ -15,7 +15,7 @@ export async function GET(
     const { leadId, lpId } = await params;
     if (!leadId?.trim() || !lpId?.trim()) {
       return NextResponse.json(
-        { error: "leadId and lpId are required" },
+        { success: false, error: "leadId and lpId are required" },
         { status: 400 }
       );
     }
@@ -31,7 +31,7 @@ export async function GET(
 
     if (mtpError || !mtp) {
       return NextResponse.json(
-        { error: "MTP not found" },
+        { success: false, error: "MTP not found" },
         { status: 404 }
       );
     }
@@ -45,10 +45,10 @@ export async function GET(
 
     if (eventsError) throw eventsError;
 
-    return NextResponse.json({ events: events ?? [] });
+    return NextResponse.json({ success: true, data: events ?? [] });
   } catch (error: unknown) {
-    console.error("Error fetching MTP events:", error);
+    console.error("[Fetch MTP Events Error]:", error);
     const message = error instanceof Error ? error.message : "Error fetching events";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

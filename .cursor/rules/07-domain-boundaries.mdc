@@ -1,0 +1,85 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-03-11
+glob: ["**/app/rentals/**", "**/app/login/**"]
+description: "Domain boundaries and isolation rules"
+---
+
+# Vistral Lab - Domain Boundaries Rules
+
+## Domain Structure
+
+### Domains
+
+**Current domains:**
+- `src/app/rentals/` - Rentals management domain (kanban, leads, property, team, notifications)
+- `src/app/login/` - Authentication (shared)
+- `src/app/api/` - API routes (shared backend)
+
+### Domain Isolation Rule
+
+**CRITICAL:** When working on a specific domain, do NOT touch other domains unless explicitly requested.
+
+**Example:**
+- Working on `src/app/rentals/leads/[id]/page.tsx`?
+  - ✅ Modify `src/app/rentals/**` files
+  - ✅ Use shared utilities from `src/lib/`
+  - ✅ Use shared components from `src/components/ui/`
+  - ✅ Modify `src/components/rentals/**` components
+  - ❌ Do NOT modify `src/app/login/**` files
+
+## Shared Resources
+
+### What CAN be shared
+
+**From `src/lib/`:**
+- `lib/utils.ts` - Utility functions (cn, isDemoMode, etc.)
+- `lib/constants.ts` - Constants and config
+- `lib/supabase/**` - Supabase clients and types
+- `lib/auth/**` - Auth providers and permissions
+- `lib/config/**` - Configuration helpers
+- `lib/i18n/**` - Translations
+
+**From `src/components/ui/`:**
+- All UI primitives (Button, Input, Form, Dialog, etc.)
+- Shared layout components
+
+**From `src/hooks/`:**
+- Generic hooks
+- Domain-specific hooks can be shared if appropriate
+
+### What SHOULD be domain-specific
+
+**Domain-specific components:**
+- `src/components/rentals/**` - Rental domain components (kanban, lead cards, property views)
+- `src/components/layout/**` - Navigation components
+- `src/components/specs-card/**` - Specs card components
+
+**Domain-specific hooks:**
+- `src/hooks/use-leads.ts` - Leads data hook
+- `src/hooks/use-lead.ts` - Single lead hook
+- `src/hooks/use-property.ts` - Property data hook
+
+## Cross-Domain Communication
+
+**When domains need to interact:**
+
+**Pattern 1: Shared Service via lib/**
+```typescript
+// src/lib/leads/lead-events.ts
+export function getLeadEvents(leadId: string) { ... }
+```
+
+**Pattern 2: API Route**
+```typescript
+// src/app/api/leads/[leadId]/events/route.ts
+// Both client and server code call this API
+```
+
+## Testing Expectations
+
+When working within a domain:
+- Test domain-specific functionality
+- Verify shared resources still work
+- Check no unintended side effects on other domains

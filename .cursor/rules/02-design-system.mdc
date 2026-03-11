@@ -1,0 +1,133 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-03-11
+glob: ["**/components/**", "**/*.css", "**/app/**/*.tsx"]
+description: "Design system rules - Vistral/Prophero tokens, component patterns, and styling"
+---
+
+# Vistral Lab - Design System Rules
+
+## Prophero / Vistral Design System
+
+### Design Tokens
+
+**Active tokens file:** `src/app/vistral.css` (imported in root layout)
+**Legacy tokens file:** `src/app/prophero.css` (not currently imported)
+**External tokens:** `vistral-design-system/tokens.css` (npm package)
+
+**Import order in `src/app/layout.tsx`:**
+```tsx
+import "./globals.css";
+import "vistral-design-system/tokens.css";
+import "./vistral.css";
+```
+
+**Usage:**
+- Use CSS variables for dynamic values
+- Use Tailwind classes when possible
+- Constants from `lib/constants.ts` for breakpoints/spacing
+
+### Grid Responsivo
+
+**Breakpoints:** Defined in `lib/constants.ts` and `tailwind.config.ts`
+- XS (<576px)
+- SM (577px-768px)
+- MD (769px-992px)
+- LG (993px-1199px)
+- XL (1200px-1400px)
+- XXL (>1400px)
+
+**TypeScript Constants:**
+- Import from `@/lib/constants`: `BREAKPOINTS`, `SPACING`
+
+### Theme Configuration
+
+**File:** `src/app/globals.css`
+- Imports Tailwind base/components/utilities
+- Dark mode support via `.dark` class (configured in tailwind.config.ts)
+
+## Component Patterns
+
+### Class Utilities
+
+**Always use `cn()` from `@/lib/utils`:**
+```typescript
+import { cn } from "@/lib/utils"
+
+// ✅ CORRECT
+<div className={cn("base-class", condition && "conditional-class")}>
+
+// ❌ WRONG
+<div className={"base-class " + (condition ? "conditional-class" : "")}>
+```
+
+### Component Variants (CVA)
+
+**Pattern for variant-based components:**
+```typescript
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+
+const componentVariants = cva(
+  "base-classes",
+  {
+    variants: {
+      variant: {
+        default: "default-classes",
+        secondary: "secondary-classes",
+      },
+      size: {
+        sm: "small-classes",
+        md: "medium-classes",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "md",
+    },
+  }
+)
+
+interface ComponentProps extends VariantProps<typeof componentVariants> {
+  className?: string
+}
+
+export function Component({ variant, size, className, ...props }: ComponentProps) {
+  return (
+    <div className={cn(componentVariants({ variant, size, className }))} {...props} />
+  )
+}
+```
+
+### Refs
+
+**Components wrapping native elements MUST use `forwardRef`:**
+```typescript
+import { forwardRef } from "react"
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <button ref={ref} className={cn(buttonVariants({ className }))} {...props} />
+    )
+  }
+)
+Button.displayName = "Button"
+```
+
+### Accessibility
+
+- Use Radix UI primitives for keyboard navigation, focus management, ARIA
+- Don't reinvent modals, selects, dropdowns - use Radix components
+- Ensure proper focus order and keyboard shortcuts
+- Test with screen readers
+
+### Testing Expectations
+
+When modifying components:
+- Verify responsive behavior at different breakpoints
+- Check dark mode appearance
+- Test keyboard navigation
+- Verify ARIA attributes are correct
+- Suggest manual visual testing for UI changes

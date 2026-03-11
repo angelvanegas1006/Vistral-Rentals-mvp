@@ -23,7 +23,7 @@ export function useTeam() {
       const data = await res.json();
       setMembers(data);
     } catch (error) {
-      console.error("Error fetching team:", error);
+      console.error("[Fetch Team Error]:", error);
       setMembers([]);
     } finally {
       setLoading(false);

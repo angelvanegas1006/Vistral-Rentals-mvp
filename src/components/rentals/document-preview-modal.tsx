@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Button } from "@/components/ui/button";
 import { X, FileText, Image as ImageIcon } from "lucide-react";
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { config } from "@/lib/config/environment";
 
 interface DocumentPreviewModalProps {
   open: boolean;
@@ -90,7 +91,7 @@ export function DocumentPreviewModal({
     if (!documentUrl) return null;
     const ext = getFileExtension(documentUrl, documentName);
     // Debug logging (remove in production if needed)
-    if (process.env.NODE_ENV === "development") {
+    if (config.isDevelopment) {
       console.log("DocumentPreviewModal - URL:", documentUrl);
       console.log("DocumentPreviewModal - DocumentName:", documentName);
       console.log("DocumentPreviewModal - Detected Extension:", ext);

@@ -147,7 +147,8 @@ export async function GET(request: NextRequest) {
     ].sort();
 
     return NextResponse.json({
-      properties: data || [],
+      success: true,
+      data: data || [],
       filterOptions: {
         cities: allCities,
         areaClusters: allAreaClusters,
@@ -155,8 +156,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error("Error fetching published properties:", error);
+    console.error("[Fetch Published Properties Error]:", error);
     const message = error instanceof Error ? error.message : "Error al cargar";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

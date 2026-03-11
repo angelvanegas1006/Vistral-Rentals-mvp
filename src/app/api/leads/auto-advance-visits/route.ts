@@ -23,7 +23,7 @@ export async function POST() {
 
     if (qErr) {
       console.error("[auto-advance] query error:", qErr);
-      return NextResponse.json({ error: qErr.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: qErr.message }, { status: 500 });
     }
 
     const nowMs = Date.now();
@@ -117,7 +117,7 @@ export async function POST() {
   } catch (error: unknown) {
     console.error("[auto-advance] error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal error" },
+      { success: false, error: error instanceof Error ? error.message : "Internal error" },
       { status: 500 }
     );
   }

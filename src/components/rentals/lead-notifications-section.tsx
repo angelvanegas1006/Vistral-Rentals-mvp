@@ -40,7 +40,7 @@ export function LeadNotificationsSection({ leadId, refreshKey }: LeadNotificatio
       const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}/notifications`);
       const data = await res.json();
       if (res.ok) {
-        setNotifications(data.notifications ?? []);
+        setNotifications(data.data ?? []);
       }
     } catch {
       // silently fail

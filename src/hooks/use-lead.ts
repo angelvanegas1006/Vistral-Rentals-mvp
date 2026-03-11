@@ -28,7 +28,7 @@ export function useLead(leadId: string) {
       setLead(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al cargar lead"));
-      console.error("Error fetching lead:", err);
+      console.error("[Fetch Lead Error]:", err);
     }
   }, [leadId]);
 
@@ -54,7 +54,7 @@ export function useLead(leadId: string) {
         setLead(data);
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Error al cargar lead"));
-        console.error("Error fetching lead:", err);
+        console.error("[Fetch Lead Error]:", err);
       } finally {
         setLoading(false);
       }

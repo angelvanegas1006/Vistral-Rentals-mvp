@@ -18,7 +18,7 @@ export async function GET(
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
-        { error: "leadId (leads_unique_id) is required" },
+        { success: false, error: "leadId (leads_unique_id) is required" },
         { status: 400 }
       );
     }
@@ -149,9 +149,9 @@ export async function GET(
 
     return NextResponse.json({ items, didAutoAdvance });
   } catch (error: unknown) {
-    console.error("Error fetching lead properties:", error);
+    console.error("[Fetch Lead Properties Error]:", error);
     const message = error instanceof Error ? error.message : "Error al cargar";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
@@ -168,7 +168,7 @@ export async function POST(
     const { leadId } = await params;
     if (!leadId?.trim()) {
       return NextResponse.json(
-        { error: "leadId (leads_unique_id) is required" },
+        { success: false, error: "leadId (leads_unique_id) is required" },
         { status: 400 }
       );
     }
@@ -178,7 +178,7 @@ export async function POST(
 
     if (!properties_unique_id?.trim()) {
       return NextResponse.json(
-        { error: "properties_unique_id is required" },
+        { success: false, error: "properties_unique_id is required" },
         { status: 400 }
       );
     }
@@ -195,7 +195,7 @@ export async function POST(
 
     if (existing) {
       return NextResponse.json(
-        { error: "Esta propiedad ya está asignada a este interesado" },
+        { success: false, error: "Esta propiedad ya está asignada a este interesado" },
         { status: 409 }
       );
     }
@@ -224,8 +224,8 @@ export async function POST(
 
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error: unknown) {
-    console.error("Error adding property to lead:", error);
+    console.error("[Add Property To Lead Error]:", error);
     const message = error instanceof Error ? error.message : "Error al asignar";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

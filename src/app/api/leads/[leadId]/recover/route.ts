@@ -33,7 +33,7 @@ export async function POST(
   try {
     const { leadId } = await params;
     if (!leadId?.trim()) {
-      return NextResponse.json({ error: "leadId is required" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "leadId is required" }, { status: 400 });
     }
 
     const body = await request.json();
@@ -104,8 +104,8 @@ export async function POST(
       newPhase: RECOVERY_PHASE,
     });
   } catch (error: unknown) {
-    console.error("Error recovering lead:", error);
+    console.error("[Recover Lead Error]:", error);
     const message = error instanceof Error ? error.message : "Error recovering lead";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

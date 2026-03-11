@@ -36,7 +36,7 @@ export async function GET(
 
     return NextResponse.json({ visits: data || [] });
   } catch (error) {
-    console.error("Error fetching visits:", error);
+    console.error("[Fetch Visits Error]:", error);
     return NextResponse.json(
       { error: "Error al obtener visitas" },
       { status: 500 }
@@ -76,11 +76,11 @@ export async function POST(
 
     if (error) throw error;
 
-    return NextResponse.json({ visit: data });
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error creating visit:", error);
+    console.error("[Create Visit Error]:", error);
     return NextResponse.json(
-      { error: "Error al crear visita" },
+      { success: false, error: "Error al crear visita" },
       { status: 500 }
     );
   }

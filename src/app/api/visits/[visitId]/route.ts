@@ -29,11 +29,11 @@ export async function PUT(
 
     if (error) throw error;
 
-    return NextResponse.json({ visit: data });
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error updating visit:", error);
+    console.error("[Update Visit Error]:", error);
     return NextResponse.json(
-      { error: "Error al actualizar visita" },
+      { success: false, error: "Error al actualizar visita" },
       { status: 500 }
     );
   }
@@ -56,9 +56,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting visit:", error);
+    console.error("[Delete Visit Error]:", error);
     return NextResponse.json(
-      { error: "Error al eliminar visita" },
+      { success: false, error: "Error al eliminar visita" },
       { status: 500 }
     );
   }

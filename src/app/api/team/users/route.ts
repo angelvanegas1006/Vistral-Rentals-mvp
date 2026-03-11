@@ -13,13 +13,13 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json(data);
   } catch (err: any) {
     return NextResponse.json(
-      { error: err.message || "Server error" },
+      { success: false, error: err.message || "Server error" },
       { status: 500 }
     );
   }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { success: false, error: "Email and password are required" },
         { status: 400 }
       );
     }
@@ -46,13 +46,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
 
     return NextResponse.json({ user: data.user }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json(
-      { error: err.message || "Server error" },
+      { success: false, error: err.message || "Server error" },
       { status: 500 }
     );
   }

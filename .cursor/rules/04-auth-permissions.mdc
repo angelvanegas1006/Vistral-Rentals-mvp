@@ -1,0 +1,165 @@
+---
+version: 1.0
+owner: Vistral Lab
+lastUpdated: 2026-03-11
+glob: ["**/lib/auth/**", "**/app/**/page.tsx", "**/components/**"]
+description: "Authentication layers, roles, permissions, and layout structure"
+---
+
+# Vistral Lab - Authentication & Permissions Rules
+
+## Authentication Layers
+
+### Layer Architecture
+
+1. **Supabase Auth** - Base authentication layer
+2. **SupabaseAuthProvider** - Session context (`lib/auth/supabase-auth-provider.tsx`)
+3. **AppAuthProvider** - Application role layer (`lib/auth/app-auth-provider.tsx`)
+
+### Provider Setup
+
+**File:** `src/app/layout.tsx`
+
+**Order (critical):**
+```tsx
+<ThemeProvider>
+  <I18nProvider>
+    <SupabaseAuthProvider>
+      <AppAuthProvider>
+        {children}
+        <Toaster />
+      </AppAuthProvider>
+    </SupabaseAuthProvider>
+  </I18nProvider>
+</ThemeProvider>
+```
+
+**Why this order:**
+- ThemeProvider: Base theming
+- I18nProvider: Translations (may need theme)
+- SupabaseAuthProvider: User session
+- AppAuthProvider: Requires SupabaseAuthProvider for user data
+
+## Roles
+
+### Role Definition
+
+**Roles are stored in `profiles` table.**
+
+**Available Roles:**
+- `admin` - Full access
+- `developer` - Admin + dev-only features (dev cards, test data)
+- Default user - Standard access
+
+### Role Usage
+
+**Use permission functions from `lib/auth/permissions.ts`:**
+```typescript
+import { canEditProperty, isAdmin, isDeveloper } from '@/lib/auth/permissions'
+
+// ✅ CORRECT
+if (canEditProperty(role)) { ... }
+if (isDeveloper(role)) { ... }
+
+// ❌ WRONG - Don't hardcode role strings
+if (role === "admin") { ... }
+```
+
+## Permissions
+
+### Permission Functions
+
+**File:** `src/lib/auth/permissions.ts`
+
+**Available functions:**
+- `canViewProperty(role)` - Can view property data
+- `canEditProperty(role)` - Can edit property fields
+- `canDeleteProperty(role)` - Can delete properties
+- `canManageUsers(role)` - Can manage team users
+- `canViewAllProperties(role)` - Can see all properties
+- `isAdmin(role)` - Check admin role
+- `isDeveloper(role)` - Check developer role
+- `canViewDevCards(role)` - Can see development/test cards
+
+**Rules:**
+- Centralize permission logic in `permissions.ts`
+- Don't duplicate permission checks in components
+- Use permission functions, not inline role checks
+
+## Hooks
+
+### useAppAuth
+
+**File:** `src/lib/auth/app-auth-provider.tsx`
+
+**Returns:**
+- `user` - Supabase user object
+- `profile` - User profile from profiles table
+- `role` - User role string
+- `isAdmin` - Check if admin role
+- `isDeveloper` - Check if developer role
+- `isLoading` - Loading state
+- `signOut` - Sign out function
+
+**Usage:**
+```typescript
+import { useAppAuth } from '@/lib/auth/app-auth-provider'
+
+function Component() {
+  const { user, role, isAdmin, isDeveloper, isLoading } = useAppAuth()
+
+  if (isLoading) return <Loading />
+  if (!user) return <Login />
+
+  if (isAdmin) {
+    // Admin-only UI
+  }
+}
+```
+
+## Protected Routes
+
+**The rentals layout uses AuthGuard:**
+
+**File:** `src/app/rentals/layout.tsx`
+
+```typescript
+import { AuthGuard } from '@/components/auth/auth-guard'
+
+export default function RentalsLayout({ children }) {
+  return <AuthGuard>{children}</AuthGuard>
+}
+```
+
+**Pattern for additional role protection:**
+```typescript
+'use client'
+import { useAppAuth } from '@/lib/auth/app-auth-provider'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+export default function ProtectedPage() {
+  const { user, isAdmin, isLoading } = useAppAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, isLoading, router])
+
+  if (isLoading) return <Loading />
+  if (!user) return null
+
+  // Protected content
+}
+```
+
+## Testing Expectations
+
+When modifying auth:
+- Test login/logout flows
+- Verify role-based access control
+- Test permission functions with different roles
+- Check loading states
+- Verify redirects work correctly

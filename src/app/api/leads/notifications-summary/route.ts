@@ -44,8 +44,8 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (error: unknown) {
-    console.error("Error fetching notifications summary:", error);
+    console.error("[Fetch Notifications Summary Error]:", error);
     const message = error instanceof Error ? error.message : "Error fetching notifications summary";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

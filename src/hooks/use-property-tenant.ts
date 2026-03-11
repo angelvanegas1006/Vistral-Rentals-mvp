@@ -39,7 +39,7 @@ export function usePropertyTenant({ propertyId }: UsePropertyTenantOptions) {
       setTenant(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al cargar datos del inquilino"));
-      console.error("Error fetching tenant:", err);
+      console.error("[Fetch Tenant Error]:", err);
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ export function usePropertyTenant({ propertyId }: UsePropertyTenantOptions) {
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Error al actualizar datos del inquilino");
       setError(error);
-      console.error("Error updating tenant:", err);
+      console.error("[Update Tenant Error]:", err);
       throw error;
     } finally {
       setUpdating(false);

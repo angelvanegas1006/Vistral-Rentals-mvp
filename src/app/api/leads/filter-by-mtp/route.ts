@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     if (!propertyQuery) {
       return NextResponse.json(
-        { error: "property_query is required" },
+        { success: false, error: "property_query is required" },
         { status: 400 }
       );
     }
@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ leads_unique_ids: uniqueIds });
   } catch (error: unknown) {
-    console.error("Error in filter-by-mtp:", error);
+    console.error("[Filter By MTP Error]:", error);
     const message = error instanceof Error ? error.message : "Error al filtrar";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

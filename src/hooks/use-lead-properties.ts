@@ -57,7 +57,7 @@ export function useLeadProperties(
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Error al cargar"));
-      console.error("Error fetching lead properties:", err);
+      console.error("[Fetch Lead Properties Error]:", err);
       setItems([]);
     } finally {
       setLoading(false);
