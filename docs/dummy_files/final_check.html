@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Informe de Propiedad - Checklist Final</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background-color: #F8FAFC;
+  color: #1E293B;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  overflow-x: hidden;
+}
+
+/* Header: fondo blanco full width (Rectangle 1 - Figma) */
+.report-header-wrapper {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  background: #FFFFFF;
+  overflow-x: hidden;
+}
+
+.report-header {
+  position: relative;
+  width: 100%;
+  min-width: 100%;
+  height: 123px;
+  min-height: 123px;
+  background: #FFFFFF;
+  padding: 26px 64px;
+}
+
+.logo-prophero {
+  position: absolute;
+  width: 322px;
+  height: 70px;
+  left: 64px;
+  top: 26px;
+  object-fit: contain;
+}
+
+/* Separador debajo del header */
+.header-divider {
+  height: 1px;
+  background: #E2E8F0;
+  width: 100%;
+}
+
+/* Bloque: titulo, direccion, fecha - Figma */
+.report-intro {
+  position: relative;
+  background: #F8FAFC;
+  padding: 24px 64px 32px;
+  margin-bottom: 20px;
+  min-height: 130px;
+  overflow-x: hidden;
+}
+
+/* INFORME DE LA PROPIEDAD */
+.report-intro-title {
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 34px;
+  letter-spacing: -1.5px;
+  color: rgba(0, 0, 0, 0.87);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* Dirección */
+.report-intro-address {
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 30px;
+  letter-spacing: -1.5px;
+  color: rgba(0, 0, 0, 0.87);
+  margin-bottom: 8px;
+}
+
+/* Fecha de inspección */
+.report-intro-date {
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: -1px;
+  color: #71717A;
+}
+
+.property-info {
+  display: none;
+}
+
+.section-container {
+  background: #FFFFFF;
+  border: 1px solid #FAFAFA;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+  letter-spacing: -1.5px;
+  color: #212121;
+}
+
+.see-all-images-link {
+  color: #162EB7;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: -0.7px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.see-all-images-link:hover {
+  color: #0F1E8C;
+}
+
+.section-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .section-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile-first: pantallas pequeñas (teléfonos) */
+@media (max-width: 640px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-size: 13px;
+  }
+
+  .container {
+    padding: 12px;
+    max-width: 100%;
+  }
+
+  .report-header {
+    height: auto;
+    min-height: 80px;
+    padding: 16px 16px;
+  }
+
+  .logo-prophero {
+    position: relative;
+    left: 0;
+    width: 180px;
+    height: auto;
+    max-height: 44px;
+    object-fit: contain;
+  }
+
+  .report-intro {
+    padding: 16px 16px 20px;
+    min-height: auto;
+  }
+
+  .report-intro-title {
+    font-size: 20px;
+    line-height: 26px;
+  }
+
+  .report-intro-address {
+    font-size: 16px;
+    line-height: 22px;
+    word-break: break-word;
+  }
+
+  .report-intro-date {
+    font-size: 14px;
+  }
+
+  .section-container {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .see-all-images-link {
+    font-size: 14px;
+  }
+
+  .carousel-container {
+    min-height: 180px;
+  }
+
+  .carousel-nav {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .carousel-nav.prev {
+    left: 4px;
+  }
+
+  .carousel-nav.next {
+    right: 4px;
+  }
+
+  .condition-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .condition-label {
+    font-size: 13px;
+    word-break: break-word;
+  }
+
+  .condition-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .condition-notes {
+    font-size: 12px;
+  }
+
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .modal-overlay.active {
+    align-items: flex-start;
+    padding-top: 24px;
+  }
+
+  .modal-content {
+    padding: 16px;
+    max-height: 88vh;
+    width: 98vw;
+  }
+
+  .modal-title {
+    font-size: 14px;
+  }
+
+  .modal-main-image {
+    min-height: 240px;
+    height: 45vh;
+  }
+
+  .modal-thumbnail {
+    width: 56px;
+    height: 56px;
+  }
+
+  .dynamic-section-title {
+    font-size: 14px;
+  }
+}
+
+/* Image Carousel - rellena toda la altura de la estancia (grid stretch) */
+.image-carousel {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 200px;
+  overflow: hidden;
+  border: 1px solid #D4D4D8;
+  border-radius: 8px;
+  background: #F1F5F9;
+  box-shadow: 0px 0px 16px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+/* Cuando hay 2+ fotos: dar altura mínima al “cuadrado” para que el layout horizontal se vea bien */
+.carousel-container--multi .carousel-images-wrapper {
+  min-height: 220px;
+}
+
+.carousel-images-wrapper {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.carousel-images-group {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  gap: 8px;
+}
+
+.carousel-images-group.active {
+  display: flex;
+}
+
+/* Una sola imagen: ocupar todo el ancho, sin forzar horizontal (no aplicar layout de “varias fotos”) */
+.carousel-images-group--few.carousel-images-group--one {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+.carousel-images-group--few.carousel-images-group--one .carousel-image {
+  width: 100%;
+  flex: 1;
+  min-height: 80px;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Dos o más imágenes: horizontal (lado a lado). Solo cuando hay más de una foto. */
+.carousel-images-group--few:not(.carousel-images-group--one) {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+.carousel-images-group--few:not(.carousel-images-group--one) .carousel-image {
+  flex: 0 0 calc((100% - 8px * (var(--img-count, 2) - 1)) / var(--img-count, 2));
+  width: 0;
+  min-width: 0;
+  max-width: none;
+  height: auto;
+  min-height: 80px;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* En viewport muy estrecho: 2+ imágenes en vertical para que no queden minúsculas */
+@media (max-width: 480px) {
+  .carousel-images-group--few:not(.carousel-images-group--one) {
+    flex-direction: column;
+    flex-wrap: wrap;
+  }
+  .carousel-images-group--few:not(.carousel-images-group--one) .carousel-image {
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: 50vh;
+  }
+}
+
+/* Fallback para grupos con muchas imágenes (carrusel): una por slide */
+.carousel-images-group:not(.carousel-images-group--few) {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+}
+.carousel-images-group:not(.carousel-images-group--few) .carousel-image {
+  flex: none;
+  width: auto;
+  max-width: calc(100% / var(--img-count, 1) - 6px);
+  height: auto;
+  max-height: 100%;
+  min-height: 80px;
+  object-fit: contain;
+}
+
+.carousel-image {
+  width: 100%;
+  flex: 1;
+  min-height: 1px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #D9E7FF;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #162EB7;
+  transition: background 0.2s;
+  z-index: 10;
+}
+
+.carousel-nav:hover {
+  background: #C5DBFF;
+}
+
+.carousel-nav.prev {
+  left: 8px;
+}
+
+.carousel-nav.next {
+  right: 8px;
+}
+
+.carousel-counter {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.5px;
+  color: #71717A;
+  padding: 8px 0;
+}
+
+/* Conditions List */
+.conditions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.category-group {
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 10px;
+}
+
+.category-group:last-child {
+  border-bottom: none;
+}
+
+.category-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.condition-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  gap: 12px;
+}
+
+.condition-label {
+  flex: 1;
+  font-size: 13px;
+  color: #1E293B;
+  font-weight: 500;
+}
+
+.condition-badge {
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.condition-notes {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.45;
+}
+
+.condition-bad-elements {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #B45309;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Mini imágenes ocultas: se ven en el carrusel de la izquierda */
+.condition-photos {
+  display: none !important;
+}
+
+.condition-thumbnail {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #E2E8F0;
+}
+
+.condition-item-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.modal-overlay.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 1000px;
+  width: 95vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 24px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #64748B;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: #F1F5F9;
+}
+
+.modal-main-image {
+  width: 100%;
+  min-height: 360px;
+  height: 60vh;
+  max-height: 560px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: #F1F5F9;
+}
+
+.modal-observations {
+  margin-bottom: 14px;
+}
+
+.modal-observations-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
+  margin-bottom: 8px;
+}
+
+.modal-observations-text {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.5;
+}
+
+.modal-thumbnails {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0;
+}
+
+.modal-thumbnail {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.modal-thumbnail:hover {
+  border-color: #3B82F6;
+}
+
+.modal-thumbnail.active {
+  border-color: #3B82F6;
+}
+
+.modal-done-button {
+  margin-top: 14px;
+  width: 100%;
+  padding: 10px;
+  background: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-done-button:hover {
+  background: #2563EB;
+}
+
+/* Dynamic sections (Habitaciones, Baños) */
+.dynamic-section {
+  margin-bottom: 20px;
+}
+
+.dynamic-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E293B;
+  margin-bottom: 14px;
+}
+
+/* View Toggle (Por Estancias / Por Partidas) */
+.view-toggle-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 0 64px 24px;
+  background: #F8FAFC;
+}
+
+.view-toggle {
+  display: inline-flex;
+  background: #E2E8F0;
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 0;
+}
+
+.view-toggle-btn {
+  padding: 8px 24px;
+  border: none;
+  border-radius: 9999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748B;
+  background: transparent;
+  line-height: 20px;
+  letter-spacing: -0.3px;
+}
+
+.view-toggle-btn.active {
+  background: #FFFFFF;
+  color: #1E293B;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+.view-toggle-btn:hover:not(.active) {
+  color: #334155;
+}
+
+/* Partidas view: sub-header for room origin */
+.partida-room-group {
+  margin-bottom: 12px;
+}
+
+.partida-room-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #162EB7;
+  margin-bottom: 6px;
+  padding: 4px 0;
+  border-bottom: 1px dashed #CBD5E1;
+}
+
+@media (max-width: 640px) {
+  .view-toggle-wrapper {
+    padding: 0 16px 16px;
+  }
+
+  .view-toggle-btn {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="report-header-wrapper">
+<header class="report-header">
+<img class="logo-prophero" src="data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%22323%22%20height%3D%2270%22%20viewBox%3D%220%200%20323%2070%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cg%20clip-path%3D%22url(%23clip0_47_4797)%22%3E%0A%3Cpath%20d%3D%22M17.1861%204.78611C8.37926%207.67652%201.00492%2010.1346%200.80997%2010.2533C0.589587%2010.3804%200.360728%2010.6178%200.216632%2010.8636L-0.0207029%2011.262L-0.0461317%2018.2125C-0.0630842%2023.2474%20-0.0461317%2025.2902%200.0216784%2025.6207C0.19968%2026.4345%200.996447%2027.0702%201.8695%2027.0702C2.08141%2027.0702%2026.493%2019.1279%2040.1991%2014.5931C42.1995%2013.932%2042.2927%2013.8896%2042.6657%2013.5167C43.2675%2012.9233%2043.4116%2012.1944%2043.0556%2011.4569C42.9539%2011.245%2041.0806%208.575%2038.8853%205.5405C34.4861%20-0.562402%2034.6302%20-0.401353%2033.6809%20-0.45221C33.2486%20-0.477639%2031.7568%20-0.00296879%2017.1861%204.78611Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M77.8338%2057.8386H84.6995V42.4288L90.4888%2042.3864C96.3629%2042.3441%2096.7697%2042.3271%2098.3887%2041.9881C102.627%2041.1065%20105.95%2038.5976%20107.628%2035.0036C108.865%2032.3506%20109.238%2028.7651%20108.594%2025.6119C108.102%2023.1793%20106.975%2021.0517%20105.28%2019.3565C103.627%2017.7036%20101.169%2016.3813%2098.7108%2015.8049C96.7104%2015.3387%2096.8884%2015.3472%2087.0136%2015.3133L77.8338%2015.2794V57.8386ZM95.2864%2021.4755C98.6176%2021.9078%20100.94%2023.8658%20101.652%2026.8495C102.356%2029.7568%20101.432%2032.9185%2099.4058%2034.529C98.7362%2035.063%2097.6428%2035.6478%2096.8714%2035.8767C95.5576%2036.2751%2095.0575%2036.309%2089.726%2036.309H84.6995V21.3908H89.6836C92.4214%2021.3908%2094.9389%2021.4331%2095.2864%2021.4755Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M201.672%2057.8386H208.538V39.3604H228.033L228.075%2057.7963L231.534%2057.8217L234.984%2057.8386V15.2879L231.534%2015.3048L228.075%2015.3302L228.033%2033.1728H208.538V15.2879H201.672V57.8386Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M44.6493%2016.1267C44.4628%2016.2115%2044.2085%2016.3895%2044.0814%2016.5251C43.5813%2017.0761%2019.3222%2050.8624%2019.2036%2051.1845C18.9069%2052.0067%2019.3392%2053.0493%2020.1529%2053.4477C20.297%2053.524%2023.2807%2054.5157%2026.7814%2055.6685C33.6471%2057.9147%2033.681%2057.9231%2034.4015%2057.5926C34.588%2057.5078%2034.8762%2057.2705%2035.0457%2057.067C35.5627%2056.4229%2054.7615%2029.7311%2054.8886%2029.4768C55.0751%2029.0869%2055.1259%2028.7055%2055.0242%2028.2478C54.9479%2027.8918%2054.3546%2027.0272%2050.9895%2022.3398C48.8196%2019.3223%2046.9209%2016.7286%2046.7768%2016.5675C46.2428%2015.9911%2045.3443%2015.8046%2044.6493%2016.1267Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M142.931%2026.485C136.566%2027.2224%20131.717%2031.2995%20130.132%2037.2583C129.725%2038.8179%20129.615%2039.6825%20129.564%2041.6998C129.497%2044.336%20129.725%2046.0905%20130.395%2048.1164C132.573%2054.7702%20138.905%2058.6863%20146.551%2058.1099C148.992%2057.9234%20150.738%2057.4657%20152.721%2056.4824C154.222%2055.7365%20155.273%2054.9821%20156.409%2053.8548C157.46%2052.8037%20158.248%2051.7188%20158.943%2050.3795C160.248%2047.8621%20160.816%2045.4124%20160.816%2042.2932C160.816%2039.3604%20160.274%2036.843%20159.163%2034.5713C156.892%2029.9348%20152.705%2027.0868%20147.297%2026.4765C146.398%2026.3748%20143.838%2026.3833%20142.931%2026.485ZM147.551%2032.2319C149.399%2032.7235%20151.187%2034.0119%20152.323%2035.6478C153.595%2037.5041%20154.205%2039.6232%20154.205%2042.2423C154.205%2044.7937%20153.654%2046.8449%20152.51%2048.591C150.704%2051.3458%20148.043%2052.702%20144.711%2052.5579C141.787%2052.4308%20139.524%2051.1509%20137.871%2048.6843C136.252%2046.2855%20135.718%2042.2593%20136.566%2038.8942C136.879%2037.6736%20137.227%2036.8599%20137.829%2035.9275C139.176%2033.8424%20140.965%2032.5964%20143.321%2032.1132C144.228%2031.9267%20146.669%2031.9945%20147.551%2032.2319Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M180.142%2026.4511C177.141%2026.7732%20174.531%2028.1887%20172.454%2030.6299C171.929%2031.2487%20171.869%2031.291%20171.818%2031.1215C171.784%2031.0113%20171.623%2030.0705%20171.454%2029.0194C171.293%2027.9683%20171.14%2027.0275%20171.115%2026.9173L171.072%2026.7308H165.478V69.9597H171.92V53.4734L172.318%2053.9396C174.48%2056.4994%20176.947%2057.7624%20180.439%2058.1014C183.456%2058.3896%20186.728%2057.7369%20189.085%2056.3892C193.891%2053.6344%20196.645%2048.0147%20196.391%2041.4795C196.247%2037.8093%20195.365%2034.868%20193.662%2032.3251C191.441%2029.0194%20188.059%2027.0021%20183.872%2026.485C183.202%2026.4002%20180.812%2026.3748%20180.142%2026.4511ZM182.583%2032.1132C183.405%2032.2743%20184.05%2032.4862%20184.745%2032.8422C188.127%2034.5544%20189.941%2038.1229%20189.78%2042.7509C189.652%2046.5737%20188.144%2049.5997%20185.508%2051.3119C182.651%2053.1852%20178.464%2053.0665%20175.717%2051.0492C174.209%2049.9303%20172.954%2048.0571%20172.395%2046.099C171.513%2042.9883%20171.751%2039.2672%20172.997%2036.7752C173.726%2035.3257%20175.005%2033.9272%20176.311%2033.1389C177.048%2032.6981%20178.354%2032.2149%20179.125%2032.0793C179.896%2031.9522%20181.837%2031.9691%20182.583%2032.1132Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M252.945%2026.5194C246.85%2027.384%20242.349%2031.3763%20240.841%2037.2673C240.391%2039.0049%20240.29%2039.9543%20240.281%2042.2852C240.281%2044.5653%20240.374%2045.4045%20240.807%2047.1167C241.993%2051.8549%20245.164%2055.4743%20249.588%2057.1102C252.445%2058.1697%20256.318%2058.4579%20259.438%2057.8307C262.048%2057.3051%20264.396%2056.0676%20266.219%2054.2367C267.897%2052.5584%20269.024%2050.5665%20269.609%2048.2695C269.728%2047.8202%20269.821%2047.4303%20269.821%2047.3879C269.821%2047.354%20268.372%2047.3371%20266.592%2047.3455L263.362%2047.371L263.125%2048.0321C261.93%2051.2955%20258.59%2053.1687%20254.657%2052.7703C252.563%2052.5584%20250.995%2051.8719%20249.614%2050.558C248.249%2049.2442%20247.486%2047.6592%20247.147%2045.4214C247.079%2044.9552%20247.02%2044.3704%20247.02%2044.1246V43.6838H270.152L270.219%2043.2769C270.253%2043.0566%20270.287%2042.0733%20270.279%2041.0985C270.27%2039.683%20270.236%2039.1151%20270.092%2038.3438C268.923%2031.9442%20264.795%2027.7569%20258.548%2026.6296C257.285%2026.4007%20254.182%2026.3414%20252.945%2026.5194ZM256.81%2031.7323C257.768%2031.8764%20258.463%2032.0713%20259.192%2032.4104C261.54%2033.4954%20262.938%2035.3347%20263.506%2038.0725C263.574%2038.4116%20263.633%2038.7337%20263.633%2038.7761C263.633%2038.8184%20260.472%2038.8523%20255.454%2038.8523C247.427%2038.8523%20247.274%2038.8523%20247.274%2038.6913C247.274%2038.4285%20247.503%2037.4114%20247.681%2036.9028C248.486%2034.5803%20250.461%2032.7579%20252.996%2031.9951C254.089%2031.6645%20255.598%2031.5628%20256.81%2031.7323Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M304.701%2026.527C298.92%2027.2984%20294.521%2030.7058%20292.596%2035.8848C291.884%2037.8004%20291.579%2039.7161%20291.571%2042.1996C291.571%2044.0983%20291.656%2044.9968%20292.003%2046.5564C292.885%2050.5657%20295.156%2053.8206%20298.513%2055.8888C302.556%2058.3808%20308.642%2058.8724%20313.372%2057.1093C315.482%2056.3211%20317.076%2055.2615%20318.695%2053.5832C320.805%2051.3964%20322.162%2048.4805%20322.687%2045.0392C322.882%2043.6999%20322.882%2040.8858%20322.679%2039.4957C321.628%2032.2824%20316.745%2027.434%20309.634%2026.5186C308.405%2026.366%20305.879%2026.366%20304.701%2026.527ZM309.617%2032.24C312.414%2032.9859%20314.745%2035.3593%20315.711%2038.4192C316.101%2039.6652%20316.22%2040.5298%20316.22%2042.242C316.22%2044.0474%20316.093%2044.912%20315.626%2046.3021C314.558%2049.4977%20312.194%2051.7269%20309.168%2052.3965C308.362%2052.5746%20306.133%2052.5915%20305.379%2052.4305C303.065%2051.9304%20301.302%2050.7437%20299.996%2048.8111C299.225%2047.6753%20298.742%2046.4462%20298.411%2044.8273C298.199%2043.7423%20298.199%2040.7417%20298.411%2039.6652C298.843%2037.5122%20299.708%2035.8%20301.03%2034.4523C302.259%2033.1978%20303.683%2032.435%20305.379%2032.1044C306.303%2031.9264%20308.744%2032.0027%20309.617%2032.24Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M112.968%2057.7963L116.206%2057.8217L119.444%2057.8386L119.478%2049.0064C119.512%2039.4791%20119.495%2039.9707%20119.961%2038.1483C120.52%2035.9953%20122.054%2034.1475%20123.911%2033.3931C124.877%2033.0032%20125.538%2032.91%20127.827%2032.8591L129.963%2032.8083V26.7054L128.251%2026.7562C125.911%2026.824%20124.682%2027.0868%20123.224%2027.8158C121.868%2028.4939%20120.885%2029.3584%20120.012%2030.6468C119.732%2031.0622%20119.495%2031.3758%20119.469%2031.3588C119.452%2031.3419%20119.283%2030.2993%20119.079%2029.0448L118.732%2026.7732L115.824%2026.7478L112.925%2026.7308L112.968%2057.7963Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M274.991%2057.8386H281.425L281.459%2049.2098C281.501%2039.8605%20281.493%2040.0385%20281.984%2038.1907C282.654%2035.6817%20284.409%2033.7746%20286.604%2033.1812C287.519%2032.9269%20288.553%2032.8337%20290.359%2032.8337H291.944V26.7308H290.8C289.376%2026.7308%20288.147%2026.858%20287.129%2027.1207C286.206%2027.3496%20284.781%2028.0107%20284.019%2028.5447C283.349%2029.0279%20282.518%2029.9264%20281.976%2030.7486C281.747%2031.0961%20281.544%2031.3843%20281.518%2031.3843C281.493%2031.3927%20281.332%2030.4265%20281.154%2029.2483C280.967%2028.0785%20280.806%2027.0275%20280.781%2026.9173L280.738%2026.7308H274.991V57.8386Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3Cpath%20d%3D%22M1.42039%2030.2823C0.82705%2030.4349%200.437143%2030.7485%200.140474%2031.3079C-0.0120988%2031.5961%20-0.0205751%2032.2234%20-0.0460039%2050.032C-0.0544801%2062.1869%20-0.0375276%2068.5611%200.0218062%2068.773C0.242189%2069.5782%201.00505%2070.1546%201.83572%2070.1461C2.1663%2070.1461%203.81069%2069.6375%208.72692%2068.0186C12.2869%2066.8489%2015.2621%2065.8571%2015.3384%2065.8148C15.6096%2065.6707%2016.0334%2065.179%2016.1606%2064.8569C16.2793%2064.5772%2016.2962%2062.9583%2016.2962%2050.1845V35.8342L16.0758%2035.385C15.9317%2035.1138%2015.7283%2034.8595%2015.5333%2034.7323C15.1858%2034.5035%202.56468%2030.3247%202.00525%2030.2569C1.82725%2030.2314%201.56448%2030.2484%201.42039%2030.2823Z%22%20fill%3D%22%232050F6%22%2F%3E%0A%3C%2Fg%3E%0A%3Cdefs%3E%0A%3CclipPath%20id%3D%22clip0_47_4797%22%3E%0A%3Crect%20width%3D%22323%22%20height%3D%2270%22%20fill%3D%22white%22%2F%3E%0A%3C%2FclipPath%3E%0A%3C%2Fdefs%3E%0A%3C%2Fsvg%3E" alt="PropHero" />
+</header>
+</div>
+<div class="header-divider"></div>
+<div class="report-intro">
+<div class="report-intro-title">Informe de la Propiedad</div>
+<div class="report-intro-address">Calle Mayor 40, 0º-4, Algorfa</div>
+<div class="report-intro-date">Fecha de inspección: 2 de marzo de 2026</div>
+</div><div class="container">
+<section class="section-container" data-section-id="entorno-zonas-comunes">
+<div class="section-header">
+<h2 class="section-title">Entorno y Zonas Comunes</h2><a href="#" class="see-all-images-link" onclick="event.preventDefault(); openModal('entorno-zonas-comunes'); return false;">Ver todas las imágenes</a></div>
+<div class="section-content"><div class="image-carousel"><div class="carousel-container" id="carousel-entorno-zonas-comunes" data-total-images="2" data-images-per-group="1"><div class="carousel-images-wrapper"><div class="carousel-images-group active" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/01b7ebdc-4021-4797-b458-1d86c9ab457b/1772457772651_7o3anj.jpg" alt="Portal" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/01b7ebdc-4021-4797-b458-1d86c9ab457b/1772457772663_rzt3yo.jpg" alt="Fachada" class="carousel-image" /></div></div><button class="carousel-nav prev">‹</button>
+<button class="carousel-nav next">›</button><div class="carousel-counter">1 de 2</div></div></div><div class="conditions-list"><div class="category-group">
+<h3 class="category-title">Acabados</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acabados</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Comunicaciones</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Comunicaciones</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Electricidad</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Electricidad</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Ascensor</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Ascensor</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Otros</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Carpinteria</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acceso Principal</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div></div>
+</div>
+<div class="modal-overlay" id="modal-entorno-zonas-comunes">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Entorno y Zonas Comunes</h3>
+<button class="modal-close" onclick="closeModal('entorno-zonas-comunes')">×</button>
+</div>
+<img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/01b7ebdc-4021-4797-b458-1d86c9ab457b/1772457772651_7o3anj.jpg" alt="Portal" class="modal-main-image" /><div class="modal-thumbnails"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/01b7ebdc-4021-4797-b458-1d86c9ab457b/1772457772651_7o3anj.jpg" alt="Portal" class="modal-thumbnail active" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/01b7ebdc-4021-4797-b458-1d86c9ab457b/1772457772663_rzt3yo.jpg" alt="Fachada" class="modal-thumbnail " /></div><button class="modal-done-button" onclick="closeModal('entorno-zonas-comunes')">Hecho</button>
+</div>
+</div></section>
+<section class="section-container" data-section-id="estado-general">
+<div class="section-header">
+<h2 class="section-title">Estado General</h2><a href="#" class="see-all-images-link" onclick="event.preventDefault(); openModal('estado-general'); return false;">Ver todas las imágenes</a></div>
+<div class="section-content"><div class="image-carousel"><div class="carousel-container" id="carousel-estado-general" data-total-images="2" data-images-per-group="1"><div class="carousel-images-wrapper"><div class="carousel-images-group active" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/6dcf86d6-73f1-49bf-a359-81365d2daccd/1772457892874_xwyxe5.jpg" alt="Perspectiva General" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/6dcf86d6-73f1-49bf-a359-81365d2daccd/1772457942148_op0skq.jpg" alt="Perspectiva General" class="carousel-image" /></div></div><button class="carousel-nav prev">‹</button>
+<button class="carousel-nav next">›</button><div class="carousel-counter">1 de 2</div></div></div><div class="conditions-list"><div class="category-group">
+<h3 class="category-title">Acabados</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acabados</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Comunicaciones</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Comunicaciones</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Electricidad</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Electricidad</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Climatización</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Split Ac</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Calentador Agua</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div></div>
+</div>
+<div class="modal-overlay" id="modal-estado-general">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Estado General</h3>
+<button class="modal-close" onclick="closeModal('estado-general')">×</button>
+</div>
+<img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/6dcf86d6-73f1-49bf-a359-81365d2daccd/1772457892874_xwyxe5.jpg" alt="Perspectiva General" class="modal-main-image" /><div class="modal-thumbnails"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/6dcf86d6-73f1-49bf-a359-81365d2daccd/1772457892874_xwyxe5.jpg" alt="Perspectiva General" class="modal-thumbnail active" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/6dcf86d6-73f1-49bf-a359-81365d2daccd/1772457942148_op0skq.jpg" alt="Perspectiva General" class="modal-thumbnail " /></div><button class="modal-done-button" onclick="closeModal('estado-general')">Hecho</button>
+</div>
+</div></section>
+<section class="section-container" data-section-id="entrada-pasillos">
+<div class="section-header">
+<h2 class="section-title">Entrada y Pasillos de la Vivienda</h2><a href="#" class="see-all-images-link" onclick="event.preventDefault(); openModal('entrada-pasillos'); return false;">Ver todas las imágenes</a></div>
+<div class="section-content"><div class="image-carousel"><div class="carousel-container" id="carousel-entrada-pasillos" data-total-images="3" data-images-per-group="1"><div class="carousel-images-wrapper"><div class="carousel-images-group active" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/578bf166-2231-40b3-87e8-7748e8e19e31/1772458769292_ezw6e7.jpg" alt="Cuadro General Electrico" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/578bf166-2231-40b3-87e8-7748e8e19e31/1772458769297_m3841w.jpg" alt="Cuadro General Electrico" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/578bf166-2231-40b3-87e8-7748e8e19e31/1772458769305_2h3274.jpg" alt="Entrada Vivienda Pasillos" class="carousel-image" /></div></div><button class="carousel-nav prev">‹</button>
+<button class="carousel-nav next">›</button><div class="carousel-counter">1 de 3</div></div></div><div class="conditions-list"><div class="category-group">
+<h3 class="category-title">Acabados</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acabados</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Electricidad</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Electricidad</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Mobiliario</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Mobiliario</div></div>
+<span class="condition-badge bg-gray-50 text-gray-800 border-gray-200">No aplica</span>
+</div></div></div>
+</div>
+<div class="modal-overlay" id="modal-entrada-pasillos">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Entrada y Pasillos de la Vivienda</h3>
+<button class="modal-close" onclick="closeModal('entrada-pasillos')">×</button>
+</div>
+<img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/578bf166-2231-40b3-87e8-7748e8e19e31/1772458769292_ezw6e7.jpg" alt="Cuadro General Electrico" class="modal-main-image" /><div class="modal-thumbnails"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/578bf166-2231-40b3-87e8-7748e8e19e31/1772458769292_ezw6e7.jpg" alt="Cuadro General Electrico" class="modal-thumbnail active" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/578bf166-2231-40b3-87e8-7748e8e19e31/1772458769297_m3841w.jpg" alt="Cuadro General Electrico" class="modal-thumbnail " /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/578bf166-2231-40b3-87e8-7748e8e19e31/1772458769305_2h3274.jpg" alt="Entrada Vivienda Pasillos" class="modal-thumbnail " /></div><button class="modal-done-button" onclick="closeModal('entrada-pasillos')">Hecho</button>
+</div>
+</div></section>
+<section class="section-container" data-section-id="dynamic-habitaciones-1">
+<div class="section-header">
+<h2 class="section-title">Habitación 1</h2><a href="#" class="see-all-images-link" onclick="event.preventDefault(); openModal('dynamic-habitaciones-1'); return false;">Ver todas las imágenes</a></div>
+<div class="section-content"><div class="image-carousel"><div class="carousel-container" id="carousel-dynamic-habitaciones-1" data-total-images="4" data-images-per-group="1"><div class="carousel-images-wrapper"><div class="carousel-images-group active" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772459235985_g69svv.jpg" alt="Habitaciones 1" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772459235993_b90qao.jpg" alt="Habitaciones 1" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772458894169_cmkvqw.jpg" alt="Habitaciones 1" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772459101611_z6caaw.jpg" alt="Mobiliario" class="carousel-image" /></div></div><button class="carousel-nav prev">‹</button>
+<button class="carousel-nav next">›</button><div class="carousel-counter">1 de 4</div></div></div><div class="conditions-list"><div class="category-group">
+<h3 class="category-title">Acabados</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acabados</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Electricidad</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Electricidad</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Carpintería</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Ventanas</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Persianas</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Armarios</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Mobiliario</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Mobiliario</div><div class="condition-notes">1 base de cama doble
+1 colchón doble
+2 mesas de noche
+1 armario empotrado</div><div class="condition-photos"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772459101611_z6caaw.jpg" alt="" class="condition-thumbnail" loading="lazy" /></div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Otros</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Puerta Entrada</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div></div>
+</div>
+<div class="modal-overlay" id="modal-dynamic-habitaciones-1">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Habitación 1</h3>
+<button class="modal-close" onclick="closeModal('dynamic-habitaciones-1')">×</button>
+</div>
+<img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772459235985_g69svv.jpg" alt="Habitaciones 1" class="modal-main-image" /><div class="modal-observations">
+<h4 class="modal-observations-title">Observaciones</h4>
+<div class="modal-observations-text"><p>Mobiliario: 1 base de cama doble
+1 colchón doble
+2 mesas de noche
+1 armario empotrado</p></div>
+</div><div class="modal-thumbnails"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772459235985_g69svv.jpg" alt="Habitaciones 1" class="modal-thumbnail active" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772459235993_b90qao.jpg" alt="Habitaciones 1" class="modal-thumbnail " /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772458894169_cmkvqw.jpg" alt="Habitaciones 1" class="modal-thumbnail " /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/0a75b29c-13fe-408f-ab79-3eee05c26920/1772459101611_z6caaw.jpg" alt="Mobiliario" class="modal-thumbnail " /></div><button class="modal-done-button" onclick="closeModal('dynamic-habitaciones-1')">Hecho</button>
+</div>
+</div></section>
+<section class="section-container" data-section-id="salon">
+<div class="section-header">
+<h2 class="section-title">Salón</h2><a href="#" class="see-all-images-link" onclick="event.preventDefault(); openModal('salon'); return false;">Ver todas las imágenes</a></div>
+<div class="section-content"><div class="image-carousel"><div class="carousel-container" id="carousel-salon" data-total-images="5" data-images-per-group="1"><div class="carousel-images-wrapper"><div class="carousel-images-group active" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458267027_g9mgzl.jpg" alt="Salon" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458267085_xb2x5d.jpg" alt="Salon" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458267322_614iiq.jpg" alt="Existe mobiliario" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458342584_y0ji6d.jpg" alt="Existe mobiliario" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458342596_x88yxz.jpg" alt="Existe mobiliario" class="carousel-image" /></div></div><button class="carousel-nav prev">‹</button>
+<button class="carousel-nav next">›</button><div class="carousel-counter">1 de 5</div></div></div><div class="conditions-list"><div class="category-group">
+<h3 class="category-title">Acabados</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acabados</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Electricidad</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Electricidad</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Carpintería</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Ventanas</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Persianas</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Climatización</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Split Ac</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Mobiliario</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Existe mobiliario</div><div class="condition-notes">1 sofá 
+1 soporte tv
+1 mesita centro
+1 mesa comedor
+4 sillas</div><div class="condition-photos"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458267322_614iiq.jpg" alt="" class="condition-thumbnail" loading="lazy" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458342584_y0ji6d.jpg" alt="" class="condition-thumbnail" loading="lazy" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458342596_x88yxz.jpg" alt="" class="condition-thumbnail" loading="lazy" /></div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Otros</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Puerta Entrada</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div></div>
+</div>
+<div class="modal-overlay" id="modal-salon">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Salón</h3>
+<button class="modal-close" onclick="closeModal('salon')">×</button>
+</div>
+<img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458267027_g9mgzl.jpg" alt="Salon" class="modal-main-image" /><div class="modal-observations">
+<h4 class="modal-observations-title">Observaciones</h4>
+<div class="modal-observations-text"><p>Mobiliario: 1 sofá 
+1 soporte tv
+1 mesita centro
+1 mesa comedor
+4 sillas</p></div>
+</div><div class="modal-thumbnails"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458267027_g9mgzl.jpg" alt="Salon" class="modal-thumbnail active" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458267085_xb2x5d.jpg" alt="Salon" class="modal-thumbnail " /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458267322_614iiq.jpg" alt="Existe mobiliario" class="modal-thumbnail " /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458342584_y0ji6d.jpg" alt="Existe mobiliario" class="modal-thumbnail " /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/cf6e3e0b-42f2-4711-b081-ecbc26280e32/1772458342596_x88yxz.jpg" alt="Existe mobiliario" class="modal-thumbnail " /></div><button class="modal-done-button" onclick="closeModal('salon')">Hecho</button>
+</div>
+</div></section>
+<section class="section-container" data-section-id="dynamic-banos-1">
+<div class="section-header">
+<h2 class="section-title">Baño 1</h2><a href="#" class="see-all-images-link" onclick="event.preventDefault(); openModal('dynamic-banos-1'); return false;">Ver todas las imágenes</a></div>
+<div class="section-content"><div class="image-carousel"><div class="carousel-container" id="carousel-dynamic-banos-1" data-total-images="2" data-images-per-group="1"><div class="carousel-images-wrapper"><div class="carousel-images-group active" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/d6b0024a-da4b-4430-a0d3-2b95b6611f25/1772458480743_zj4on2.jpg" alt="Banos 1" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/d6b0024a-da4b-4430-a0d3-2b95b6611f25/1772458480774_hs4etq.jpg" alt="Banos 1" class="carousel-image" /></div></div><button class="carousel-nav prev">‹</button>
+<button class="carousel-nav next">›</button><div class="carousel-counter">1 de 2</div></div></div><div class="conditions-list"><div class="category-group">
+<h3 class="category-title">Acabados</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acabados</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Carpintería</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Ventanas</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Otros</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Agua Drenaje</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Sanitarios</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Griferia Ducha</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Puerta Entrada</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Ventilacion</div></div>
+<span class="condition-badge bg-gray-50 text-gray-800 border-gray-200">No aplica</span>
+</div></div></div>
+</div>
+<div class="modal-overlay" id="modal-dynamic-banos-1">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Baño 1</h3>
+<button class="modal-close" onclick="closeModal('dynamic-banos-1')">×</button>
+</div>
+<img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/d6b0024a-da4b-4430-a0d3-2b95b6611f25/1772458480743_zj4on2.jpg" alt="Banos 1" class="modal-main-image" /><div class="modal-thumbnails"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/d6b0024a-da4b-4430-a0d3-2b95b6611f25/1772458480743_zj4on2.jpg" alt="Banos 1" class="modal-thumbnail active" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/d6b0024a-da4b-4430-a0d3-2b95b6611f25/1772458480774_hs4etq.jpg" alt="Banos 1" class="modal-thumbnail " /></div><button class="modal-done-button" onclick="closeModal('dynamic-banos-1')">Hecho</button>
+</div>
+</div></section>
+<section class="section-container" data-section-id="cocina">
+<div class="section-header">
+<h2 class="section-title">Cocina</h2><a href="#" class="see-all-images-link" onclick="event.preventDefault(); openModal('cocina'); return false;">Ver todas las imágenes</a></div>
+<div class="section-content"><div class="image-carousel"><div class="carousel-container" id="carousel-cocina" data-total-images="2" data-images-per-group="1"><div class="carousel-images-wrapper"><div class="carousel-images-group active" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/c44cd7df-b264-4cc0-b63a-9a2a37476e36/1772458547948_jjewb9.jpg" alt="Cocina" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/c44cd7df-b264-4cc0-b63a-9a2a37476e36/1772458547967_5j8dqu.jpg" alt="Cocina" class="carousel-image" /></div></div><button class="carousel-nav prev">‹</button>
+<button class="carousel-nav next">›</button><div class="carousel-counter">1 de 2</div></div></div><div class="conditions-list"><div class="category-group">
+<h3 class="category-title">Acabados</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acabados</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Carpintería</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Ventanas y vierteaguas</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Electrodomésticos</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Horno</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Nevera</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Lavadora</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Campana Extractora</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Placa Vitro Induccion</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Otros</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Puerta Entrada</div></div>
+<span class="condition-badge bg-gray-50 text-gray-800 border-gray-200">No aplica</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Agua Drenaje</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Mobiliario Fijo</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div></div>
+</div>
+<div class="modal-overlay" id="modal-cocina">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Cocina</h3>
+<button class="modal-close" onclick="closeModal('cocina')">×</button>
+</div>
+<img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/c44cd7df-b264-4cc0-b63a-9a2a37476e36/1772458547948_jjewb9.jpg" alt="Cocina" class="modal-main-image" /><div class="modal-thumbnails"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/c44cd7df-b264-4cc0-b63a-9a2a37476e36/1772458547948_jjewb9.jpg" alt="Cocina" class="modal-thumbnail active" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/c44cd7df-b264-4cc0-b63a-9a2a37476e36/1772458547967_5j8dqu.jpg" alt="Cocina" class="modal-thumbnail " /></div><button class="modal-done-button" onclick="closeModal('cocina')">Hecho</button>
+</div>
+</div></section>
+<section class="section-container" data-section-id="exteriores">
+<div class="section-header">
+<h2 class="section-title">Exteriores de la Vivienda</h2><a href="#" class="see-all-images-link" onclick="event.preventDefault(); openModal('exteriores'); return false;">Ver todas las imágenes</a></div>
+<div class="section-content"><div class="image-carousel"><div class="carousel-container" id="carousel-exteriores" data-total-images="2" data-images-per-group="1"><div class="carousel-images-wrapper"><div class="carousel-images-group active" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/48ff0842-b629-4bdb-8915-6e85cfe1b53a/1772458607818_w7epzn.jpg" alt="Exterior" class="carousel-image" /></div><div class="carousel-images-group" style="--img-count: 1"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/48ff0842-b629-4bdb-8915-6e85cfe1b53a/1772458607826_k7hedp.jpg" alt="Exterior" class="carousel-image" /></div></div><button class="carousel-nav prev">‹</button>
+<button class="carousel-nav next">›</button><div class="carousel-counter">1 de 2</div></div></div><div class="conditions-list"><div class="category-group">
+<h3 class="category-title">Acabados</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Acabados Exteriores</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Seguridad</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Barandillas</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Rejas</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div><div class="category-group">
+<h3 class="category-title">Sistemas</h3><div class="condition-item">
+<div class="condition-item-wrapper">
+<div class="condition-label">Tendedero Exterior</div></div>
+<span class="condition-badge bg-green-50 text-green-800 border-green-200">Buen estado</span>
+</div></div></div>
+</div>
+<div class="modal-overlay" id="modal-exteriores">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Exteriores de la Vivienda</h3>
+<button class="modal-close" onclick="closeModal('exteriores')">×</button>
+</div>
+<img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/48ff0842-b629-4bdb-8915-6e85cfe1b53a/1772458607818_w7epzn.jpg" alt="Exterior" class="modal-main-image" /><div class="modal-thumbnails"><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/48ff0842-b629-4bdb-8915-6e85cfe1b53a/1772458607818_w7epzn.jpg" alt="Exterior" class="modal-thumbnail active" /><img src="https://kqqobbxjyrdputngvxrf.supabase.co/storage/v1/object/public/inspection-images/SP-ZQT-ME7-004828/307818b8-112d-4044-b1c7-fbda6a9c4031/48ff0842-b629-4bdb-8915-6e85cfe1b53a/1772458607826_k7hedp.jpg" alt="Exterior" class="modal-thumbnail " /></div><button class="modal-done-button" onclick="closeModal('exteriores')">Hecho</button>
+</div>
+</div></section>
+<script>
+// Carrusel functionality
+function initCarousel(sectionId) {
+  const carousel = document.querySelector(`#carousel-${sectionId}`);
+  if (!carousel) return;
+
+  const imageGroups = carousel.querySelectorAll('.carousel-images-group');
+  const prevBtn = carousel.querySelector('.carousel-nav.prev');
+  const nextBtn = carousel.querySelector('.carousel-nav.next');
+  const counter = carousel.querySelector('.carousel-counter');
+
+  if (imageGroups.length === 0) return;
+
+  let currentGroupIndex = 0;
+  const imagesPerGroup = parseInt(carousel.getAttribute('data-images-per-group') || '4');
+  const totalImages = parseInt(carousel.getAttribute('data-total-images') || '0');
+
+  function showGroup(groupIndex) {
+    imageGroups.forEach((group, i) => {
+      group.classList.toggle('active', i === groupIndex);
+    });
+    if (counter && totalImages > 0) {
+      const startImage = groupIndex * imagesPerGroup + 1;
+      const endImage = Math.min((groupIndex + 1) * imagesPerGroup, totalImages);
+      if (startImage === endImage) {
+        counter.textContent = `${startImage} de ${totalImages}`;
+      } else {
+        counter.textContent = `${startImage}-${endImage} de ${totalImages}`;
+      }
+    }
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      currentGroupIndex = (currentGroupIndex - 1 + imageGroups.length) % imageGroups.length;
+      showGroup(currentGroupIndex);
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      currentGroupIndex = (currentGroupIndex + 1) % imageGroups.length;
+      showGroup(currentGroupIndex);
+    });
+  }
+
+  showGroup(0);
+}
+
+// Modal functionality
+function openModal(sectionId) {
+  const modal = document.getElementById(`modal-${sectionId}`);
+  if (!modal) return;
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // Initialize modal carousel
+  const thumbnails = modal.querySelectorAll('.modal-thumbnail');
+  const mainImage = modal.querySelector('.modal-main-image');
+  if (thumbnails.length > 0 && mainImage) {
+    thumbnails.forEach((thumb, index) => {
+      thumb.addEventListener('click', () => {
+        thumbnails.forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+        mainImage.src = thumb.src;
+      });
+    });
+    // Set first thumbnail as active
+    if (thumbnails[0]) {
+      thumbnails[0].classList.add('active');
+      mainImage.src = thumbnails[0].src;
+    }
+  }
+}
+
+function closeModal(sectionId) {
+  const modal = document.getElementById(`modal-${sectionId}`);
+  if (!modal) return;
+
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// Close modal on overlay click
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-overlay')) {
+    const modal = e.target;
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+});
+
+// View toggle (Por Estancias / Por Partidas)
+function toggleView(view) {
+  var estancias = document.getElementById('view-estancias');
+  var partidas = document.getElementById('view-partidas');
+  var btnEstancias = document.getElementById('btn-estancias');
+  var btnPartidas = document.getElementById('btn-partidas');
+  if (!estancias || !partidas) return;
+
+  if (view === 'partidas') {
+    estancias.style.display = 'none';
+    partidas.style.display = 'block';
+    if (btnEstancias) btnEstancias.classList.remove('active');
+    if (btnPartidas) btnPartidas.classList.add('active');
+    // Initialize carousels inside partidas view on first show
+    partidas.querySelectorAll('.section-container').forEach(function(section) {
+      var sid = section.getAttribute('data-section-id');
+      if (sid) initCarousel(sid);
+    });
+  } else {
+    estancias.style.display = 'block';
+    partidas.style.display = 'none';
+    if (btnEstancias) btnEstancias.classList.add('active');
+    if (btnPartidas) btnPartidas.classList.remove('active');
+  }
+}
+
+// Initialize all carousels
+document.addEventListener('DOMContentLoaded', () => {
+  // Only init carousels in the visible view (estancias by default)
+  var visibleView = document.getElementById('view-estancias') || document;
+  visibleView.querySelectorAll('.section-container').forEach(section => {
+    const sectionId = section.getAttribute('data-section-id');
+    if (sectionId) {
+      initCarousel(sectionId);
+    }
+  });
+  // Also init any carousels outside the views (for final check reports)
+  document.querySelectorAll('.section-container').forEach(section => {
+    if (!section.closest('#view-estancias') && !section.closest('#view-partidas')) {
+      const sectionId = section.getAttribute('data-section-id');
+      if (sectionId) initCarousel(sectionId);
+    }
+  });
+});
+</script>
+</div>
+</body>
+</html>

@@ -146,6 +146,7 @@ Type: `jsonb` | Default: `[]`
 | :--- | :--- | :--- | :--- |
 | **technical** | `doc_renovation_files` | TEXT (Fixed) | `/property/technical/renovation/` |
 | **technical** | `doc_energy_cert` | TEXT (Fixed) | `/property/technical/energy_certificate/` |
+| **technical** | `doc_final_check` | TEXT (Fixed) | `/property/technical/final_check/` |
 | **technical** | `custom_technical_documents` | JSONB (Custom) | `/property/technical/custom/` |
 
 **3. Legal**

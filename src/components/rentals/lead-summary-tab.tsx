@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Users, Calendar, CalendarRange, Briefcase, User, Banknote, UserCheck } from "lucide-react";
+import { Copy, Check, Users, Calendar, CalendarRange, Briefcase, User, Banknote, UserCheck, Pencil, X } from "lucide-react";
+import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+const MOVE_IN_TIMEFRAMES = ["Inmediato", "1-2 semanas", "1 mes", "1-3 meses", "3-6 meses", "Flexible"];
+const LEASE_DURATION_PREFERENCES = ["11 meses", "1 año", "2 años", "Largo plazo", "Corto plazo"];
 
 interface Lead {
   id: string;
@@ -27,6 +34,7 @@ interface Lead {
 
 interface LeadSummaryTabProps {
   lead: Lead;
+  onLeadUpdate?: () => Promise<void> | void;
 }
 
 function getInitials(name: string | null | undefined): string {
@@ -36,8 +44,60 @@ function getInitials(name: string | null | undefined): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function LeadSummaryTab({ lead }: LeadSummaryTabProps) {
+export function LeadSummaryTab({ lead, onLeadUpdate }: LeadSummaryTabProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [editingPrefs, setEditingPrefs] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [editOccupants, setEditOccupants] = useState<string>("");
+  const [editMoveIn, setEditMoveIn] = useState<string>("");
+  const [editLeaseDuration, setEditLeaseDuration] = useState<string>("");
+
+  const startEditingPrefs = () => {
+    setEditOccupants(lead?.occupant_count != null ? String(lead.occupant_count) : "");
+    setEditMoveIn(lead?.move_in_timeframe ?? "");
+    setEditLeaseDuration(lead?.lease_duration_preference ?? "");
+    setEditingPrefs(true);
+  };
+
+  const cancelEditingPrefs = () => {
+    setEditingPrefs(false);
+  };
+
+  const savePrefs = async () => {
+    try {
+      setSavingPrefs(true);
+      const occupants = editOccupants.trim() === "" ? null : parseInt(editOccupants, 10);
+      if (editOccupants.trim() !== "" && (isNaN(occupants!) || occupants! < 0)) {
+        toast.error("El número de ocupantes debe ser un número válido");
+        return;
+      }
+
+      const res = await fetch(`/api/leads/${lead.id}/preferences`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          number_of_occupants: occupants,
+          move_in_timeframe: editMoveIn || null,
+          lease_duration_preference: editLeaseDuration || null,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(result.error ?? "Error al guardar las preferencias");
+      }
+
+      toast.success("Preferencias de alquiler actualizadas");
+      setEditingPrefs(false);
+      await onLeadUpdate?.();
+    } catch (error) {
+      console.error("[Save Rental Preferences Error]:", error);
+      toast.error("Error al guardar las preferencias");
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
 
   const copyToClipboard = async (text: string, fieldName: string) => {
     try {
@@ -141,47 +201,127 @@ export function LeadSummaryTab({ lead }: LeadSummaryTabProps) {
       {/* Preferencias de Alquiler - título mismo estilo que Documentos */}
       <div className="text-card-foreground bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm hover:shadow-md transition-shadow">
         <div className="flex flex-col space-y-1.5 p-0 pb-4 border-b border-[#E5E7EB] dark:border-[#374151] mb-4">
-          <div className="tracking-tight text-base font-semibold flex items-center gap-2">
-            Preferencias de Alquiler
+          <div className="tracking-tight text-base font-semibold flex items-center justify-between">
+            <span className="flex items-center gap-2">Preferencias de Alquiler</span>
+            {!editingPrefs ? (
+              <button
+                onClick={startEditingPrefs}
+                className="p-1.5 rounded-md hover:bg-[#F3F4F6] dark:hover:bg-[#374151] transition-colors"
+                title="Editar preferencias"
+              >
+                <Pencil className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+              </button>
+            ) : (
+              <button
+                onClick={cancelEditingPrefs}
+                className="p-1.5 rounded-md hover:bg-[#F3F4F6] dark:hover:bg-[#374151] transition-colors"
+                title="Cancelar edición"
+              >
+                <X className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+              </button>
+            )}
           </div>
         </div>
-        <div className="rounded-lg border border-[#E5E7EB] dark:border-[#374151] overflow-hidden">
-          <div className="grid grid-cols-3 divide-x divide-[#E5E7EB] dark:divide-[#374151]">
-            <div className="py-3 text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1.5">
-                <Users className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0" />
-                <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+
+        {!editingPrefs ? (
+          <div className="rounded-lg border border-[#E5E7EB] dark:border-[#374151] overflow-hidden">
+            <div className="grid grid-cols-3 divide-x divide-[#E5E7EB] dark:divide-[#374151]">
+              <div className="py-3 text-center">
+                <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                  <Users className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0" />
+                  <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                    Número de ocupantes
+                  </span>
+                </div>
+                <p className="text-lg font-semibold text-[#111827] dark:text-[#F9FAFB]">
+                  {lead?.occupant_count != null ? String(lead.occupant_count) : "--"}
+                </p>
+              </div>
+              <div className="py-3 text-center">
+                <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0" />
+                  <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                    Fecha de entrada
+                  </span>
+                </div>
+                <p className="text-lg font-semibold text-[#111827] dark:text-[#F9FAFB]">
+                  {lead?.move_in_timeframe ?? "--"}
+                </p>
+              </div>
+              <div className="py-3 text-center">
+                <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                  <CalendarRange className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0" />
+                  <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                    Duración
+                  </span>
+                </div>
+                <p className="text-lg font-semibold text-[#111827] dark:text-[#F9FAFB]">
+                  {lead?.lease_duration_preference ?? "--"}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="flex items-center gap-1.5 text-xs text-[#6B7280] dark:text-[#9CA3AF] mb-1.5">
+                  <Users className="w-3.5 h-3.5 flex-shrink-0" />
                   Número de ocupantes
-                </span>
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={20}
+                  placeholder="--"
+                  value={editOccupants}
+                  onChange={(e) => setEditOccupants(e.target.value)}
+                  className="h-9 text-sm"
+                />
               </div>
-              <p className="text-lg font-semibold text-[#111827] dark:text-[#F9FAFB]">
-                {lead?.occupant_count != null ? String(lead.occupant_count) : "--"}
-              </p>
-            </div>
-            <div className="py-3 text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0" />
-                <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+              <div>
+                <label className="flex items-center gap-1.5 text-xs text-[#6B7280] dark:text-[#9CA3AF] mb-1.5">
+                  <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
                   Fecha de entrada
-                </span>
+                </label>
+                <Select value={editMoveIn} onValueChange={setEditMoveIn}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MOVE_IN_TIMEFRAMES.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <p className="text-lg font-semibold text-[#111827] dark:text-[#F9FAFB]">
-                {lead?.move_in_timeframe ?? "--"}
-              </p>
-            </div>
-            <div className="py-3 text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1.5">
-                <CalendarRange className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF] flex-shrink-0" />
-                <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+              <div>
+                <label className="flex items-center gap-1.5 text-xs text-[#6B7280] dark:text-[#9CA3AF] mb-1.5">
+                  <CalendarRange className="w-3.5 h-3.5 flex-shrink-0" />
                   Duración
-                </span>
+                </label>
+                <Select value={editLeaseDuration} onValueChange={setEditLeaseDuration}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LEASE_DURATION_PREFERENCES.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <p className="text-lg font-semibold text-[#111827] dark:text-[#F9FAFB]">
-                {lead?.lease_duration_preference ?? "--"}
-              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={cancelEditingPrefs} disabled={savingPrefs}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={savePrefs} disabled={savingPrefs}>
+                {savingPrefs ? "Guardando..." : "Guardar"}
+              </Button>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Perfil Económico - mismo estilo que Preferencias de Alquiler */}

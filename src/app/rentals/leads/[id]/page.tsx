@@ -291,7 +291,7 @@ export default function LeadDetailPage() {
                     />
                   )}
                   {effectiveTab === "registro" && <LeadGestionRegistroTab lead={lead} />}
-                  {effectiveTab === "summary" && <LeadSummaryTab lead={lead} />}
+                  {effectiveTab === "summary" && <LeadSummaryTab lead={lead} onLeadUpdate={handleLeadRefetch} />}
                 </div>
               </div>
 

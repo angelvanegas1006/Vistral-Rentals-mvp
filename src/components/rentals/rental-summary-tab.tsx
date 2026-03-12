@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Banknote, Calendar, FileText, Zap } from "lucide-react";
+import { Banknote, Calendar, FileText, Shield, Zap } from "lucide-react";
 import { useProperty } from "@/hooks/use-property";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays, differenceInMonths, parseISO, isValid } from "date-fns";
@@ -70,7 +70,14 @@ function getDurationLabel(
   return duration;
 }
 
-export function RentalSummaryTab({ propertyId }: RentalSummaryTabProps) {
+const POST_PENDING_PHASES = [
+  "Alquilado",
+  "Actualización de Renta (IPC)",
+  "Gestión de Renovación",
+  "Finalización y Salida",
+];
+
+export function RentalSummaryTab({ propertyId, currentPhase }: RentalSummaryTabProps) {
   const { property, loading } = useProperty(propertyId);
   const [localProperty, setLocalProperty] = useState(property ?? null);
 
@@ -85,6 +92,14 @@ export function RentalSummaryTab({ propertyId }: RentalSummaryTabProps) {
   const nextRentUpdate = prop?.next_rent_update_date ?? null;
   const leaseDuration = prop?.lease_duration ?? null;
   const leaseDurationUnit = prop?.lease_duration_unit ?? null;
+  const depositAmount = prop?.deposit_amount ?? null;
+  const depositResponsible = prop?.deposit_responsible ?? null;
+
+  const showDepositCard =
+    currentPhase != null &&
+    POST_PENDING_PHASES.includes(currentPhase) &&
+    depositAmount != null &&
+    depositAmount > 0;
 
   const nextRevision = useMemo(
     () => getNextRevisionDate(nextRentUpdate, leaseStart),
@@ -174,6 +189,30 @@ export function RentalSummaryTab({ propertyId }: RentalSummaryTabProps) {
           )}
         </div>
       </div>
+
+      {/* Card: Fianza (only for post-Pendiente de trámites phases) */}
+      {showDepositCard && (
+        <div className={cardStyle}>
+          <div className="flex flex-col space-y-1.5 p-0 pb-4 border-b border-[#E5E7EB] dark:border-[#374151] mb-4">
+            <div className="text-base font-semibold flex items-center gap-2">
+              <Shield className="h-5 w-5 text-[#6B7280] dark:text-[#9CA3AF]" />
+              Fianza
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+            <div>
+              <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">
+                {Number(depositAmount).toLocaleString("es-ES")} €
+              </p>
+            </div>
+            {depositResponsible && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 shrink-0">
+                Responsable: {depositResponsible}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Card 2: Cronología */}
       <div className={cardStyle}>

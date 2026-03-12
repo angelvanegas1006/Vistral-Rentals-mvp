@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import type { PropheroSectionReviews, PropheroSectionReview } from "@/lib/supabase/types";
 
-// Mapeo de campos de Supabase a IDs de sección Prophero
+// Mapeo de campos de Supabase a IDs de secci?n Prophero
 const FIELD_TO_SECTION_MAP: Record<string, string> = {
   // property-management-info
   admin_name: "property-management-info",
@@ -10,6 +10,7 @@ const FIELD_TO_SECTION_MAP: Record<string, string> = {
   // technical-documents
   doc_energy_cert: "technical-documents",
   doc_renovation_files: "technical-documents",
+  doc_final_check: "technical-documents",
   
   // legal-documents
   doc_purchase_contract: "legal-documents",
@@ -39,10 +40,10 @@ const FIELD_TO_SECTION_MAP: Record<string, string> = {
   property_manager: "property-management",
 };
 
-// Mapeo de secciones a campos (para comparación con snapshot)
+// Mapeo de secciones a campos (para comparaci?n con snapshot)
 const SECTION_FIELDS_MAP: Record<string, string[]> = {
   "property-management-info": ["admin_name", "keys_location"],
-  "technical-documents": ["doc_energy_cert", "doc_renovation_files"],
+  "technical-documents": ["doc_energy_cert", "doc_renovation_files", "doc_final_check"],
   "legal-documents": ["doc_purchase_contract", "doc_land_registry_note"],
   "client-financial-info": ["client_iban", "client_bank_certificate_url"],
   "supplies-contracts": ["doc_contract_electricity", "doc_contract_water", "doc_contract_gas"],
@@ -52,8 +53,8 @@ const SECTION_FIELDS_MAP: Record<string, string[]> = {
 };
 
 /**
- * Detecta si un campo actualizado pertenece a una sección Prophero con estado "No"
- * y si hay cambios comparados con el snapshot, resetea la sección a NULL
+ * Detecta si un campo actualizado pertenece a una secci?n Prophero con estado "No"
+ * y si hay cambios comparados con el snapshot, resetea la secci?n a NULL
  */
 export async function detectAndResetPropheroSection(
   propertyId: string,
@@ -74,7 +75,7 @@ export async function detectAndResetPropheroSection(
       return false;
     }
     
-    // Solo procesar si la propiedad está en fase "Viviendas Prophero"
+    // Solo procesar si la propiedad est? en fase "Viviendas Prophero"
     if (property.current_stage !== "Viviendas Prophero") {
       return false;
     }
@@ -96,17 +97,17 @@ export async function detectAndResetPropheroSection(
     const sectionsToReset: string[] = [];
     
     for (const [fieldName, newValue] of Object.entries(updatedFields)) {
-      // Obtener la sección a la que pertenece este campo
+      // Obtener la secci?n a la que pertenece este campo
       const sectionId = FIELD_TO_SECTION_MAP[fieldName];
       if (!sectionId) {
-        // Este campo no pertenece a una sección Prophero
+        // Este campo no pertenece a una secci?n Prophero
         continue;
       }
       
-      // Verificar si la sección tiene estado "No" y un snapshot
+      // Verificar si la secci?n tiene estado "No" y un snapshot
       const review = reviews[sectionId] as PropheroSectionReview | undefined;
       if (!review || review.isCorrect !== false || !review.snapshot) {
-        // La sección no tiene estado "No" o no tiene snapshot
+        // La secci?n no tiene estado "No" o no tiene snapshot
         continue;
       }
       
@@ -130,7 +131,7 @@ export async function detectAndResetPropheroSection(
           isCorrect: null,
           reviewed: false,
           comments: null,
-          // Mantener submittedComments y snapshot (histórico)
+          // Mantener submittedComments y snapshot (hist?rico)
         };
       }
       
@@ -153,7 +154,7 @@ export async function detectAndResetPropheroSection(
         }
       }));
       
-      console.log(`✅ Secciones reseteadas automáticamente: ${sectionsToReset.join(", ")}`);
+      console.log(`Secciones reseteadas automaticamente: ${sectionsToReset.join(", ")}`);
       return true;
     }
     
@@ -175,7 +176,7 @@ function compareValues(newValue: any, snapshotValue: any): boolean {
     return JSON.stringify(newArray.sort()) !== JSON.stringify(snapshotArray.sort());
   }
   
-  // Comparación normal
+  // Comparaci?n normal
   const normalizedNew = newValue !== null && newValue !== undefined ? newValue : null;
   const normalizedSnapshot = snapshotValue !== null && snapshotValue !== undefined ? snapshotValue : null;
   

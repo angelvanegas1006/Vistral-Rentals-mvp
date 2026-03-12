@@ -351,7 +351,7 @@ async function uploadSingleDoc(
   const sanitizedBaseName = sanitizeStoragePath(baseName);
   const storagePath = sanitizeStoragePath(`${propertyId}/${folder}/${sanitizedBaseName}_${timestamp}${ext}`);
   
-  const contentType = ext === '.pdf' ? 'application/pdf' : ext === '.jpg' ? 'image/jpeg' : 'application/octet-stream';
+  const contentType = ext === '.pdf' ? 'application/pdf' : ext === '.jpg' ? 'image/jpeg' : ext === '.html' ? 'text/html' : 'application/octet-stream';
   
   return await uploadFile(bucket, storagePath, fileBuffer, contentType);
 }
@@ -617,6 +617,13 @@ async function createProperty(index: number, overrides?: PropertyOverrides): Pro
       propertyUniqueId,
       'Cert. Eficiencia Energética.pdf',
       'property/technical/energy_certificate',
+      'properties-restricted-docs'
+    );
+    
+    propertyData.doc_final_check = await uploadSingleDoc(
+      propertyUniqueId,
+      'final_check.html',
+      'property/technical/final_check',
       'properties-restricted-docs'
     );
     

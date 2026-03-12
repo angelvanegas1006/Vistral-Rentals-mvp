@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { DocumentUploadField } from "@/components/rentals/document-upload-field";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { SuppliesDisplaySection } from "@/components/rentals/supplies-display-section";
 import { deleteDocument } from "@/lib/document-upload";
@@ -45,6 +46,7 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
   
   // Deposit state
   const [depositResponsible, setDepositResponsible] = useState<"Prophero" | "Inversor" | null>(null);
+  const [depositAmount, setDepositAmount] = useState<number | null>(null);
   const [depositReceiptUrl, setDepositReceiptUrl] = useState<string | null>(null);
   
   // First rent payment state
@@ -54,6 +56,7 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
   const guaranteeSignedRef = useRef<boolean | null>(null);
   const guaranteeUrlRef = useRef<string | null>(null);
   const depositResponsibleRef = useRef<"Prophero" | "Inversor" | null>(null);
+  const depositAmountRef = useRef<number | null>(null);
   const depositReceiptUrlRef = useRef<string | null>(null);
   const firstRentPaymentUrlRef = useRef<string | null>(null);
   
@@ -69,6 +72,10 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
   useEffect(() => {
     depositResponsibleRef.current = depositResponsible;
   }, [depositResponsible]);
+
+  useEffect(() => {
+    depositAmountRef.current = depositAmount;
+  }, [depositAmount]);
 
   useEffect(() => {
     depositReceiptUrlRef.current = depositReceiptUrl;
@@ -152,6 +159,10 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
         depositResponsibleRef.current = supabaseProperty.deposit_responsible as "Prophero" | "Inversor";
       }
       
+      const initialDepositAmount = supabaseProperty.deposit_amount ?? null;
+      setDepositAmount(initialDepositAmount);
+      depositAmountRef.current = initialDepositAmount;
+
       const initialDepositUrl = supabaseProperty.deposit_receipt_file_url || null;
       setDepositReceiptUrl(initialDepositUrl);
       depositReceiptUrlRef.current = initialDepositUrl;
@@ -187,6 +198,12 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
         depositResponsibleRef.current = newResponsible;
       }
       
+      const newDepositAmount = supabaseProperty.deposit_amount ?? null;
+      if (newDepositAmount !== depositAmountRef.current) {
+        setDepositAmount(newDepositAmount);
+        depositAmountRef.current = newDepositAmount;
+      }
+
       const newDepositUrl = supabaseProperty.deposit_receipt_file_url || null;
       if (newDepositUrl !== depositReceiptUrlRef.current) {
         setDepositReceiptUrl(newDepositUrl);
@@ -215,8 +232,11 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
     // Check deposit completion
     const currentDepositResponsible = depositResponsibleRef.current;
     const currentDepositUrl = depositReceiptUrlRef.current;
+    const currentDepositAmount = depositAmountRef.current;
     const depositIsComplete = currentDepositResponsible === "Inversor" || 
-      (currentDepositResponsible === "Prophero" && currentDepositUrl !== null && currentDepositUrl !== undefined);
+      (currentDepositResponsible === "Prophero" &&
+        currentDepositUrl !== null && currentDepositUrl !== undefined &&
+        currentDepositAmount !== null && currentDepositAmount !== undefined && currentDepositAmount > 0);
     
     updateTask("depositReceipt", PHASE, {
       is_completed: depositIsComplete,
@@ -300,13 +320,19 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
   }, [checkGuaranteeCompletion]);
 
   // Check if deposit section can be completed
-  const checkDepositCompletion = useCallback(async (responsible?: "Prophero" | "Inversor" | null, url?: string | null) => {
+  const checkDepositCompletion = useCallback(async (
+    responsible?: "Prophero" | "Inversor" | null,
+    url?: string | null,
+    amount?: number | null,
+  ) => {
     const currentResponsible = responsible !== undefined ? responsible : depositResponsibleRef.current;
     const currentUrl = url !== undefined ? url : depositReceiptUrlRef.current;
+    const currentAmount = amount !== undefined ? amount : depositAmountRef.current;
     
-    // Complete if responsible is "Inversor" OR (responsible is "Prophero" AND document is uploaded)
     const isComplete = currentResponsible === "Inversor" || 
-      (currentResponsible === "Prophero" && currentUrl !== null && currentUrl !== undefined);
+      (currentResponsible === "Prophero" &&
+        currentUrl !== null && currentUrl !== undefined &&
+        currentAmount !== null && currentAmount !== undefined && currentAmount > 0);
     
     await updateTask("depositReceipt", PHASE, {
       is_completed: isComplete,
@@ -325,8 +351,7 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
       deposit_responsible: responsible,
     });
     
-    // Check completion with the new value directly
-    await checkDepositCompletion(responsible, currentUrl);
+    await checkDepositCompletion(responsible, currentUrl, depositAmountRef.current);
   };
 
   // Handle clear deposit selection
@@ -353,13 +378,23 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
       deposit_receipt_file_url: url,
     });
     
-    // Check completion with the latest values from refs
-    await checkDepositCompletion(depositResponsibleRef.current, url);
+    await checkDepositCompletion(depositResponsibleRef.current, url, depositAmountRef.current);
+  }, [propertyId, updateProperty, checkDepositCompletion]);
+
+  // Handle deposit amount blur (save on blur)
+  const handleDepositAmountBlur = useCallback(async (value: string) => {
+    const parsed = value.trim() === "" ? null : parseFloat(value);
+    const amount = parsed !== null && !isNaN(parsed) ? parsed : null;
+    setDepositAmount(amount);
+    depositAmountRef.current = amount;
+
+    await updateProperty(propertyId, { deposit_amount: amount });
+    await checkDepositCompletion(depositResponsibleRef.current, depositReceiptUrlRef.current, amount);
   }, [propertyId, updateProperty, checkDepositCompletion]);
 
   // Wrapper for deposit completion check that always uses current state from refs
   const handleDepositCompletionCheck = useCallback(async () => {
-    await checkDepositCompletion(depositResponsibleRef.current, depositReceiptUrlRef.current);
+    await checkDepositCompletion(depositResponsibleRef.current, depositReceiptUrlRef.current, depositAmountRef.current);
   }, [checkDepositCompletion]);
 
   // Check if first rent payment section can be completed
@@ -751,18 +786,35 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
                     </RadioGroup>
                   </div>
 
-                  {/* Upload field - Solo se muestra cuando el responsable es "Prophero" */}
+                  {/* Importe + Upload - Solo se muestra cuando el responsable es "Prophero" */}
                   {depositResponsible === "Prophero" && (
-                    <DocumentUploadField
-                      label="Resguardo del depósito de la fianza"
-                      documentTitle="Resguardo del depósito de la fianza"
-                      fieldName="deposit_receipt_file_url"
-                      propertyId={propertyId}
-                      value={depositReceiptUrl || supabaseProperty?.deposit_receipt_file_url || null}
-                      onUpdate={handleDepositReceiptUrlUpdate}
-                      onCompletionCheck={handleDepositCompletionCheck}
-                      accept=".pdf,.doc,.docx"
-                    />
+                    <>
+                      <div className="space-y-1.5">
+                        <Label className="text-sm font-medium">Importe de la fianza</Label>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0,00"
+                            defaultValue={depositAmount ?? ""}
+                            onBlur={(e) => handleDepositAmountBlur(e.target.value)}
+                            className="pr-8"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">€</span>
+                        </div>
+                      </div>
+                      <DocumentUploadField
+                        label="Resguardo del depósito de la fianza"
+                        documentTitle="Resguardo del depósito de la fianza"
+                        fieldName="deposit_receipt_file_url"
+                        propertyId={propertyId}
+                        value={depositReceiptUrl || supabaseProperty?.deposit_receipt_file_url || null}
+                        onUpdate={handleDepositReceiptUrlUpdate}
+                        onCompletionCheck={handleDepositCompletionCheck}
+                        accept=".pdf,.doc,.docx"
+                      />
+                    </>
                   )}
                 </div>
               </AccordionContent>
@@ -812,18 +864,35 @@ export function PendingProceduresTasks({ property }: PendingProceduresTasksProps
               </RadioGroup>
             </div>
 
-            {/* Upload field - Solo se muestra cuando el responsable es "Prophero" */}
+            {/* Importe + Upload - Solo se muestra cuando el responsable es "Prophero" */}
             {depositResponsible === "Prophero" && (
-              <DocumentUploadField
-                label="Resguardo del depósito de la fianza"
-                documentTitle="Resguardo del depósito de la fianza"
-                fieldName="deposit_receipt_file_url"
-                propertyId={propertyId}
-                value={depositReceiptUrl || supabaseProperty?.deposit_receipt_file_url || null}
-                onUpdate={handleDepositReceiptUrlUpdate}
-                onCompletionCheck={handleDepositCompletionCheck}
-                accept=".pdf,.doc,.docx"
-              />
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Importe de la fianza</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0,00"
+                      defaultValue={depositAmount ?? ""}
+                      onBlur={(e) => handleDepositAmountBlur(e.target.value)}
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">€</span>
+                  </div>
+                </div>
+                <DocumentUploadField
+                  label="Resguardo del depósito de la fianza"
+                  documentTitle="Resguardo del depósito de la fianza"
+                  fieldName="deposit_receipt_file_url"
+                  propertyId={propertyId}
+                  value={depositReceiptUrl || supabaseProperty?.deposit_receipt_file_url || null}
+                  onUpdate={handleDepositReceiptUrlUpdate}
+                  onCompletionCheck={handleDepositCompletionCheck}
+                  accept=".pdf,.doc,.docx"
+                />
+              </>
             )}
           </CardContent>
         )}

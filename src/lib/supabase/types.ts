@@ -145,6 +145,7 @@ export interface Database {
           pics_urls: Json | null; // JSONB array of strings
           doc_renovation_files: Json | null; // JSONB array of strings
           doc_energy_cert: string | null;
+          doc_final_check: string | null;
           doc_purchase_contract: string | null;
           doc_land_registry_note: string | null;
           // Supplies Documents
@@ -225,6 +226,7 @@ export interface Database {
           documents_closed: boolean | null;
           utilities_files_urls: Json | null;
           deposit_responsible: "Prophero" | "Inversor" | null;
+          deposit_amount: number | null;
           deposit_receipt_file_url: string | null;
           first_rent_payment_file_url: string | null;
           payment_receipt_file_url: string | null;

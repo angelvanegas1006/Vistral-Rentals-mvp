@@ -163,6 +163,11 @@ export function PropertyDocumentsTab({ propertyId, currentPhase, property }: Pro
                 path: "property/technical/energy_certificate",
               },
               {
+                dbField: "doc_final_check",
+                label: DOCUMENT_LABELS.FINAL_CHECK,
+                path: "property/technical/final_check",
+              },
+              {
                 dbField: "doc_renovation_files",
                 label: DOCUMENT_LABELS.RENOVATION_FILES,
                 path: "property/technical/renovation",

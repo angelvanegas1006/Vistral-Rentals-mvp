@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
 type PropertyUpdate = Database["public"]["Tables"]["properties"]["Update"];
@@ -40,10 +41,16 @@ export function useUpdateProperty() {
 
       console.log("🔄 Actualizando propiedad via API:", { propertyId, fields: Object.keys(filteredUpdates) });
 
-      // Usar la API route (service role key) para garantizar que la actualización persiste
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch(`/api/properties/${encodeURIComponent(propertyId)}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(filteredUpdates),
       });
 

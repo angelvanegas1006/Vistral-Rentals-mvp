@@ -25,6 +25,7 @@ interface Property {
   propertyReadyDate?: string; // Fecha en que la propiedad está lista
   daysToPublishRent?: number; // Días para publicar el alquiler
   propheroSectionReviews?: PropheroSectionReviews | null; // Estado de revisión de Prophero
+  hasAcceptedInterested?: boolean;
 }
 
 interface RentalsKanbanColumnProps {

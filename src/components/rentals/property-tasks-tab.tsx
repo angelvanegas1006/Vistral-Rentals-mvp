@@ -47,6 +47,7 @@ interface PropertyTasksTabProps {
   onPhase2ProgressChange?: (progress: number) => void; // Progress percentage (0-100)
   onPhase4ProgressChange?: (progress: number) => void; // Progress percentage (0-100) for phase 4
   onPhase5ProgressChange?: (progress: number) => void; // Progress percentage (0-100) for phase 5
+  onPublicadoAcceptedChange?: (hasAccepted: boolean) => void;
 }
 
 export function PropertyTasksTab({ 
@@ -62,9 +63,18 @@ export function PropertyTasksTab({
   onPhase2ProgressChange,
   onPhase4ProgressChange,
   onPhase5ProgressChange,
+  onPublicadoAcceptedChange,
 }: PropertyTasksTabProps) {
   const { formData } = usePropertyForm();
   const { property: supabaseProperty, loading: propertyLoading } = useProperty(propertyId);
+  
+  // Estado para tracking de interesado aceptado en fase Publicado
+  const [hasAcceptedLead, setHasAcceptedLead] = useState(false);
+  
+  const handleAcceptedLeadChange = useCallback((hasAccepted: boolean) => {
+    setHasAcceptedLead(hasAccepted);
+    onPublicadoAcceptedChange?.(hasAccepted);
+  }, [onPublicadoAcceptedChange]);
   
   // Estado local para propheroSectionReviews que se actualiza en tiempo real
   const [propheroSectionReviews, setPropheroSectionReviews] = useState<PropheroSectionReviews | undefined>(undefined);
@@ -295,6 +305,7 @@ export function PropertyTasksTab({
             title: "Depósito de la fianza",
             required: true,
             fields: [
+              { id: "depositAmount", required: true },
               { id: "depositReceipt", required: true },
             ],
           },
@@ -311,13 +322,11 @@ export function PropertyTasksTab({
       case "Publicado":
         return [
           {
-            id: "leads",
-            title: "Gestión de Interesados",
+            id: "accepted-lead",
+            title: "Interesado aceptado",
             required: true,
             fields: [
-              { id: "unguidedLeads", required: false },
-              { id: "scheduledLeads", required: false },
-              { id: "visitedLeads", required: false },
+              { id: "hasAcceptedLead", required: true },
             ],
           },
         ];
@@ -525,12 +534,15 @@ export function PropertyTasksTab({
     const data = { ...formData };
     
     if (currentPhase === "Listo para Alquilar") {
-      // Agregar completitud de inspección técnica
       data["readyToRent.technicalInspectionComplete"] = calculateTechnicalInspectionComplete();
     }
     
+    if (currentPhase === "Publicado") {
+      data["accepted-lead.hasAcceptedLead"] = hasAcceptedLead;
+    }
+    
     return data;
-  }, [formData, currentPhase, supabaseProperty]);
+  }, [formData, currentPhase, supabaseProperty, hasAcceptedLead]);
 
   // Calcular progreso de fase 2 y exponerlo al componente padre
   useEffect(() => {
@@ -987,7 +999,7 @@ export function PropertyTasksTab({
       ) : isFinalization ? (
         <FinalizationTasks property={property} />
       ) : isPublished ? (
-        <PublishedTasks property={property} />
+        <PublishedTasks property={property} onAcceptedLeadChange={handleAcceptedLeadChange} />
       ) : (
         <div className="bg-card rounded-lg border p-4 md:p-6 shadow-sm">
           <p className="text-sm text-muted-foreground">

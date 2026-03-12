@@ -100,6 +100,7 @@ interface Property {
   daysToPublishRent?: number; // Días para publicar el alquiler
   propheroSubstate?: "Pendiente de revisión" | "Pendiente de información" | null; // Subestado de Prophero
   is_dev?: boolean;
+  hasAcceptedInterested?: boolean;
 }
 
 interface RentalsPropertyCardProps {
@@ -235,6 +236,13 @@ export function RentalsPropertyCard({
           property.daysToPublishRent >= 3 &&
           property.daysToPublishRent <= 5 &&
           "border-l-4 border-l-amber-500 dark:border-l-amber-400",
+        // Publicado con interesado aceptado: verde (mismo patrón que notificaciones del kanban de leads)
+        !isHighlighted &&
+          !property.needsUpdate &&
+          !property.isExpired &&
+          property.currentPhase === "Publicado" &&
+          property.hasAcceptedInterested &&
+          "border-l-4 border-l-green-500 bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-l-green-400 dark:border-green-800",
         className
       )}
       style={{ pointerEvents: disabled ? "none" : "auto" }}

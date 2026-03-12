@@ -331,6 +331,12 @@ export function ProgressOverviewWidget({
       return { completed: 0, total: 1 };
     }
 
+    // Special handling for Publicado "Interesado aceptado" section
+    if (section.id === "accepted-lead") {
+      const hasAccepted = formData["accepted-lead.hasAcceptedLead"];
+      return { completed: hasAccepted ? 1 : 0, total: 1 };
+    }
+
     // Special handling for lead "Propiedad seleccionada para calificación" section
     if (section.id === "selected-property") {
       const hasSelected = formData["selected-property.has_selected_property"];
@@ -545,28 +551,23 @@ export function ProgressOverviewWidget({
       }
       
       if (section.id === "deposit") {
-        // Deposit section for Phase 5: Check deposit_responsible and deposit_receipt_file_url
-        // Complete if:
-        // - deposit_responsible === "Inversor" (no document needed), OR
-        // - deposit_responsible === "Prophero" AND deposit_receipt_file_url exists
         const depositResponsible = supabaseProperty.deposit_responsible;
         const depositReceiptUrl = supabaseProperty.deposit_receipt_file_url;
+        const depositAmount = supabaseProperty.deposit_amount;
         
-        let completed = 0;
-        const total = 1; // 1 field: responsible selection (document is conditional)
-        
-        // Check if responsible is selected
         if (depositResponsible === "Inversor") {
-          // Inversor is responsible - section is complete
-          completed = 1;
-        } else if (depositResponsible === "Prophero") {
-          // Prophero is responsible - need document
-          if (depositReceiptUrl && typeof depositReceiptUrl === 'string' && depositReceiptUrl.trim() !== '') {
-            completed = 1;
-          }
+          return { completed: 1, total: 1 };
         }
-        
-        return { completed, total };
+
+        if (depositResponsible === "Prophero") {
+          let completed = 0;
+          const total = 2; // amount + receipt document
+          if (depositAmount !== null && depositAmount !== undefined && Number(depositAmount) > 0) completed++;
+          if (depositReceiptUrl && typeof depositReceiptUrl === 'string' && depositReceiptUrl.trim() !== '') completed++;
+          return { completed, total };
+        }
+
+        return { completed: 0, total: 1 };
       }
       
       if (section.id === "supplies-change") {

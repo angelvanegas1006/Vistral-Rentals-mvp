@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, List, ChevronDown, ChevronUp, User, ExternalLink } from "lucide-react";
+import { LayoutGrid, List, ChevronDown, ChevronUp, User, ExternalLink, Copy, Check, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PublishedTasksKanban } from "./published-tasks-kanban";
+import { AcceptedLeadDetailModal } from "./accepted-lead-detail-modal";
 import {
   MTP_ACTIVE_STATUSES,
   MTP_INACTIVE_STATUSES,
@@ -15,12 +16,28 @@ import {
   type MtpStatusDisplay,
 } from "@/lib/leads/mtp-display";
 
+export interface AcceptedLeadData {
+  leadId: string;
+  leadUuid: string;
+  leadName: string;
+  phone: string;
+  email: string;
+  occupant_count?: number | null;
+  move_in_timeframe?: string | null;
+  lease_duration_preference?: string | null;
+  employment_status?: string | null;
+  job_title?: string | null;
+  monthly_net_income?: number | null;
+  has_guarantor?: boolean | null;
+}
+
 interface PublishedTasksProps {
   property: {
     property_unique_id: string;
     address: string;
     city?: string;
   };
+  onAcceptedLeadChange?: (hasAccepted: boolean) => void;
 }
 
 interface StatusGroup {
@@ -28,13 +45,23 @@ interface StatusGroup {
   leads: InterestedLeadItem[];
 }
 
-export function PublishedTasks({ property }: PublishedTasksProps) {
+function getInitials(name: string | null | undefined): string {
+  if (!name) return "??";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+export function PublishedTasks({ property, onAcceptedLeadChange }: PublishedTasksProps) {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<"lists" | "kanban">("lists");
   const [interested, setInterested] = useState<InterestedLeadItem[]>([]);
+  const [acceptedLead, setAcceptedLead] = useState<AcceptedLeadData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedPhase, setExpandedPhase] = useState<string | null>(null);
   const [inactiveOpen, setInactiveOpen] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -43,16 +70,18 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
         `/api/properties/${encodeURIComponent(property.property_unique_id)}/interested`
       );
       if (!res.ok) throw new Error("fetch failed");
-      const { interested: items } = (await res.json()) as {
-        interested: InterestedLeadItem[];
-      };
+      const json = await res.json();
+      const items: InterestedLeadItem[] = json.interested || [];
+      const accepted: AcceptedLeadData | null = json.acceptedLead || null;
       setInterested(items);
+      setAcceptedLead(accepted);
+      onAcceptedLeadChange?.(!!accepted);
     } catch (err) {
       console.error("Error fetching interested summary:", err);
     } finally {
       setLoading(false);
     }
-  }, [property.property_unique_id]);
+  }, [property.property_unique_id, onAcceptedLeadChange]);
 
   useEffect(() => {
     fetchData();
@@ -88,6 +117,16 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
 
   const handleNavigateToLead = (leadUuid: string) => {
     router.push(`/rentals/leads/${leadUuid}`);
+  };
+
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
   };
 
   const renderStatusRow = (group: StatusGroup) => {
@@ -170,10 +209,140 @@ export function PublishedTasks({ property }: PublishedTasksProps) {
     );
   }
 
+  // --- Accepted Lead View ---
+  if (acceptedLead) {
+    const leadForModal = {
+      id: acceptedLead.leadUuid,
+      name: acceptedLead.leadName,
+      phone: acceptedLead.phone,
+      email: acceptedLead.email,
+      currentPhase: "Interesado Aceptado",
+      occupant_count: acceptedLead.occupant_count,
+      move_in_timeframe: acceptedLead.move_in_timeframe,
+      lease_duration_preference: acceptedLead.lease_duration_preference,
+      employment_status: acceptedLead.employment_status,
+      job_title: acceptedLead.job_title,
+      monthly_net_income: acceptedLead.monthly_net_income,
+      has_guarantor: acceptedLead.has_guarantor,
+    };
+
+    return (
+      <>
+        <Card className="border transition-all shadow-sm border-green-200 dark:border-green-800 bg-white dark:bg-gray-800" id="section-accepted-lead">
+          <div className="px-4 pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Interesado aceptado
+              </h3>
+            </div>
+          </div>
+
+          <div className="border-b border-gray-200 dark:border-gray-700 mx-4" />
+
+          <div className="px-4 py-4">
+            <div className="text-card-foreground bg-white dark:bg-[#1F2937] rounded-xl border border-[#E5E7EB] dark:border-[#374151] p-6 shadow-sm">
+              {/* Header: Avatar + Name + Ver más detalles */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                    {getInitials(acceptedLead.leadName)}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-semibold text-[#111827] dark:text-[#F9FAFB]">
+                    {acceptedLead.leadName}
+                  </p>
+                  <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+                    Interesado aceptado
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setModalOpen(true)}
+                  className="h-8 w-8 shrink-0"
+                  title="Ver más detalles"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              {/* Contact info */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Teléfono</p>
+                  {acceptedLead.phone ? (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`tel:${acceptedLead.phone.replace(/\s/g, "")}`}
+                        className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] hover:text-[#2563EB] dark:hover:text-[#3B82F6] transition-colors"
+                      >
+                        {acceptedLead.phone}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(acceptedLead.phone, "accepted-phone")}
+                        className="p-1 hover:bg-[#F3F4F6] dark:hover:bg-[#374151] rounded transition-colors"
+                        title="Copiar teléfono"
+                      >
+                        {copiedField === "accepted-phone" ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">No disponible</p>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">Email</p>
+                  {acceptedLead.email ? (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`mailto:${acceptedLead.email}`}
+                        className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB] hover:text-[#2563EB] dark:hover:text-[#3B82F6] transition-colors"
+                      >
+                        {acceptedLead.email}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(acceptedLead.email, "accepted-email")}
+                        className="p-1 hover:bg-[#F3F4F6] dark:hover:bg-[#374151] rounded transition-colors"
+                        title="Copiar email"
+                      >
+                        {copiedField === "accepted-email" ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">No disponible</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <AcceptedLeadDetailModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          lead={leadForModal}
+          onLeadUpdate={fetchData}
+        />
+      </>
+    );
+  }
+
+  // --- Normal (no accepted lead) View ---
   const total = activeTotal + inactiveTotal;
 
   return (
-    <Card className="border transition-all shadow-sm border-gray-200 bg-white dark:bg-gray-800">
+    <Card className="border transition-all shadow-sm border-gray-200 bg-white dark:bg-gray-800" id="section-accepted-lead">
       {/* Header: titulo + descripción */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start justify-between">

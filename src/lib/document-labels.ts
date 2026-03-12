@@ -12,6 +12,7 @@ export const DOCUMENT_LABELS = {
   // Technical Documents
   ENERGY_CERTIFICATE: "Certificado de eficiencia energética",
   RENOVATION_FILES: "Documentos de la reforma",
+  FINAL_CHECK: "Final Check",
   
   // Insurance
   HOME_INSURANCE_POLICY: "Póliza del Seguro de Hogar",
@@ -40,6 +41,7 @@ export const FIELD_TO_LABEL: Record<string, string> = {
   property_management_plan_contract_url: DOCUMENT_LABELS.PROPERTY_MANAGEMENT_CONTRACT,
   doc_energy_cert: DOCUMENT_LABELS.ENERGY_CERTIFICATE,
   doc_renovation_files: DOCUMENT_LABELS.RENOVATION_FILES,
+  doc_final_check: DOCUMENT_LABELS.FINAL_CHECK,
   home_insurance_policy_url: DOCUMENT_LABELS.HOME_INSURANCE_POLICY,
   client_bank_certificate_url: DOCUMENT_LABELS.BANK_CERTIFICATE,
   doc_contract_electricity: DOCUMENT_LABELS.CONTRACT_ELECTRICITY,

@@ -77,7 +77,35 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, data: data || [] });
+    const properties = data || [];
+
+    // For Publicado properties, check if they have an accepted interested party
+    const publicadoPropertyIds = properties
+      .filter((p: any) => p.current_stage === "Publicado")
+      .map((p: any) => p.property_unique_id);
+
+    let acceptedMap = new Map<string, boolean>();
+
+    if (publicadoPropertyIds.length > 0) {
+      const { data: acceptedMtps, error: acceptedError } = await supabase
+        .from("leads_properties")
+        .select("properties_unique_id")
+        .in("properties_unique_id", publicadoPropertyIds)
+        .eq("current_status", "interesado_aceptado");
+
+      if (!acceptedError && acceptedMtps) {
+        for (const mtp of acceptedMtps) {
+          acceptedMap.set(mtp.properties_unique_id, true);
+        }
+      }
+    }
+
+    const enrichedData = properties.map((p: any) => ({
+      ...p,
+      has_accepted_interested: acceptedMap.get(p.property_unique_id) ?? false,
+    }));
+
+    return NextResponse.json({ success: true, data: enrichedData });
   } catch (error) {
     console.error("[Fetch Properties Error]:", error);
     return NextResponse.json(

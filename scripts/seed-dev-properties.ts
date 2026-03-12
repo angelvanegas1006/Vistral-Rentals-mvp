@@ -217,7 +217,7 @@ async function uploadSingleDoc(propertyId: string, filename: string, folder: str
   const baseName = path.basename(filename, path.extname(filename));
   const ext = path.extname(filename);
   const storagePath = sanitizeStoragePath(`${propertyId}/${folder}/${sanitizeStoragePath(baseName)}_${Date.now()}${ext}`);
-  const contentType = ext === '.pdf' ? 'application/pdf' : ext === '.jpg' ? 'image/jpeg' : 'application/octet-stream';
+  const contentType = ext === '.pdf' ? 'application/pdf' : ext === '.jpg' ? 'image/jpeg' : ext === '.html' ? 'text/html' : 'application/octet-stream';
   return await uploadFile(bucket, storagePath, fileBuffer, contentType);
 }
 
@@ -365,6 +365,7 @@ async function createProperty(devIndex: number, overrides?: PropertyOverrides): 
     propertyData.pics_urls = await uploadGallery(propertyUniqueId);
     propertyData.doc_renovation_files = await uploadRenovationDocs(propertyUniqueId);
     propertyData.doc_energy_cert = await uploadSingleDoc(propertyUniqueId, 'Cert. Eficiencia Energética.pdf', 'property/technical/energy_certificate', 'properties-restricted-docs');
+    propertyData.doc_final_check = await uploadSingleDoc(propertyUniqueId, 'final_check.html', 'property/technical/final_check', 'properties-restricted-docs');
     propertyData.client_bank_certificate_url = await uploadSingleDoc(propertyUniqueId, 'Certificado de titularidad bancaria.pdf', 'client/financial', 'properties-restricted-docs');
     propertyData.doc_purchase_contract = await uploadSingleDoc(propertyUniqueId, 'Contrato Compraventa.pdf', 'property/legal/purchase_contract', 'properties-restricted-docs');
     propertyData.client_identity_doc_url = await uploadSingleDoc(propertyUniqueId, 'DNI del inversor.pdf', 'client/identity', 'properties-restricted-docs');

@@ -311,7 +311,7 @@ export function PropheroTasks({
   // Mapeo de secciones a campos (para snapshot y detección de cambios)
   const SECTION_FIELDS_MAP: Record<string, string[]> = {
     "property-management-info": ["admin_name", "keys_location"],
-    "technical-documents": ["doc_energy_cert", "doc_renovation_files"],
+    "technical-documents": ["doc_energy_cert", "doc_renovation_files", "doc_final_check"],
     "legal-documents": ["doc_purchase_contract", "doc_land_registry_note"],
     "client-financial-info": ["client_iban", "client_bank_certificate_url"],
     "supplies-contracts": ["doc_contract_electricity", "doc_contract_water", "doc_contract_gas"],
@@ -1174,8 +1174,8 @@ export function PropheroTasks({
           id="technical-documents"
           title="Documentos Técnicos de la Propiedad"
           required
-          isComplete={isSectionComplete("technical-documents", ["doc_energy_cert", "doc_renovation_files"])}
-          hasData={sectionHasData("technical-documents", ["doc_energy_cert", "doc_renovation_files"])}
+          isComplete={isSectionComplete("technical-documents", ["doc_energy_cert", "doc_renovation_files", "doc_final_check"])}
+          hasData={sectionHasData("technical-documents", ["doc_energy_cert", "doc_renovation_files", "doc_final_check"])}
           reviewState={sectionReviews["technical-documents"]}
           onReviewChange={(isCorrect) => handleReviewChange("technical-documents", isCorrect)}
           onCommentsChange={(comments) => handleCommentsChange("technical-documents", comments)}
@@ -1208,6 +1208,12 @@ export function PropheroTasks({
                 "doc_renovation_files",
                 "technical-documents"
               )
+            )}
+            {renderDocumentPill(
+              DOCUMENT_LABELS.FINAL_CHECK,
+              localProperty.doc_final_check,
+              "doc_final_check",
+              "technical-documents"
             )}
           </div>
         </PropheroSectionWidget>

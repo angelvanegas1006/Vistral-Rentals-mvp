@@ -103,6 +103,7 @@ interface Property {
   daysToPublishRent?: number; // Días para publicar el alquiler
   propheroSectionReviews?: PropheroSectionReviews | null; // Estado de revisión de Prophero
   propheroSubstate?: "Pendiente de revisión" | "Pendiente de información" | null; // Subestado de Prophero
+  hasAcceptedInterested?: boolean;
 }
 
 interface KanbanColumn {
@@ -525,10 +526,18 @@ export function RentalsKanbanBoard({
         properties = [...properties].sort((a, b) => {
           const aDays = a.daysToPublishRent ?? 0;
           const bDays = b.daysToPublishRent ?? 0;
-          return bDays - aDays; // Orden descendente (mayor a menor)
+          return bDays - aDays;
         });
       }
       
+      // Ordenar "Publicado": propiedades con interesado aceptado primero
+      if (id === "published" && kanbanType === "captacion") {
+        properties = [...properties].sort((a, b) => {
+          const aAccepted = a.hasAcceptedInterested ? 1 : 0;
+          const bAccepted = b.hasAcceptedInterested ? 1 : 0;
+          return bAccepted - aAccepted;
+        });
+      }
       
       return {
         id,

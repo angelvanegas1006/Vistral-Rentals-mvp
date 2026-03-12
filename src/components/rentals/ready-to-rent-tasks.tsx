@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { usePropertyForm } from "./property-form-context";
 import { useProperty } from "@/hooks/use-property";
-import { Upload, X, XCircle, Plus } from "lucide-react";
+import { Upload, X, XCircle, Plus, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Phase2SectionWidget } from "./phase2-section-widget";
@@ -1398,6 +1398,34 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
         isComplete={isSection3Complete()}
       >
         <div className="space-y-4">
+          {/* Final Check - read-only reference document */}
+          <div className="p-3 border border-[#E5E7EB] dark:border-[#374151] rounded-lg bg-[#F9FAFB] dark:bg-[#1F2937]">
+            <p className="text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] mb-2">Documento de referencia</p>
+            <div
+              className={cn(
+                "flex items-center gap-3 rounded p-2 transition-colors",
+                supabaseProperty?.doc_final_check
+                  ? "cursor-pointer hover:bg-accent/50"
+                  : "opacity-60"
+              )}
+              onClick={() => {
+                if (supabaseProperty?.doc_final_check) {
+                  window.open(supabaseProperty.doc_final_check, "_blank");
+                }
+              }}
+            >
+              <div className="w-10 h-10 bg-[#F3F4F6] dark:bg-[#374151] rounded flex items-center justify-center">
+                <FileText className="h-5 w-5 text-[#6B7280] dark:text-[#9CA3AF]" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">Final Check</p>
+                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                  {supabaseProperty?.doc_final_check ? "HTML" : "No disponible"}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <Accordion 
             type="multiple" 
             className="w-full space-y-4"

@@ -25,6 +25,7 @@ export function usePhaseSections(currentPhase: string) {
       fields: [
         { id: "doc_energy_cert", type: "document", label: "Certificado de eficiencia energética", required: true },
         { id: "doc_renovation_files", type: "document", label: "Documentos de la reforma", required: true },
+        { id: "doc_final_check", type: "document", label: "Final Check", required: true },
       ],
     },
     {

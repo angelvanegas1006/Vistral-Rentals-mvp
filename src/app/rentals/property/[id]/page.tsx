@@ -81,6 +81,9 @@ export default function PropertyDetailPage() {
   // Estado para progreso de fase 5 (Pendiente de trámites)
   const [phase5Progress, setPhase5Progress] = useState<number>(0);
   
+  // Estado para tracking de interesado aceptado en fase Publicado
+  const [publicadoHasAccepted, setPublicadoHasAccepted] = useState(false);
+  
   // Función estabilizada para actualizar propheroSectionReviews
   // Solo actualiza si los valores realmente cambiaron para evitar re-renderizados innecesarios
   const handlePropheroReviewsChange = useCallback((reviews: PropheroSectionReviews | undefined) => {
@@ -341,6 +344,11 @@ export default function PropertyDetailPage() {
       return blocked;
     }
     
+    // Block phase 3 (Publicado) if no accepted interested party
+    if (property.currentPhase === "Publicado") {
+      return !publicadoHasAccepted;
+    }
+    
     // Block phase 4 (Inquilino aceptado) if progress is not 100%
     if (property.currentPhase === "Inquilino aceptado") {
       const blocked = phase4Progress < 100;
@@ -356,8 +364,10 @@ export default function PropertyDetailPage() {
     }
     
     return false;
-  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews, phase2Progress, phase4Progress, phase5Progress]);
-  const blockedMessage = property.currentPhase === "Listo para Alquilar" || property.currentPhase === "Inquilino aceptado" || property.currentPhase === "Pendiente de trámites"
+  }, [property.currentPhase, checkPropheroSectionsComplete, propheroSectionReviews, supabaseProperty?.prophero_section_reviews, phase2Progress, phase4Progress, phase5Progress, publicadoHasAccepted]);
+  const blockedMessage = property.currentPhase === "Publicado"
+    ? "Avance bloqueado - Se necesita un Interesado aceptado"
+    : property.currentPhase === "Listo para Alquilar" || property.currentPhase === "Inquilino aceptado" || property.currentPhase === "Pendiente de trámites"
     ? "Avance bloqueado - Completa el Progreso General de la fase"
     : "Avance bloqueado - Completa todas las secciones requeridas";
 
@@ -425,6 +435,7 @@ export default function PropertyDetailPage() {
             onPhase2ProgressChange={setPhase2Progress}
             onPhase4ProgressChange={setPhase4Progress}
             onPhase5ProgressChange={setPhase5Progress}
+            onPublicadoAcceptedChange={setPublicadoHasAccepted}
           />
         );
       case "property-summary":
@@ -458,6 +469,7 @@ export default function PropertyDetailPage() {
             onPhase2ProgressChange={setPhase2Progress}
             onPhase4ProgressChange={setPhase4Progress}
             onPhase5ProgressChange={setPhase5Progress}
+            onPublicadoAcceptedChange={setPublicadoHasAccepted}
           />
         );
     }

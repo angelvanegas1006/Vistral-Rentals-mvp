@@ -480,6 +480,39 @@ export async function POST(
           });
         }
       }
+
+      // Cascada de Éxito: las demás MTPs del mismo lead pasan a descartada
+      // (ya aseguró vivienda, el resto de opciones quedan invalidadas)
+      const { data: sameLeadMtps } = await supabase
+        .from("leads_properties")
+        .select("id, current_status, properties_unique_id")
+        .eq("leads_unique_id", leadId)
+        .neq("id", lpId);
+
+      for (const m of sameLeadMtps || []) {
+        const st = m.current_status ?? "";
+        if (st !== "en_espera" && !isMtpActive(st)) continue;
+
+        await supabase
+          .from("leads_properties")
+          .update({
+            current_status: "descartada",
+            previous_status: st || null,
+            exit_reason: "cierre_automatico_aceptado",
+            exit_comments: "Cierre automático: El interesado ha sido aceptado para otra propiedad.",
+          })
+          .eq("id", m.id);
+
+        const cascadedAddr = await getPropertyAddress(supabase, m.properties_unique_id);
+        await insertLeadEvent(supabase, {
+          leads_unique_id: leadId,
+          properties_unique_id: m.properties_unique_id,
+          event_type: "MTP_ARCHIVED",
+          title: `Propiedad Descartada: ${cascadedAddr}`,
+          description: `Estado: Descartada. Causa: El interesado ha sido aceptado para la propiedad ${propertyAddress}.`,
+          new_status: "descartada",
+        });
+      }
     }
 
     if (phaseChanged) {

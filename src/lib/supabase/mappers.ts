@@ -52,6 +52,7 @@ export function mapPropertyFromSupabase(row: any) {
         : row.prophero_section_reviews
     ) : undefined,
     is_dev: row.is_dev ?? false,
+    hasAcceptedInterested: row.has_accepted_interested ?? false,
   };
 }
 

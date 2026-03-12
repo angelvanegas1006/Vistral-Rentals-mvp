@@ -34,6 +34,10 @@ const FIELD_MAPPINGS: Record<string, { bucket: string; folder: string }> = {
     bucket: "properties-restricted-docs",
     folder: "property/technical/renovation",
   },
+  doc_final_check: {
+    bucket: "properties-restricted-docs",
+    folder: "property/technical/final_check",
+  },
   // Property Insurance (V2.1 Architecture)
   home_insurance_policy_url: {
     bucket: "properties-restricted-docs",
