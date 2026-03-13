@@ -57,12 +57,12 @@ export function ComplianceStatusWidget({ property }: ComplianceStatusWidgetProps
           </p>
         </div>
 
-        {/* Metric 3: ITV al día */}
+        {/* Metric 3: ITE al día */}
         <div className="py-3 text-center">
           <div className="flex items-center justify-center gap-1.5 mb-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
             <span className="text-xs text-muted-foreground">
-              ITV al día
+              ITE al día
             </span>
           </div>
           <p className={`text-lg font-semibold ${getStatusColor(property.itv_passed)}`}>

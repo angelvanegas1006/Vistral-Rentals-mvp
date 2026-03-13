@@ -20,6 +20,7 @@ import { uploadDocument } from "@/lib/document-upload";
 import { deleteDocument } from "@/lib/document-upload";
 import { usePhaseSections } from "@/hooks/use-phase-sections";
 import { TechnicalInspectionReport, RoomInspectionData, ClientPresentationChannel } from "@/lib/supabase/types";
+import { DocumentPreviewModal } from "./document-preview-modal";
 
 interface ReadyToRentTasksProps {
   property: {
@@ -86,6 +87,11 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
 
   // Estado Sección 3: Inspección Técnica (consolidado en JSON)
   const [technicalInspectionReport, setTechnicalInspectionReport] = useState<TechnicalInspectionReport>({});
+  const [previewModal, setPreviewModal] = useState<{
+    open: boolean;
+    url: string | null;
+    label: string;
+  }>({ open: false, url: null, label: "" });
 
   // Helper functions para trabajar con technical_inspection_report
   const getRoomData = (room: { type: string; index?: number }): RoomInspectionData | null => {
@@ -1399,30 +1405,35 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
       >
         <div className="space-y-4">
           {/* Final Check - read-only reference document */}
-          <div className="p-3 border border-[#E5E7EB] dark:border-[#374151] rounded-lg bg-[#F9FAFB] dark:bg-[#1F2937]">
-            <p className="text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] mb-2">Documento de referencia</p>
-            <div
-              className={cn(
-                "flex items-center gap-3 rounded p-2 transition-colors",
-                supabaseProperty?.doc_final_check
-                  ? "cursor-pointer hover:bg-accent/50"
-                  : "opacity-60"
-              )}
-              onClick={() => {
-                if (supabaseProperty?.doc_final_check) {
-                  window.open(supabaseProperty.doc_final_check, "_blank");
-                }
-              }}
-            >
-              <div className="w-10 h-10 bg-[#F3F4F6] dark:bg-[#374151] rounded flex items-center justify-center">
-                <FileText className="h-5 w-5 text-[#6B7280] dark:text-[#9CA3AF]" />
+          <div className="rounded-lg border border-[#E5E7EB] dark:border-[#374151] bg-[#F9FAFB] dark:bg-[#1F2937] p-3 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Documento de referencia</p>
+            <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-[#374151] bg-white dark:bg-[#111827] p-3 transition-colors hover:bg-accent/50">
+              <div
+                className={cn(
+                  "flex items-center gap-3 flex-1",
+                  supabaseProperty?.doc_final_check ? "cursor-pointer" : "cursor-default opacity-60"
+                )}
+                onClick={() => {
+                  if (supabaseProperty?.doc_final_check) {
+                    setPreviewModal({
+                      open: true,
+                      url: supabaseProperty.doc_final_check,
+                      label: "Final Check",
+                    });
+                  }
+                }}
+              >
+                <div className="w-10 h-10 bg-[#F3F4F6] dark:bg-[#374151] rounded flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-[#6B7280] dark:text-[#9CA3AF]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">Final Check</p>
+                  <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                    {supabaseProperty?.doc_final_check ? "HTML" : "No disponible"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-[#111827] dark:text-[#F9FAFB]">Final Check</p>
-                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                  {supabaseProperty?.doc_final_check ? "HTML" : "No disponible"}
-                </p>
-              </div>
+              <FileText className="h-5 w-5 text-[#6B7280] dark:text-[#9CA3AF]" />
             </div>
           </div>
 
@@ -1706,6 +1717,19 @@ export function ReadyToRentTasks({ property }: ReadyToRentTasksProps) {
           </Accordion>
         </div>
       </Phase2SectionWidget>
+
+      {previewModal.open && previewModal.url && (
+        <DocumentPreviewModal
+          open={previewModal.open}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPreviewModal({ open: false, url: null, label: "" });
+            }
+          }}
+          documentUrl={previewModal.url}
+          documentName={previewModal.label}
+        />
+      )}
 
       {/* Sección 4: Lanzamiento Comercial */}
       <Phase2SectionWidget

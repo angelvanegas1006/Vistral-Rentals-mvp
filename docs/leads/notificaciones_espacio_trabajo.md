@@ -145,5 +145,4 @@ Cuando el PM pulsa "Recuperar Interesado" desde la tarjeta de una MTP rechazada 
 
 ## 8. Restricciones de Redacción
 
-- **Nunca** se usará el término "embudo" en ningún texto de notificación ni en la interfaz de usuario.
 - Los textos deben ser claros, directos y orientados a la acción que debe tomar el PM.
